@@ -1,4 +1,4 @@
-# react-native-cashfree-pg-api
+# react-native-cashfree-pg-sdk
 The Cashfree React Native SDK allows you to integrate Cashfree Payment Gateway into your application and start collecting payments from your customers. The React Native SDK has been designed to minimise the complexity of handling and integrating payments in your React Native project.
 
 Click [here](https://docs.cashfree.com/docs/react-native-integration) for more Documentation.
