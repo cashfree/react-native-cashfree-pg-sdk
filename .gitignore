@@ -68,3 +68,4 @@ lib/
 /android/gradlew.bat
 /example/yarn.lock
 /yarn.lock
+/package-lock.json

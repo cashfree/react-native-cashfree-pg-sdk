@@ -9,10 +9,10 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "^0.0.5",
+    "cashfree-pg-api-contract": "^1.0.0",
     "react": "16.13.1",
     "react-native": "0.63.4",
-    "react-native-cashfree-pg-sdk": "^0.1.7"
+    "react-native-cashfree-pg-sdk": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
