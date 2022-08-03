@@ -5,6 +5,14 @@ import CashfreePG
 @objc(CashfreePgApi)
 class CashfreePgApi: NSObject {
 
+    override init() {
+        super.init()
+    }
+
+    @objc static func requiresMainQueueSetup() -> Bool {
+        return false
+    }
+
     @objc func doPayment(_ paymentObject: NSString) -> Void {
         do {
             let dropObject = try! parseDropPayment(paymentObject: "\(paymentObject)")
