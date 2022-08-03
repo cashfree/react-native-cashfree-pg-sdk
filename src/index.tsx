@@ -74,14 +74,14 @@ class CFPaymentGateway {
       this.successSubscription !== undefined &&
       this.successSubscription !== null
     ) {
-      this.emitter.removeSubscription(this.successSubscription);
+      this.successSubscription.remove();
       this.successSubscription = null;
     }
     if (
       this.failureSubscription !== undefined &&
       this.failureSubscription !== null
     ) {
-      this.emitter.removeSubscription(this.failureSubscription);
+      this.failureSubscription.remove();
       this.failureSubscription = null;
     }
   }
