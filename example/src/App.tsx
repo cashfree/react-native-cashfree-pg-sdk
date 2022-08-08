@@ -5,7 +5,6 @@ import { Component } from 'react';
 
 import { Button, Platform, StyleSheet, Text, View } from 'react-native';
 import {
-  CFCallback,
   CFErrorResponse,
   CFPaymentGatewayService,
 } from 'react-native-cashfree-pg-sdk';
@@ -20,7 +19,7 @@ import {
 
 const BASE_RESPONSE_TEXT = 'Response or error will show here.';
 
-export default class App extends Component implements CFCallback {
+export default class App extends Component {
   constructor() {
     super();
 
@@ -29,18 +28,18 @@ export default class App extends Component implements CFCallback {
     };
   }
 
-  onVerify(orderID: string): void {
-    this.changeResponseText('orderId is :' + orderID);
-  }
-  onError(error: CFErrorResponse, orderID: string): void {
-    this.changeResponseText(
-      'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
-    );
-  }
-
   componentDidMount() {
     console.log('MOUNTED');
-    CFPaymentGatewayService.setCallback(this);
+    CFPaymentGatewayService.setCallback({
+      onVerify(orderID: string): void {
+        this.changeResponseText('orderId is :' + orderID);
+      },
+      onError(error: CFErrorResponse, orderID: string): void {
+        this.changeResponseText(
+          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
+        );
+      },
+    });
   }
 
   componentWillUnmount() {
