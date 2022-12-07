@@ -44,7 +44,8 @@ class CashfreePgApi: NSObject {
                     .setTheme(theme!)
                     .setComponent(component!)
                     .build()
-                nativePayment.setPlatform( "ios-rn-" + (((output["version"]) as? String) ?? ""))
+//                 let systemVersion = UIDevice.current.systemVersion
+//                 nativePayment.setPlatform("irnx-d-" + (((output["version"]) as? String) ?? "") + "-3.3.9-m-s-x-i-\(systemVersion.prefix(4))")
                 return nativePayment
 
             } catch let e {

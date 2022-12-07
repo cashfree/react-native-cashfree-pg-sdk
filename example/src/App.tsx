@@ -56,8 +56,8 @@ export default class App extends Component {
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'WMD5d2KyC7ULxfyNVBdR',
-        'order_1246922D4OVtpwyV7bBrlEJh4R6ZGGFuh',
+        'session_ma_fUwYk9OXUt_YyuHk5poR182viKT_Wi00xDvTQMJcv4wg5K3rBS9Vk_qrXrt2yUM7Jz-WJrgILpJmfx7FjPLuIonazlbgGbz_wODdB0VKJ',
+        'order_880242IZzlKZGPbP2X1wISvA5sv0vJAp',
         CFEnvironment.SANDBOX
       );
       const paymentModes = new CFPaymentComponentBuilder()
