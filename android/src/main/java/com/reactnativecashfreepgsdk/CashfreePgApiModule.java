@@ -15,6 +15,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
+import com.cashfree.pg.api.util.DropPaymentParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,6 +40,8 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     try {
       Activity activity = getCurrentActivity();
       CFDropCheckoutPayment cfDropCheckoutPayment = DropPaymentParser.getDropCheckoutPayment(cfPaymentString);
+//       cfDropCheckoutPayment.setSourcePlatform(CFPayment.CFSourceSDK.DROP);
+//       cfDropCheckoutPayment.setSourceFramework(CFPayment.CFSourceFramework.REACT_NATIVE);
       if (activity != null) {
         CFPaymentGatewayService.getInstance().doPayment(activity, cfDropCheckoutPayment);
       } else {

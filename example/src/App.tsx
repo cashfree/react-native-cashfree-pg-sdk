@@ -28,20 +28,6 @@ export default class App extends Component {
     };
   }
 
-  componentDidMount() {
-    console.log('MOUNTED');
-    CFPaymentGatewayService.setCallback({
-      onVerify(orderID: string): void {
-        this.changeResponseText('orderId is :' + orderID);
-      },
-      onError(error: CFErrorResponse, orderID: string): void {
-        this.changeResponseText(
-          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
-        );
-      },
-    });
-  }
-
   componentWillUnmount() {
     console.log('UNMOUNTED');
     CFPaymentGatewayService.removeCallback();
@@ -53,11 +39,25 @@ export default class App extends Component {
     });
   };
 
+  componentDidMount() {
+    console.log('MOUNTED');
+    CFPaymentGatewayService.setCallback({
+      onVerify(orderID: string): void {
+        console.log('orderId is :' + orderID);
+      },
+      onError(error: CFErrorResponse, orderID: string): void {
+        console.log(
+          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
+        );
+      },
+    });
+  }
+
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'EKnOtw8HtEo26tlmUg6P',
-        'order_1246922AeJyW66DV9SAC7LJL5UJGfmZuW',
+        'WMD5d2KyC7ULxfyNVBdR',
+        'order_1246922D4OVtpwyV7bBrlEJh4R6ZGGFuh',
         CFEnvironment.SANDBOX
       );
       const paymentModes = new CFPaymentComponentBuilder()
@@ -80,6 +80,7 @@ export default class App extends Component {
         paymentModes,
         theme
       );
+      console.log(JSON.stringify(dropPayment));
       CFPaymentGatewayService.doPayment(dropPayment);
     } catch (e: any) {
       console.log(e.message);

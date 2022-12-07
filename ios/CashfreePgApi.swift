@@ -61,7 +61,7 @@ class CashfreePgApi: NSObject {
             do {
                 let builder =  CFSession.CFSessionBuilder()
                     .setOrderID(sessionDict["orderID"] ?? "")
-                    .setOrderToken(sessionDict["token"] ?? "")
+                    .setPaymentSessionId(sessionDict["payment_session_id"] ?? "")
                 if (sessionDict["environment"] == "SANDBOX") {
                     builder.setEnvironment(CFENVIRONMENT.SANDBOX)
                 } else {
