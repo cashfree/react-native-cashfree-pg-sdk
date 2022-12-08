@@ -4,8 +4,12 @@ import android.app.Activity;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.cashfree.pg.api.CFPaymentGatewayService;
+import com.cashfree.pg.cf_analytics.CFAnalyticsService;
+import com.cashfree.pg.cf_analytics.CFEventsSubscriber;
+import com.cashfree.pg.core.api.base.CFPayment;
 import com.cashfree.pg.core.api.callback.CFCheckoutResponseCallback;
 import com.cashfree.pg.core.api.exception.CFException;
 import com.cashfree.pg.core.api.utils.CFErrorResponse;
@@ -20,8 +24,10 @@ import com.cashfree.pg.api.util.DropPaymentParser;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Map;
+
 @ReactModule(name = CashfreePgApiModule.NAME)
-public class CashfreePgApiModule extends ReactContextBaseJavaModule implements CFCheckoutResponseCallback {
+public class CashfreePgApiModule extends ReactContextBaseJavaModule implements CFCheckoutResponseCallback, CFEventsSubscriber {
   public static final String NAME = "CashfreePgApi";
 
   public CashfreePgApiModule(ReactApplicationContext reactContext) {
@@ -40,8 +46,8 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     try {
       Activity activity = getCurrentActivity();
       CFDropCheckoutPayment cfDropCheckoutPayment = DropPaymentParser.getDropCheckoutPayment(cfPaymentString);
-//       cfDropCheckoutPayment.setSourcePlatform(CFPayment.CFSourceSDK.DROP);
-//       cfDropCheckoutPayment.setSourceFramework(CFPayment.CFSourceFramework.REACT_NATIVE);
+      cfDropCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
+      cfDropCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.DROP);
       if (activity != null) {
         CFPaymentGatewayService.getInstance().doPayment(activity, cfDropCheckoutPayment);
       } else {
@@ -57,6 +63,22 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     try {
       CFPaymentGatewayService.getInstance().setCheckoutCallback(this);
     } catch (CFException cfException) {
+    }
+  }
+
+  @ReactMethod
+  public void setEventSubscriber() {
+    try {
+      CFAnalyticsService.getInstance().setSubscriber(this);
+    } catch (Exception ignored) {
+    }
+  }
+
+  @ReactMethod
+  public void removeEventSubscriber() {
+    try {
+      CFAnalyticsService.getInstance().removeSubscriber();
+    } catch (Exception ignored) {
     }
   }
 
@@ -79,5 +101,25 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     this.getReactApplicationContext()
       .getJSModule(RCTNativeAppEventEmitter.class)
       .emit("cfFailure", jsonObject.toString());
+  }
+
+  @Override
+  public void receivedEvent(String s, @Nullable Map<String, String> map) {
+    JSONObject jsonObject = new JSONObject();
+    JSONObject jsonMeta = new JSONObject();
+    try {
+      if (map != null) {
+        for (String key : map.keySet()) {
+          jsonMeta.put(key, map.get(key));
+        }
+      }
+      jsonObject.put("eventName", s);
+      jsonObject.put("meta", jsonMeta);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    this.getReactApplicationContext()
+      .getJSModule(RCTNativeAppEventEmitter.class)
+      .emit("cfEvent", jsonObject.toString());
   }
 }

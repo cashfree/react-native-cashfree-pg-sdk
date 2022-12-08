@@ -12,7 +12,7 @@
     "cashfree-pg-api-contract": "^2.0.0-dev.1",
     "react": "17.0.2",
     "react-native": "^0.67.5",
-    "react-native-cashfree-pg-sdk": "^2.0.0-dev.1"
+    "react-native-cashfree-pg-sdk": "file:.."
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

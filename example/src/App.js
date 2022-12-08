@@ -15,6 +15,7 @@ export default class App extends Component {
     componentWillUnmount() {
         console.log('UNMOUNTED');
         CFPaymentGatewayService.removeCallback();
+        CFPaymentGatewayService.removeEventSubscriber();
     }
     changeResponseText = (message) => {
         this.setState({
@@ -23,6 +24,14 @@ export default class App extends Component {
     };
     componentDidMount() {
         console.log('MOUNTED');
+        CFPaymentGatewayService.setEventSubscriber({
+            onReceivedEvent(eventName, map) {
+                console.log('Event recieved on screen: ' +
+                    eventName +
+                    ' map: ' +
+                    JSON.stringify(map));
+            },
+        });
         CFPaymentGatewayService.setCallback({
             onVerify(orderID) {
                 console.log('orderId is :' + orderID);
@@ -34,7 +43,7 @@ export default class App extends Component {
     }
     async _startCheckout() {
         try {
-            const session = new CFSession('session_ma_fUwYk9OXUt_YyuHk5poR182viKT_Wi00xDvTQMJcv4wg5K3rBS9Vk_qrXrt2yUM7Jz-WJrgILpJmfx7FjPLuIonazlbgGbz_wODdB0VKJ', 'order_880242IZzlKZGPbP2X1wISvA5sv0vJAp', CFEnvironment.SANDBOX);
+            const session = new CFSession('session_sKR3CAq_TWbsiU-pbOWb3Wyc1WLMiOUEGr3xT5npfC-X_8yDSFzUMt8LRoBL3zgbODK04bAfcFnNTBlQcLsssm30U4t0g9EmmMPrcJGOtdRr', 'order_880242IdGMX0NUiOmmm1izduH18QxdpU', CFEnvironment.SANDBOX);
             const paymentModes = new CFPaymentComponentBuilder()
                 .add(CFPaymentModes.CARD)
                 .add(CFPaymentModes.UPI)
