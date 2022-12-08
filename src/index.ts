@@ -45,26 +45,30 @@ class CFPaymentGateway {
   }
 
   setEventSubscriber(cfEventCallback: CFEventCallback) {
-    let eventFunction = (event: string) => {
-      let data = JSON.parse(event);
-      cfEventCallback.onReceivedEvent(data.eventName, data.meta);
-    };
-    this.eventSubscription = this.emitter.addListener(
-      'cfEvent',
-      eventFunction,
-    );
-    CashfreePgApi.setEventSubscriber();
+    if (Platform.OS === 'android') {
+      let eventFunction = (event: string) => {
+        let data = JSON.parse(event);
+        cfEventCallback.onReceivedEvent(data.eventName, data.meta);
+      };
+      this.eventSubscription = this.emitter.addListener(
+        'cfEvent',
+        eventFunction,
+      );
+      CashfreePgApi.setEventSubscriber();
+    }
   }
 
   removeEventSubscriber() {
-    if (
-      this.eventSubscription !== undefined &&
-      this.eventSubscription !== null
-    ) {
-      this.eventSubscription.remove();
-      this.eventSubscription = null;
+    if (Platform.OS === 'android') {
+      if (
+        this.eventSubscription !== undefined &&
+        this.eventSubscription !== null
+      ) {
+        this.eventSubscription.remove();
+        this.eventSubscription = null;
+      }
+      CashfreePgApi.removeEventSubscriber();
     }
-    CashfreePgApi.removeEventSubscriber();
   }
 
   setCallback(cfCallback: CFCallback) {
@@ -153,4 +157,5 @@ export class CFErrorResponse {
     return this.type;
   }
 }
+
 export const CFPaymentGatewayService = new CFPaymentGateway();
