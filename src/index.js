@@ -27,20 +27,24 @@ class CFPaymentGateway {
         CashfreePgApi.doPayment(JSON.stringify(checkoutPayment));
     }
     setEventSubscriber(cfEventCallback) {
-        let eventFunction = (event) => {
-            let data = JSON.parse(event);
-            cfEventCallback.onReceivedEvent(data.eventName, data.meta);
-        };
-        this.eventSubscription = this.emitter.addListener('cfEvent', eventFunction);
-        CashfreePgApi.setEventSubscriber();
+        if (Platform.OS === 'android') {
+            let eventFunction = (event) => {
+                let data = JSON.parse(event);
+                cfEventCallback.onReceivedEvent(data.eventName, data.meta);
+            };
+            this.eventSubscription = this.emitter.addListener('cfEvent', eventFunction);
+            CashfreePgApi.setEventSubscriber();
+        }
     }
     removeEventSubscriber() {
-        if (this.eventSubscription !== undefined &&
-            this.eventSubscription !== null) {
-            this.eventSubscription.remove();
-            this.eventSubscription = null;
+        if (Platform.OS === 'android') {
+            if (this.eventSubscription !== undefined &&
+                this.eventSubscription !== null) {
+                this.eventSubscription.remove();
+                this.eventSubscription = null;
+            }
+            CashfreePgApi.removeEventSubscriber();
         }
-        CashfreePgApi.removeEventSubscriber();
     }
     setCallback(cfCallback) {
         // this.cfCallback = cfCallback;

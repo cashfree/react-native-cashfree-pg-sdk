@@ -43,7 +43,7 @@ export default class App extends Component {
     }
     async _startCheckout() {
         try {
-            const session = new CFSession('session_sKR3CAq_TWbsiU-pbOWb3Wyc1WLMiOUEGr3xT5npfC-X_8yDSFzUMt8LRoBL3zgbODK04bAfcFnNTBlQcLsssm30U4t0g9EmmMPrcJGOtdRr', 'order_880242IdGMX0NUiOmmm1izduH18QxdpU', CFEnvironment.SANDBOX);
+            const session = new CFSession('session_IoErBDpoq1nreFnrYWltLCy-o9HD3RdV8N7iinJcAbZbYRN6K946_KdYXoeVQRDuOhyKDm6JBxlmKLcZIvSa_sBMRi5_8nzoGL7taayp365A', 'order_880242IfUmh0KTA3O9MMzGvmKg83ufbL', CFEnvironment.SANDBOX);
             const paymentModes = new CFPaymentComponentBuilder()
                 .add(CFPaymentModes.CARD)
                 .add(CFPaymentModes.UPI)
