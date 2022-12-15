@@ -26,6 +26,10 @@
         android:name="cashfree_pg_logging_level"
         android:value="2"
         tools:replace="android:value" />
+      <meta-data
+        android:name="cashfree_custom_analytics_subscriber_enabled"
+        android:value="true"
+        tools:replace="android:value" />
     </application>
 
 </manifest>

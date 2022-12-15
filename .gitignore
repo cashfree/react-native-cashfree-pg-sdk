@@ -69,3 +69,5 @@ lib/
 /example/yarn.lock
 /yarn.lock
 /package-lock.json
+/example/android/java_pid2299.hprof
+/example/package-lock.json

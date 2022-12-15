@@ -12,28 +12,38 @@ export default class App extends Component {
             responseText: BASE_RESPONSE_TEXT,
         };
     }
-    onVerify(orderID) {
-        this.changeResponseText('orderId is :' + orderID);
-    }
-    onError(error, orderID) {
-        this.changeResponseText('exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID);
-    }
-    componentDidMount() {
-        console.log('MOUNTED');
-        CFPaymentGatewayService.setCallback(this);
-    }
     componentWillUnmount() {
         console.log('UNMOUNTED');
         CFPaymentGatewayService.removeCallback();
+        CFPaymentGatewayService.removeEventSubscriber();
     }
     changeResponseText = (message) => {
         this.setState({
             responseText: message,
         });
     };
+    componentDidMount() {
+        console.log('MOUNTED');
+        CFPaymentGatewayService.setEventSubscriber({
+            onReceivedEvent(eventName, map) {
+                console.log('Event recieved on screen: ' +
+                    eventName +
+                    ' map: ' +
+                    JSON.stringify(map));
+            },
+        });
+        CFPaymentGatewayService.setCallback({
+            onVerify(orderID) {
+                console.log('orderId is :' + orderID);
+            },
+            onError(error, orderID) {
+                console.log('exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID);
+            },
+        });
+    }
     async _startCheckout() {
         try {
-            const session = new CFSession('EKnOtw8HtEo26tlmUg6P', 'order_1246922AeJyW66DV9SAC7LJL5UJGfmZuW', CFEnvironment.SANDBOX);
+            const session = new CFSession('session_IoErBDpoq1nreFnrYWltLCy-o9HD3RdV8N7iinJcAbZbYRN6K946_KdYXoeVQRDuOhyKDm6JBxlmKLcZIvSa_sBMRi5_8nzoGL7taayp365A', 'order_880242IfUmh0KTA3O9MMzGvmKg83ufbL', CFEnvironment.SANDBOX);
             const paymentModes = new CFPaymentComponentBuilder()
                 .add(CFPaymentModes.CARD)
                 .add(CFPaymentModes.UPI)
@@ -50,6 +60,7 @@ export default class App extends Component {
                 .setSecondaryTextColor('#757575')
                 .build();
             const dropPayment = new CFDropCheckoutPayment(session, paymentModes, theme);
+            console.log(JSON.stringify(dropPayment));
             CFPaymentGatewayService.doPayment(dropPayment);
         }
         catch (e) {

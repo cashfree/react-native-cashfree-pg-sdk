@@ -44,7 +44,8 @@ class CashfreePgApi: NSObject {
                     .setTheme(theme!)
                     .setComponent(component!)
                     .build()
-                nativePayment.setPlatform( "ios-rn-" + (((output["version"]) as? String) ?? ""))
+//                 let systemVersion = UIDevice.current.systemVersion
+//                 nativePayment.setPlatform("irnx-d-" + (((output["version"]) as? String) ?? "") + "-3.3.9-m-s-x-i-\(systemVersion.prefix(4))")
                 return nativePayment
 
             } catch let e {
@@ -61,7 +62,7 @@ class CashfreePgApi: NSObject {
             do {
                 let builder =  CFSession.CFSessionBuilder()
                     .setOrderID(sessionDict["orderID"] ?? "")
-                    .setOrderToken(sessionDict["token"] ?? "")
+                    .setPaymentSessionId(sessionDict["payment_session_id"] ?? "")
                 if (sessionDict["environment"] == "SANDBOX") {
                     builder.setEnvironment(CFENVIRONMENT.SANDBOX)
                 } else {

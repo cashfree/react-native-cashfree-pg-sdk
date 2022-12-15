@@ -5,8 +5,8 @@ import { Component } from 'react';
 
 import { Button, Platform, StyleSheet, Text, View } from 'react-native';
 import {
-  CFErrorResponse,
   CFPaymentGatewayService,
+  CFErrorResponse,
 } from 'react-native-cashfree-pg-sdk';
 import {
   CFDropCheckoutPayment,
@@ -28,23 +28,10 @@ export default class App extends Component {
     };
   }
 
-  componentDidMount() {
-    console.log('MOUNTED');
-    CFPaymentGatewayService.setCallback({
-      onVerify(orderID: string): void {
-        this.changeResponseText('orderId is :' + orderID);
-      },
-      onError(error: CFErrorResponse, orderID: string): void {
-        this.changeResponseText(
-          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
-        );
-      },
-    });
-  }
-
   componentWillUnmount() {
     console.log('UNMOUNTED');
     CFPaymentGatewayService.removeCallback();
+    CFPaymentGatewayService.removeEventSubscriber();
   }
 
   changeResponseText = (message: string) => {
@@ -53,11 +40,35 @@ export default class App extends Component {
     });
   };
 
+  componentDidMount() {
+    console.log('MOUNTED');
+    CFPaymentGatewayService.setEventSubscriber({
+      onReceivedEvent(eventName: string, map: Map<string, string>): void {
+        console.log(
+          'Event recieved on screen: ' +
+            eventName +
+            ' map: ' +
+            JSON.stringify(map)
+        );
+      },
+    });
+    CFPaymentGatewayService.setCallback({
+      onVerify(orderID: string): void {
+        console.log('orderId is :' + orderID);
+      },
+      onError(error: CFErrorResponse, orderID: string): void {
+        console.log(
+          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
+        );
+      },
+    });
+  }
+
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'EKnOtw8HtEo26tlmUg6P',
-        'order_1246922AeJyW66DV9SAC7LJL5UJGfmZuW',
+        'session_IoErBDpoq1nreFnrYWltLCy-o9HD3RdV8N7iinJcAbZbYRN6K946_KdYXoeVQRDuOhyKDm6JBxlmKLcZIvSa_sBMRi5_8nzoGL7taayp365A',
+        'order_880242IfUmh0KTA3O9MMzGvmKg83ufbL',
         CFEnvironment.SANDBOX
       );
       const paymentModes = new CFPaymentComponentBuilder()
@@ -80,6 +91,7 @@ export default class App extends Component {
         paymentModes,
         theme
       );
+      console.log(JSON.stringify(dropPayment));
       CFPaymentGatewayService.doPayment(dropPayment);
     } catch (e: any) {
       console.log(e.message);
