@@ -56,8 +56,13 @@ rootProject.allprojects {
   repositories {
     google()
     mavenCentral()
-    maven { url 'https://maven.cashfree.com/release'}
-    maven { url 'https://maven.cashfree.com/development'}
+    maven {
+      url 'https://maven.cashfree.com/release'
+      content {
+              // Does only include this group
+              includeGroup "com.cashfree.pg"
+      }
+    }
   }
 }
 
