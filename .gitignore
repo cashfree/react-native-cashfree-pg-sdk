@@ -69,3 +69,4 @@ lib/
 /example/yarn.lock
 /yarn.lock
 /package-lock.json
+/example/
