@@ -145,6 +145,6 @@
     ]
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "2.0.0-dev.1"
+    "cashfree-pg-api-contract": "2.0.0"
   }
 }
