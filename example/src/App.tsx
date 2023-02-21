@@ -57,8 +57,8 @@ export default class App extends Component implements CFCallback {
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'EKnOtw8HtEo26tlmUg6P',
-        'order_1246922AeJyW66DV9SAC7LJL5UJGfmZuW',
+        'S2HJjrHMKJsqWc2grQav',
+        'order_779252M38wjqFdQHhlb7BXUkfObtULJ4',
         CFEnvironment.SANDBOX
       );
       const paymentModes = new CFPaymentComponentBuilder()
