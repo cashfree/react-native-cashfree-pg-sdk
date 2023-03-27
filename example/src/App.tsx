@@ -67,8 +67,8 @@ export default class App extends Component {
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'session_IoErBDpoq1nreFnrYWltLCy-o9HD3RdV8N7iinJcAbZbYRN6K946_KdYXoeVQRDuOhyKDm6JBxlmKLcZIvSa_sBMRi5_8nzoGL7taayp365A',
-        'order_880242IfUmh0KTA3O9MMzGvmKg83ufbL',
+        'session_aylkHRUGzQST0wLy1MonXomw9sAQvascgHrHL3pIF4GMIPrCT1d-Z0i1qcxhUrcXNlsM23yzlhq-hfHQJwWIFFuTk7VKS7pzzt0GSbXr76Mu',
+        'order_70512NasKYpCj67pGgPklgNF8zrPazT',
         CFEnvironment.SANDBOX
       );
       const paymentModes = new CFPaymentComponentBuilder()
@@ -98,11 +98,31 @@ export default class App extends Component {
     }
   }
 
+  async _startWebCheckout() {
+    try {
+      const session = new CFSession(
+        'session_aylkHRUGzQST0wLy1MonXomw9sAQvascgHrHL3pIF4GMIPrCT1d-Z0i1qcxhUrcXNlsM23yzlhq-hfHQJwWIFFuTk7VKS7pzzt0GSbXr76Mu',
+        'order_70512NasKYpCj67pGgPklgNF8zrPazT',
+        CFEnvironment.SANDBOX
+      );
+      console.log('Session', JSON.stringify(session));
+      CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <View style={styles.button}>
           <Button onPress={() => this._startCheckout()} title="Start Payment" />
+        </View>
+        <View style={styles.button}>
+          <Button
+            onPress={() => this._startWebCheckout()}
+            title="Start Web Payment"
+          />
         </View>
         <Text style={styles.response_text}> {this.state.responseText} </Text>
       </View>
