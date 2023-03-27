@@ -7,7 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { version } from '../package.json';
-import type { CheckoutPayment } from 'cashfree-pg-api-contract';
+import type { CheckoutPayment, CFSession } from 'cashfree-pg-api-contract';
 
 const LINKING_ERROR =
   `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
@@ -42,6 +42,10 @@ class CFPaymentGateway {
   doPayment(checkoutPayment: CheckoutPayment) {
     checkoutPayment.version = version;
     CashfreePgApi.doPayment(JSON.stringify(checkoutPayment));
+  }
+
+  doWebPayment(cfSession: CFSession) {
+    CashfreePgApi.doWebPayment(cfSession);
   }
 
   setEventSubscriber(cfEventCallback: CFEventCallback) {

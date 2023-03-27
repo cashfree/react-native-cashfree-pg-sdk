@@ -9,10 +9,12 @@ import androidx.annotation.Nullable;
 import com.cashfree.pg.api.CFPaymentGatewayService;
 import com.cashfree.pg.cf_analytics.CFAnalyticsService;
 import com.cashfree.pg.cf_analytics.CFEventsSubscriber;
+import com.cashfree.pg.core.api.CFSession;
 import com.cashfree.pg.core.api.base.CFPayment;
 import com.cashfree.pg.core.api.callback.CFCheckoutResponseCallback;
 import com.cashfree.pg.core.api.exception.CFException;
 import com.cashfree.pg.core.api.utils.CFErrorResponse;
+import com.cashfree.pg.core.api.webcheckout.CFWebCheckoutPayment;
 import com.cashfree.pg.ui.api.CFDropCheckoutPayment;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -50,6 +52,37 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       cfDropCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.DROP);
       if (activity != null) {
         CFPaymentGatewayService.getInstance().doPayment(activity, cfDropCheckoutPayment);
+      } else {
+        throw new IllegalStateException("activity is null");
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @ReactMethod
+  public void doWebPayment(String sessionString) {
+    Log.d("CashfreePgApiModule Web", sessionString);
+    CFSession cfSession = null;
+    try {
+      JSONObject jsonObject = new JSONObject(sessionString);
+      cfSession = new CFSession.CFSessionBuilder()
+        .setEnvironment(CFSession.Environment.valueOf(jsonObject.getString("environment")))
+        .setOrderId(jsonObject.getString("orderID"))
+        .setPaymentSessionID(jsonObject.getString("payment_session_id"))
+        .build();
+    } catch (Exception exception) {
+      throw new IllegalStateException("Session is invalid");
+    }
+    try {
+      Activity activity = getCurrentActivity();
+      CFWebCheckoutPayment cfWebCheckoutPayment = new CFWebCheckoutPayment.CFWebCheckoutPaymentBuilder()
+        .setSession(cfSession)
+        .build();
+      cfWebCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
+      cfWebCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.WEB_CHECKOUT);
+      if (activity != null) {
+        CFPaymentGatewayService.getInstance().doPayment(activity, cfWebCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
       }
