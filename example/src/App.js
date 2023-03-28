@@ -43,7 +43,7 @@ export default class App extends Component {
     }
     async _startCheckout() {
         try {
-            const session = new CFSession('session_IoErBDpoq1nreFnrYWltLCy-o9HD3RdV8N7iinJcAbZbYRN6K946_KdYXoeVQRDuOhyKDm6JBxlmKLcZIvSa_sBMRi5_8nzoGL7taayp365A', 'order_880242IfUmh0KTA3O9MMzGvmKg83ufbL', CFEnvironment.SANDBOX);
+            const session = new CFSession('session_aylkHRUGzQST0wLy1MonXomw9sAQvascgHrHL3pIF4GMIPrCT1d-Z0i1qcxhUrcXNlsM23yzlhq-hfHQJwWIFFuTk7VKS7pzzt0GSbXr76Mu', 'order_70512NasKYpCj67pGgPklgNF8zrPazT', CFEnvironment.SANDBOX);
             const paymentModes = new CFPaymentComponentBuilder()
                 .add(CFPaymentModes.CARD)
                 .add(CFPaymentModes.UPI)
@@ -67,10 +67,22 @@ export default class App extends Component {
             console.log(e.message);
         }
     }
+    async _startWebCheckout() {
+        try {
+            const session = new CFSession('session_aylkHRUGzQST0wLy1MonXomw9sAQvascgHrHL3pIF4GMIPrCT1d-Z0i1qcxhUrcXNlsM23yzlhq-hfHQJwWIFFuTk7VKS7pzzt0GSbXr76Mu', 'order_70512NasKYpCj67pGgPklgNF8zrPazT', CFEnvironment.SANDBOX);
+            console.log('Session', JSON.stringify(session));
+            CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     render() {
         return (React.createElement(View, { style: styles.container },
             React.createElement(View, { style: styles.button },
                 React.createElement(Button, { onPress: () => this._startCheckout(), title: "Start Payment" })),
+            React.createElement(View, { style: styles.button },
+                React.createElement(Button, { onPress: () => this._startWebCheckout(), title: "Start Web Payment" })),
             React.createElement(Text, { style: styles.response_text },
                 " ",
                 this.state.responseText,

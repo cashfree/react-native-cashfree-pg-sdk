@@ -26,6 +26,9 @@ class CFPaymentGateway {
         checkoutPayment.version = version;
         CashfreePgApi.doPayment(JSON.stringify(checkoutPayment));
     }
+    doWebPayment(cfSession) {
+        CashfreePgApi.doWebPayment(cfSession);
+    }
     setEventSubscriber(cfEventCallback) {
         if (Platform.OS === 'android') {
             let eventFunction = (event) => {
