@@ -1,6 +1,6 @@
 {
   "name": "react-native-cashfree-pg-sdk",
-  "version": "2.0.3",
+  "version": "2.0.4-dev.0",
   "description": "Cashfree PG Plugin for React Native",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
