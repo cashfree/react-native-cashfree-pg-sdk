@@ -26,6 +26,22 @@ class CashfreePgApi: NSObject {
         }
     }
 
+    @objc func doWebPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let sessionObj = try parseWebPayment(paymentObject: "\(paymentObject)") {
+                let cfPaymentObject = try! CFWebCheckoutPayment.CFWebCheckoutPaymentBuilder()
+                    .setSession(sessionObj)
+                    .build()
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfPaymentObject, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
     @objc func setCallback() -> Void {
         CFPaymentGatewayService.getInstance().setCallback(self)
     }
@@ -44,8 +60,8 @@ class CashfreePgApi: NSObject {
                     .setTheme(theme!)
                     .setComponent(component!)
                     .build()
-//                 let systemVersion = UIDevice.current.systemVersion
-//                 nativePayment.setPlatform("irnx-d-" + (((output["version"]) as? String) ?? "") + "-3.3.9-m-s-x-i-\(systemVersion.prefix(4))")
+                //                 let systemVersion = UIDevice.current.systemVersion
+                //                 nativePayment.setPlatform("irnx-d-" + (((output["version"]) as? String) ?? "") + "-3.3.9-m-s-x-i-\(systemVersion.prefix(4))")
                 return nativePayment
 
             } catch let e {
@@ -56,6 +72,24 @@ class CashfreePgApi: NSObject {
         }
         return nil
     }
+
+    private func parseWebPayment(paymentObject: String) throws -> CFSession? {
+        //        print(paymentObject)
+        let data = paymentObject.data(using: .utf8)!
+        do {
+            if let output = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+                let paymentObj = ["session":output]
+                let session = getSession(paymentObject: paymentObj)
+                return session
+            }
+        } catch let e {
+            let error = e as! CashfreeError
+            print(error.localizedDescription)
+            // Handle errors here
+        }
+        return nil
+    }
+
 
     private func getSession(paymentObject: Dictionary<String,Any>) -> CFSession? {
         if let sessionDict = paymentObject["session"] as? Dictionary<String, String> {
@@ -146,12 +180,12 @@ class CashfreePgApi: NSObject {
     func stringify(json: Any) -> String {
         var options: JSONSerialization.WritingOptions = []
         do {
-          let data = try JSONSerialization.data(withJSONObject: json, options: options)
-          if let string = String(data: data, encoding: String.Encoding.utf8) {
-            return string
-          }
+            let data = try JSONSerialization.data(withJSONObject: json, options: options)
+            if let string = String(data: data, encoding: String.Encoding.utf8) {
+                return string
+            }
         } catch {
-          print(error)
+            print(error)
         }
 
         return ""
