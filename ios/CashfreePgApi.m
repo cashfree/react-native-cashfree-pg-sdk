@@ -9,4 +9,8 @@ RCT_EXTERN_METHOD(doWebPayment:(NSString)paymentObject)
 
 RCT_EXTERN_METHOD(setCallback)
 
+RCT_EXTERN_METHOD(setEventSubscriber)
+
+RCT_EXTERN_METHOD(removeEventSubscriber)
+
 @end

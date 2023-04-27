@@ -5,6 +5,8 @@ import CashfreePG
 @objc(CashfreePgApi)
 class CashfreePgApi: NSObject {
 
+    var analyticsCallbackEnabled: Bool = false
+
     override init() {
         super.init()
     }
@@ -44,6 +46,14 @@ class CashfreePgApi: NSObject {
 
     @objc func setCallback() -> Void {
         CFPaymentGatewayService.getInstance().setCallback(self)
+    }
+
+    @objc func setEventSubscriber() -> Void {
+        analyticsCallbackEnabled = true
+    }
+
+    @objc func removeEventSubscriber() -> Void {
+        analyticsCallbackEnabled = false
     }
 
     private func parseDropPayment(paymentObject: String) throws -> CFDropCheckoutPayment? {
@@ -206,5 +216,14 @@ extension CashfreePgApi: CFResponseDelegate {
     func verifyPayment(order_id: String) {
         print(order_id)
         CashfreeEmitter.sharedInstance.dispatch(name: "cfSuccess", body: order_id)
+    }
+
+    func receivedEvent(event_name: String, meta_data: Dictionary<String, Any>) {
+        if (analyticsCallbackEnabled) {
+            print(event_name)
+            let data: [String: Any] = ["eventName": event_name
+                                       , "meta": meta_data]
+            CashfreeEmitter.sharedInstance.dispatch(name: "cfEvent", body: stringify(json: data))
+        }
     }
 }

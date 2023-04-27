@@ -26,10 +26,10 @@ class CashfreeEmitter {
 
     /// All Events which must be support by React Native.
     lazy var allEvents: [String] = {
-        var allEventNames: [String] = ["cfSuccess", "cfFailure"]
+        var allEventNames: [String] = ["cfSuccess", "cfFailure", "cfEvent"]
 
         // Append all events here
-        
+
         return allEventNames
     }()
 
