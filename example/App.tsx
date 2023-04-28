@@ -70,9 +70,9 @@ export default class App extends Component {
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'session_trZstVU8JqVROpBapw0OcKZBSwbTJtlJDwK0DpZSRYpUFS-0ETe3-jNl-pGEQ0vfFQ7AlfDy682Zjs4KrD8DouzJUOcBkjDGWmgAYK5HacYe',
-        'order_18482P0QQQoct0c40yKUTJiDAbAIYxz',
-        CFEnvironment.PRODUCTION,
+        'session_lREq5Rtk2EdrFuh89DXOUUfBEGF6jhfDxPbxcUyGehQ09YFbyp9HA8NYcW4_vG3Fdp3iROy_S8IBv9nTNuLo0fw_-C8Xe5cwhJqZWEcgMae5',
+        'order_779252P2kow4VGhHq79xhOWT35oTmwOe',
+        CFEnvironment.SANDBOX,
       );
       const paymentModes = new CFPaymentComponentBuilder()
         .add(CFPaymentModes.CARD)
@@ -104,9 +104,9 @@ export default class App extends Component {
   async _startWebCheckout() {
     try {
       const session = new CFSession(
-        'session_trZstVU8JqVROpBapw0OcKZBSwbTJtlJDwK0DpZSRYpUFS-0ETe3-jNl-pGEQ0vfFQ7AlfDy682Zjs4KrD8DouzJUOcBkjDGWmgAYK5HacYe',
-        'order_18482P0QQQoct0c40yKUTJiDAbAIYxz',
-        CFEnvironment.PRODUCTION,
+        'session_lREq5Rtk2EdrFuh89DXOUUfBEGF6jhfDxPbxcUyGehQ09YFbyp9HA8NYcW4_vG3Fdp3iROy_S8IBv9nTNuLo0fw_-C8Xe5cwhJqZWEcgMae5',
+        'order_779252P2kow4VGhHq79xhOWT35oTmwOe',
+        CFEnvironment.SANDBOX,
       );
       console.log('Session', JSON.stringify(session));
       CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
