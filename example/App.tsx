@@ -1,9 +1,9 @@
 // @ts-nocheck
 
 import * as React from 'react';
-import { Component } from 'react';
+import {Component} from 'react';
 
-import { Button, Platform, StyleSheet, Text, View } from 'react-native';
+import {Button, Platform, StyleSheet, Text, View} from 'react-native';
 import {
   CFPaymentGatewayService,
   CFErrorResponse,
@@ -48,7 +48,7 @@ export default class App extends Component {
           'Event recieved on screen: ' +
             eventName +
             ' map: ' +
-            JSON.stringify(map)
+            JSON.stringify(map),
         );
       },
     });
@@ -58,7 +58,10 @@ export default class App extends Component {
       },
       onError(error: CFErrorResponse, orderID: string): void {
         console.log(
-          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
+          'exception is : ' +
+            JSON.stringify(error) +
+            '\norderId is :' +
+            orderID,
         );
       },
     });
@@ -67,9 +70,9 @@ export default class App extends Component {
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'session_aylkHRUGzQST0wLy1MonXomw9sAQvascgHrHL3pIF4GMIPrCT1d-Z0i1qcxhUrcXNlsM23yzlhq-hfHQJwWIFFuTk7VKS7pzzt0GSbXr76Mu',
-        'order_70512NasKYpCj67pGgPklgNF8zrPazT',
-        CFEnvironment.SANDBOX
+        'session_trZstVU8JqVROpBapw0OcKZBSwbTJtlJDwK0DpZSRYpUFS-0ETe3-jNl-pGEQ0vfFQ7AlfDy682Zjs4KrD8DouzJUOcBkjDGWmgAYK5HacYe',
+        'order_18482P0QQQoct0c40yKUTJiDAbAIYxz',
+        CFEnvironment.PRODUCTION,
       );
       const paymentModes = new CFPaymentComponentBuilder()
         .add(CFPaymentModes.CARD)
@@ -89,7 +92,7 @@ export default class App extends Component {
       const dropPayment = new CFDropCheckoutPayment(
         session,
         paymentModes,
-        theme
+        theme,
       );
       console.log(JSON.stringify(dropPayment));
       CFPaymentGatewayService.doPayment(dropPayment);
@@ -101,9 +104,9 @@ export default class App extends Component {
   async _startWebCheckout() {
     try {
       const session = new CFSession(
-        'session_aylkHRUGzQST0wLy1MonXomw9sAQvascgHrHL3pIF4GMIPrCT1d-Z0i1qcxhUrcXNlsM23yzlhq-hfHQJwWIFFuTk7VKS7pzzt0GSbXr76Mu',
-        'order_70512NasKYpCj67pGgPklgNF8zrPazT',
-        CFEnvironment.SANDBOX
+        'session_trZstVU8JqVROpBapw0OcKZBSwbTJtlJDwK0DpZSRYpUFS-0ETe3-jNl-pGEQ0vfFQ7AlfDy682Zjs4KrD8DouzJUOcBkjDGWmgAYK5HacYe',
+        'order_18482P0QQQoct0c40yKUTJiDAbAIYxz',
+        CFEnvironment.PRODUCTION,
       );
       console.log('Session', JSON.stringify(session));
       CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
