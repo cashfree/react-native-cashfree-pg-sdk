@@ -61,6 +61,17 @@ try {
 }
 ```
 
-## License
+## Contributing
 
-MIT
+If you want to contribute please read the [Contributing](CONTRIBUTING.md) guidelines.
+
+## License
+<pre>
+The Crowdin React Native SDK is licensed under the MIT License.
+See the LICENSE file distributed with this work for additional
+information regarding copyright ownership.
+
+Except as contained in the LICENSE file, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the sale,
+use or other dealings in this Software without prior written authorization.
+</pre>
