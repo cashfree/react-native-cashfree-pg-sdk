@@ -104,8 +104,8 @@ export default class App extends Component {
   async _startWebCheckout() {
     try {
       const session = new CFSession(
-        'session_lREq5Rtk2EdrFuh89DXOUUfBEGF6jhfDxPbxcUyGehQ09YFbyp9HA8NYcW4_vG3Fdp3iROy_S8IBv9nTNuLo0fw_-C8Xe5cwhJqZWEcgMae5',
-        'order_779252P2kow4VGhHq79xhOWT35oTmwOe',
+        'session_Z470TiPvgXsD9n_JsErn_3j37Ew1Izr5V7vt4hPFc1ettVAsr8NeX_oZt37gWaJaD5E2_fIcDmaN-WJBU3oOXxY8DusR7TcjdjhQx1eXqyJ8',
+        'order_70512TkCtUWmO76fYoAT1hbVfQVrxZR',
         CFEnvironment.SANDBOX,
       );
       console.log('Session', JSON.stringify(session));
