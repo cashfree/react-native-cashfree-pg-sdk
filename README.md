@@ -67,7 +67,7 @@ If you want to contribute please read the [Contributing](CONTRIBUTING.md) guidel
 
 ## License
 <pre>
-The Crowdin React Native SDK is licensed under the MIT License.
+The Cashfree React Native SDK is licensed under the MIT License.
 See the LICENSE file distributed with this work for additional
 information regarding copyright ownership.
 
