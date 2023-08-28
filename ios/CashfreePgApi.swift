@@ -28,6 +28,19 @@ class CashfreePgApi: NSObject {
         }
     }
 
+    @objc func doUPIPayment(_ paymentObject: NSString) -> Void {
+            do {
+                let upiObject = try! parseUPIPayment(paymentObject: "\(paymentObject)")
+                if (upiObject != nil) {
+                    let vc = RCTPresentedViewController()
+                    try CFPaymentGatewayService.getInstance().doPayment(upiObject!, viewController: vc!)
+                }
+            }
+            catch {
+                print (error)
+            }
+        }
+
     @objc func doWebPayment(_ paymentObject: NSString) -> Void {
         do {
             if let sessionObj = try parseWebPayment(paymentObject: "\(paymentObject)") {
@@ -82,6 +95,33 @@ class CashfreePgApi: NSObject {
         }
         return nil
     }
+
+    private func parseUPIPayment(paymentObject: String) throws -> CFDropCheckoutPayment? {
+                //        print(paymentObject)
+                let data = paymentObject.data(using: .utf8)!
+                if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+                    do {
+                        let session = getSession(paymentObject: output)
+                        let paymentComponents = try CFPaymentComponent.CFPaymentComponentBuilder()
+                                            .enableComponents(["upi"])
+                                            .build()
+                        let theme = getTheme(paymentObject: output)
+
+                        let nativePayment = try CFDropCheckoutPayment.CFDropCheckoutPaymentBuilder()
+                            .setSession(session!)
+                            .setTheme(theme!)
+                            .setComponent(paymentComponents)
+                            .build()
+                        return nativePayment
+
+                    } catch let e {
+                        let error = e as! CashfreeError
+                        print(error.localizedDescription)
+                        // Handle errors here
+                    }
+                }
+                return nil
+            }
 
     private func parseWebPayment(paymentObject: String) throws -> CFSession? {
         //        print(paymentObject)
