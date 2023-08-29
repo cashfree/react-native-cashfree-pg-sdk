@@ -44,6 +44,11 @@ class CFPaymentGateway {
     CashfreePgApi.doPayment(JSON.stringify(checkoutPayment));
   }
 
+  doUPIPayment(checkoutPayment: CheckoutPayment) {
+    checkoutPayment.version = version;
+    CashfreePgApi.doUPIPayment(JSON.stringify(checkoutPayment));
+  }
+
   doWebPayment(cfSession: CFSession) {
     CashfreePgApi.doWebPayment(cfSession);
   }

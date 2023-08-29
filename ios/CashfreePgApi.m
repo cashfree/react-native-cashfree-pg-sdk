@@ -5,6 +5,8 @@
 
 RCT_EXTERN_METHOD(doPayment:(NSString)paymentObject)
 
+RCT_EXTERN_METHOD(doUPIPayment:(NSString)paymentObject)
+
 RCT_EXTERN_METHOD(doWebPayment:(NSString)paymentObject)
 
 RCT_EXTERN_METHOD(setCallback)

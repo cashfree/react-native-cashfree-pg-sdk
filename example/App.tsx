@@ -15,6 +15,7 @@ import {
   CFPaymentModes,
   CFSession,
   CFThemeBuilder,
+  CFUPIIntentCheckoutPayment,
 } from 'cashfree-pg-api-contract';
 
 const BASE_RESPONSE_TEXT = 'Response or error will show here.';
@@ -115,6 +116,29 @@ export default class App extends Component {
     }
   }
 
+  async _startUPICheckout() {
+    try {
+      const session = new CFSession(
+        'session_Z470TiPvgXsD9n_JsErn_3j37Ew1Izr5V7vt4hPFc1ettVAsr8NeX_oZt37gWaJaD5E2_fIcDmaN-WJBU3oOXxY8DusR7TcjdjhQx1eXqyJ8',
+        'order_70512TkCtUWmO76fYoAT1hbVfQVrxZR',
+        CFEnvironment.SANDBOX,
+      );
+      const theme = new CFThemeBuilder()
+        .setNavigationBarBackgroundColor('#E64A19')
+        .setNavigationBarTextColor('#FFFFFF')
+        .setButtonBackgroundColor('#FFC107')
+        .setButtonTextColor('#FFFFFF')
+        .setPrimaryTextColor('#212121')
+        .setSecondaryTextColor('#757575')
+        .build();
+      const upiPayment = new CFUPIIntentCheckoutPayment(session, theme);
+      console.log(JSON.stringify(upiPayment));
+      CFPaymentGatewayService.doUPIPayment(upiPayment);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -125,6 +149,12 @@ export default class App extends Component {
           <Button
             onPress={() => this._startWebCheckout()}
             title="Start Web Payment"
+          />
+        </View>
+        <View style={styles.button}>
+          <Button
+            onPress={() => this._startUPICheckout()}
+            title="Start UPI Payment"
           />
         </View>
         <Text style={styles.response_text}> {this.state.responseText} </Text>
