@@ -12,7 +12,7 @@
   "dependencies": {
     "react": "18.2.0",
     "react-native": "0.72.4",
-    "react-native-cashfree-pg-sdk": "^2.1.3"
+    "react-native-cashfree-pg-sdk": "^2.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
