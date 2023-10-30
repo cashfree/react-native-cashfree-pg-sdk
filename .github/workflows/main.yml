@@ -18,7 +18,7 @@ jobs:
       - name: Install npm dependency
         run: yarn install
       - name: Install npm dependency
-        run: 
+        run: |
           cd example
           yarn install
       - name: Setup Android SDK
