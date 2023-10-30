@@ -11,10 +11,10 @@ jobs:
         run: uname -a
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
-      - name: Checkout repo from dev branch
+      - name: Checkout repo from master branch
         uses: actions/checkout@v3
         with:
-          ref: dev
+          ref: master
       - name: Install npm dependency
         run: yarn install
       - name: Setup Android SDK
