@@ -17,6 +17,10 @@ jobs:
           ref: master
       - name: Install npm dependency
         run: yarn install
+      - name: Install npm dependency
+        run: 
+          cd example
+          yarn install
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
       - uses: actions/cache@v3
@@ -31,7 +35,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
         run: |
-          cd example/android
+          cd android
           ./gradlew build
       - name: Build Android JS Bundle
         run: |
