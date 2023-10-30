@@ -31,7 +31,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
         run: |
-          cd android
+          cd example/android
           ./gradlew build
       - name: Build Android JS Bundle
         run: |
