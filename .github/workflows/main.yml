@@ -17,10 +17,6 @@ jobs:
           ref: master
       - name: Install npm dependency
         run: npm install
-      - name: Install npm dependency
-        run: |
-          cd example
-          npm install
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
       - uses: actions/cache@v3
@@ -35,5 +31,11 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
         run: |
-          pwd && cd example/android 
+          pwd
+          cd example
+          pwd
+          npm install
+          cd android 
+          pwd
+          ls
           ./gradlew build
