@@ -13,28 +13,13 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
       - name: Checkout repo from master branch
         uses: actions/checkout@v3
-          
-      - name: Install npm dependency
-        run: npm install
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-      - name: Execute Gradle build
-        run: |
-          pwd
-          cd example
-          pwd
-          npm install
-          cd android 
-          pwd
-          ls
-          ./gradlew clean build
+      - name: Start the Docker container
+        run: docker run -d --name react-native-app-container -v ${{ github.workspace }}:/workspace reactnativecommunity/react-native-android:latest
+      - name: Build the React Native project
+        run: docker exec react-native-app-container /bin/sh -c "cd /workspace && npm install && npx react-native clean && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
+      - name: Build the Android APK
+        run: docker exec react-native-app-container /bin/sh -c "cd /workspace/android && chmod +x gradlew && ./gradlew assembleRelease"
+      - name: Copy the APK to the GitHub workspace
+        run: docker cp react-native-app-container:/workspace/android/app/build/outputs/apk/release/app-release.apk ${{ github.workspace }}
+      - name: Stop and remove the Docker container
+        run: docker stop react-native-app-container && docker rm react-native-app-container
