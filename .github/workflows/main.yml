@@ -38,4 +38,4 @@ jobs:
           cd android 
           pwd
           ls
-          ./gradlew build
+          ./gradlew clean build
