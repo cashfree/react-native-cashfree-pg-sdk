@@ -16,10 +16,8 @@ jobs:
       - name: Start the Docker container
         run: docker run -d --name react-native-app-container -v ${{ github.workspace }}:/workspace reactnativecommunity/react-native-android:latest
       - name: Build the React Native project
-        run: docker exec react-native-app-container /bin/sh -c "cd /workspace && npm install && npx react-native clean && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
+        run: docker exec react-native-app-container /bin/sh -c "cd /workspace/example && npm install && npx react-native clean && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
       - name: Build the Android APK
-        run: docker exec react-native-app-container /bin/sh -c "cd /workspace/android && chmod +x gradlew && ./gradlew assembleRelease"
-      - name: Copy the APK to the GitHub workspace
-        run: docker cp react-native-app-container:/workspace/android/app/build/outputs/apk/release/app-release.apk ${{ github.workspace }}
+        run: docker exec react-native-app-container /bin/sh -c "cd /workspace/example/android && chmod +x gradlew && ./gradlew assembleRelease"
       - name: Stop and remove the Docker container
         run: docker stop react-native-app-container && docker rm react-native-app-container
