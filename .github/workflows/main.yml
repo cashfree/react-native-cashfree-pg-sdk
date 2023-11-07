@@ -1,7 +1,7 @@
 name: Build Android
 on:
   push:
-    branches: [ "master" ]
+    branches: '*'
 jobs:
   android-build:
     name: Android Build
@@ -35,7 +35,8 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
         run: |
-          cd example/android && ./gradlew build
+          pwd && cd example/android 
+          ./gradlew build
       - name: Build Android JS Bundle
         run: |
           yarn run package-android
