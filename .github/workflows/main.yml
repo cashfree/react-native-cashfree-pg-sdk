@@ -17,7 +17,7 @@ jobs:
         run: |
           docker run -d --name react-native-app-container -v ${{ github.workspace }}:/workspace reactnativecommunity/react-native-android:latest tail -f /dev/null
       - name: Build the React Native library
-        run: docker exec react-native-app-container /bin/sh -c "cd /workspace && ls && npx react-native-builder-bob@latest init && npm run prepare && npm pack && mkdir /workspace/example/android/app/src/main/assets && cd /workspace/example && ls && npm install && npx react-native clean && npm install /workspace/react-native-cashfree-pg-sdk-2.1.4.tgz"
+        run: docker exec react-native-app-container /bin/sh -c "cd /workspace && ls && yarn add --dev react-native-builder-bob && npm run prepare && npm pack && mkdir /workspace/example/android/app/src/main/assets && cd /workspace/example && ls && npm install && npx react-native clean && npm install /workspace/react-native-cashfree-pg-sdk-2.1.4.tgz"
       - name: Build the React Native example
         run: docker exec react-native-app-container /bin/sh -c "ls && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output /workspace/example/android/app/src/main/assets/index.android.bundle --assets-dest /workspace/example/android/app/src/main/res"
       - name: Build the Android APK
