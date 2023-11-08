@@ -74,11 +74,11 @@ jobs:
       - name: Build IOS App
         uses: yukiarrr/ios-build-action@v1.4.0
         with:
-          project-path: ./CashfreePgApiExample.xcodeproj
+          project-path: example/ios/CashfreePgApiExample.xcodeproj
           p12-base64: ${{ secrets.IOS_P12_BASE64 }}
           mobileprovision-base64: ${{ secrets.IOS_MOBILE_PROVISION_BASE64 }}
           code-signing-identity: 'iPhone Distribution'
           team-id: ${{ secrets.IOS_TEAM_ID }}
           certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          workspace-path: ./CashfreePgApiExample.xcworkspace
+          workspace-path: example/ios/CashfreePgApiExample.xcworkspace
           scheme: CashfreePgApiExample
