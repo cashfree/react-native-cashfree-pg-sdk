@@ -1,21 +1,23 @@
 // @ts-nocheck
 
 import * as React from 'react';
-import {Component} from 'react';
+import { Component } from 'react';
+import CheckBox from '@react-native-community/checkbox';
 
-import {Button, Platform, StyleSheet, Text, View} from 'react-native';
+import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView } from 'react-native';
 import {
   CFPaymentGatewayService,
   CFErrorResponse,
 } from 'react-native-cashfree-pg-sdk';
 import {
+  Card, CFCardPayment,
   CFDropCheckoutPayment,
   CFEnvironment,
   CFPaymentComponentBuilder,
   CFPaymentModes,
   CFSession,
   CFThemeBuilder,
-  CFUPIIntentCheckoutPayment,
+  CFUPIIntentCheckoutPayment, SavedCard,
 } from 'cashfree-pg-api-contract';
 
 const BASE_RESPONSE_TEXT = 'Response or error will show here.';
@@ -26,8 +28,49 @@ export default class App extends Component {
 
     this.state = {
       responseText: BASE_RESPONSE_TEXT,
+      cardNumber: '',
+      cardHolderName: '',
+      cardExpiryMM: '',
+      cardExpiryYY: '',
+      cardCVV: '',
+      orderId: '',
+      sessionId: '',
+      instrumentId: '',
+      toggleCheckBox: false,
     };
   }
+
+  handleCardNumber = (number: string) => {
+    this.setState({ cardNumber: number });
+  };
+  handleCardHolderName = (name: string) => {
+    this.setState({ cardHolderName: name });
+  };
+  handleCardExpiryMM = (month: string) => {
+    this.setState({ cardExpiryMM: month });
+  };
+  handleCardExpiryYY = (year: string) => {
+    this.setState({ cardExpiryYY: year });
+  };
+  handleCardCVV = (cvv: string) => {
+    this.setState({ cardCVV: cvv });
+  };
+
+  handleOrderId = (orderId: string) => {
+    this.setState({ orderId: orderId });
+  };
+  handleSessionId = (sessionId: string) => {
+    this.setState({ sessionId: sessionId });
+  };
+
+  handleInstrumentId = (instrumentId: string) => {
+    this.setState({ instrumentId: instrumentId });
+  };
+
+  handleSaveCardToggle = (toggleBox: boolean) => {
+    this.setState({ toggleCheckBox: toggleBox });
+  };
+
 
   componentWillUnmount() {
     console.log('UNMOUNTED');
@@ -47,9 +90,9 @@ export default class App extends Component {
       onReceivedEvent(eventName: string, map: Map<string, string>): void {
         console.log(
           'Event recieved on screen: ' +
-            eventName +
-            ' map: ' +
-            JSON.stringify(map),
+          eventName +
+          ' map: ' +
+          JSON.stringify(map),
         );
       },
     });
@@ -60,9 +103,9 @@ export default class App extends Component {
       onError(error: CFErrorResponse, orderID: string): void {
         console.log(
           'exception is : ' +
-            JSON.stringify(error) +
-            '\norderId is :' +
-            orderID,
+          JSON.stringify(error) +
+          '\norderId is :' +
+          orderID,
         );
       },
     });
@@ -71,8 +114,8 @@ export default class App extends Component {
   async _startCheckout() {
     try {
       const session = new CFSession(
-        'session_lREq5Rtk2EdrFuh89DXOUUfBEGF6jhfDxPbxcUyGehQ09YFbyp9HA8NYcW4_vG3Fdp3iROy_S8IBv9nTNuLo0fw_-C8Xe5cwhJqZWEcgMae5',
-        'order_779252P2kow4VGhHq79xhOWT35oTmwOe',
+        this.state.sessionId,
+        this.state.orderId,
         CFEnvironment.SANDBOX,
       );
       const paymentModes = new CFPaymentComponentBuilder()
@@ -105,8 +148,8 @@ export default class App extends Component {
   async _startWebCheckout() {
     try {
       const session = new CFSession(
-        'session_mXUP8I08Ae6sq0e6L6Q2yVeOzkr3pkZ4UvV0Bk0petRYh-AL8qj1oq00sjLigN3oCt2yauHscqTdEyDUnu3c6-iSxeFbZF6CnTHsH2yN6dGA',
-        'order_18312Vho1mabsWRY0bCOgyTGZUuJHLd',
+        this.state.sessionId,
+        this.state.orderId,
         CFEnvironment.SANDBOX,
       );
       console.log('Session', JSON.stringify(session));
@@ -116,11 +159,55 @@ export default class App extends Component {
     }
   }
 
+  async _startCardPayment() {
+    try {
+      const session = new CFSession(
+        this.state.sessionId,
+        this.state.orderId,
+        CFEnvironment.SANDBOX,
+      );
+      console.log('Session', JSON.stringify(session));
+
+      const card = new Card(this.state.cardNumber,
+        this.state.cardHolderName,
+        this.state.cardExpiryMM,
+        this.state.cardExpiryYY,
+        this.state.cardCVV,
+        this.state.toggleCheckBox
+        );
+
+      console.log('Card', JSON.stringify(card));
+      const cardPayment = new CFCardPayment(session, card);
+      CFPaymentGatewayService.doCardPayment(cardPayment);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
+  async _startSavedCardPayment() {
+    try {
+      const session = new CFSession(
+        this.state.sessionId,
+        this.state.orderId,
+        CFEnvironment.SANDBOX,
+      );
+      console.log('Session', JSON.stringify(session));
+
+      const card = new SavedCard(
+        this.state.instrumentId,
+        this.state.cardCVV);
+      const cardPayment = new CFCardPayment(session, card);
+      CFPaymentGatewayService.doCardPayment(cardPayment);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
   async _startUPICheckout() {
     try {
       const session = new CFSession(
-        'session_Z470TiPvgXsD9n_JsErn_3j37Ew1Izr5V7vt4hPFc1ettVAsr8NeX_oZt37gWaJaD5E2_fIcDmaN-WJBU3oOXxY8DusR7TcjdjhQx1eXqyJ8',
-        'order_70512TkCtUWmO76fYoAT1hbVfQVrxZR',
+        this.state.sessionId,
+        this.state.orderId,
         CFEnvironment.SANDBOX,
       );
       const theme = new CFThemeBuilder()
@@ -141,24 +228,130 @@ export default class App extends Component {
 
   render() {
     return (
-      <View style={styles.container}>
-        <View style={styles.button}>
-          <Button onPress={() => this._startCheckout()} title="Start Payment" />
+      <ScrollView>
+        <View style={styles.container}>
+          <View style={{
+            borderWidth: 1,
+            alignSelf: 'stretch',
+            textAlign: 'center',
+          }}>
+            <TextInput
+              style={styles.input}
+              placeholder='Session Id'
+              keyboardType='default'
+              onChangeText={this.handleSessionId}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder='Order Id'
+              keyboardType='default'
+              onChangeText={this.handleOrderId}
+            />
+          </View>
+          <View style={styles.button}>
+            <Button onPress={() => this._startCheckout()} title='Start Payment' />
+          </View>
+          <View style={styles.button}>
+            <Button
+              onPress={() => this._startWebCheckout()}
+              title='Start Web Payment'
+            />
+          </View>
+          <View style={styles.button}>
+            <Button
+              onPress={() => this._startUPICheckout()}
+              title='Start UPI Payment'
+            />
+          </View>
+          <Text style={styles.response_text}> {this.state.responseText} </Text>
+          <View style={{
+            borderWidth: 1,
+            alignSelf: 'stretch',
+            textAlign: 'center',
+          }}>
+            <View style={{ flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' }}>
+              <TextInput
+                style={styles.input}
+                placeholder='Card Number'
+                keyboardType='numeric'
+                maxLength={16}
+                onChangeText={this.handleCardNumber}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder='Holder Name'
+                keyboardType='default'
+                onChangeText={this.handleCardHolderName}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', alignSelf: 'stretch' }}>
+              <TextInput
+                style={styles.input}
+                placeholder='Expiry Month'
+                keyboardType='numeric'
+                maxLength={2}
+                onChangeText={this.handleCardExpiryMM}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder='Expiry Year'
+                keyboardType='numeric'
+                maxLength={2}
+                onChangeText={this.handleCardExpiryYY}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder='CVV'
+                keyboardType='numeric'
+                maxLength={3}
+                secureTextEntry={true}
+                onChangeText={this.handleCardCVV}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', alignSelf: 'stretch', alignItems: 'center', textAlign: 'center' }}>
+              <CheckBox
+                value={this.state.toggleCheckBox}
+                onValueChange={this.handleSaveCardToggle}
+              />
+              <Text>Saved Card for future payment</Text>
+            </View>
+            <View style={styles.button}>
+              <Button
+                onPress={() => this._startCardPayment()}
+                title='Card Payment'
+              />
+            </View>
+          </View>
+
+          <View style={{
+            borderWidth: 1,
+            alignSelf: 'stretch',
+          }}>
+            <View style={{ flexDirection: 'column', textAlign: 'center', alignSelf: 'stretch' }}>
+              <TextInput
+                style={styles.input}
+                placeholder='Instrument Id'
+                keyboardType='default'
+                onChangeText={this.handleInstrumentId}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder='CVV'
+                keyboardType='numeric'
+                maxLength={3}
+                secureTextEntry={true}
+                onChangeText={this.handleCardCVV}
+              />
+            </View>
+            <View style={styles.button}>
+              <Button
+                onPress={() => this._startSavedCardPayment()}
+                title='Saved Card Payment'
+              />
+            </View>
+          </View>
         </View>
-        <View style={styles.button}>
-          <Button
-            onPress={() => this._startWebCheckout()}
-            title="Start Web Payment"
-          />
-        </View>
-        <View style={styles.button}>
-          <Button
-            onPress={() => this._startUPICheckout()}
-            title="Start UPI Payment"
-          />
-        </View>
-        <Text style={styles.response_text}> {this.state.responseText} </Text>
-      </View>
+      </ScrollView>
     );
   }
 }
@@ -179,5 +372,11 @@ const styles = StyleSheet.create({
   response_text: {
     margin: 16,
     fontSize: 14,
+  },
+  input: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
 });
