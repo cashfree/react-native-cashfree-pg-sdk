@@ -1,4 +1,4 @@
-package com.cashfreepgapiexample;
+package com.cashfree.pg.demoapp;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

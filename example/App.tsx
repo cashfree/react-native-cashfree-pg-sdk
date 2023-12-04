@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 
-import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView } from 'react-native';
+import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView, ToastAndroid } from 'react-native';
 import {
   CFPaymentGatewayService,
   CFErrorResponse,
@@ -20,7 +20,7 @@ import {
   CFUPIIntentCheckoutPayment, SavedCard,
 } from 'cashfree-pg-api-contract';
 
-const BASE_RESPONSE_TEXT = 'Response or error will show here.';
+const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 
 export default class App extends Component {
   constructor() {
@@ -37,9 +37,14 @@ export default class App extends Component {
       sessionId: '',
       instrumentId: '',
       toggleCheckBox: false,
+      cfEnv: '',
     };
   }
 
+  updateStatus = (message: string) => {
+    this.setState({ responseText: message });
+    ToastAndroid.show(message, ToastAndroid.SHORT)
+  };
   handleCardNumber = (number: string) => {
     this.setState({ cardNumber: number });
   };
@@ -71,6 +76,10 @@ export default class App extends Component {
     this.setState({ toggleCheckBox: toggleBox });
   };
 
+  handleEnv = (env: string) => {
+    this.setState({ cfEnv: env });
+  };
+
 
   componentWillUnmount() {
     console.log('UNMOUNTED');
@@ -78,13 +87,8 @@ export default class App extends Component {
     CFPaymentGatewayService.removeEventSubscriber();
   }
 
-  changeResponseText = (message: string) => {
-    this.setState({
-      responseText: message,
-    });
-  };
-
   componentDidMount() {
+    const context = this;
     console.log('MOUNTED');
     CFPaymentGatewayService.setEventSubscriber({
       onReceivedEvent(eventName: string, map: Map<string, string>): void {
@@ -99,6 +103,7 @@ export default class App extends Component {
     CFPaymentGatewayService.setCallback({
       onVerify(orderID: string): void {
         console.log('orderId is :' + orderID);
+        context.updateStatus(orderID);
       },
       onError(error: CFErrorResponse, orderID: string): void {
         console.log(
@@ -107,6 +112,7 @@ export default class App extends Component {
           '\norderId is :' +
           orderID,
         );
+        context.updateStatus(JSON.stringify(error));
       },
     });
   }
@@ -116,7 +122,7 @@ export default class App extends Component {
       const session = new CFSession(
         this.state.sessionId,
         this.state.orderId,
-        CFEnvironment.SANDBOX,
+        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       );
       const paymentModes = new CFPaymentComponentBuilder()
         .add(CFPaymentModes.CARD)
@@ -150,7 +156,7 @@ export default class App extends Component {
       const session = new CFSession(
         this.state.sessionId,
         this.state.orderId,
-        CFEnvironment.SANDBOX,
+        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       );
       console.log('Session', JSON.stringify(session));
       CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
@@ -164,7 +170,7 @@ export default class App extends Component {
       const session = new CFSession(
         this.state.sessionId,
         this.state.orderId,
-        CFEnvironment.SANDBOX,
+        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       );
       console.log('Session', JSON.stringify(session));
 
@@ -173,8 +179,8 @@ export default class App extends Component {
         this.state.cardExpiryMM,
         this.state.cardExpiryYY,
         this.state.cardCVV,
-        this.state.toggleCheckBox
-        );
+        this.state.toggleCheckBox,
+      );
 
       console.log('Card', JSON.stringify(card));
       const cardPayment = new CFCardPayment(session, card);
@@ -189,7 +195,7 @@ export default class App extends Component {
       const session = new CFSession(
         this.state.sessionId,
         this.state.orderId,
-        CFEnvironment.SANDBOX,
+        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       );
       console.log('Session', JSON.stringify(session));
 
@@ -208,7 +214,7 @@ export default class App extends Component {
       const session = new CFSession(
         this.state.sessionId,
         this.state.orderId,
-        CFEnvironment.SANDBOX,
+        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       );
       const theme = new CFThemeBuilder()
         .setNavigationBarBackgroundColor('#E64A19')
@@ -247,6 +253,12 @@ export default class App extends Component {
               keyboardType='default'
               onChangeText={this.handleOrderId}
             />
+            <TextInput
+              style={styles.input}
+              placeholder='SANDBOX'
+              keyboardType='default'
+              onChangeText={this.handleEnv}
+            />
           </View>
           <View style={styles.button}>
             <Button onPress={() => this._startCheckout()} title='Start Payment' />
@@ -263,11 +275,19 @@ export default class App extends Component {
               title='Start UPI Payment'
             />
           </View>
-          <Text style={styles.response_text}> {this.state.responseText} </Text>
           <View style={{
             borderWidth: 1,
             alignSelf: 'stretch',
             textAlign: 'center',
+            marginBottom:10
+          }}>
+            <Text style={styles.response_text}> {this.state.responseText} </Text>
+          </View>
+          <View style={{
+            borderWidth: 1,
+            alignSelf: 'stretch',
+            textAlign: 'center',
+            marginBottom:10
           }}>
             <View style={{ flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' }}>
               <TextInput
@@ -372,6 +392,7 @@ const styles = StyleSheet.create({
   response_text: {
     margin: 16,
     fontSize: 14,
+    color:'black'
   },
   input: {
     height: 40,
