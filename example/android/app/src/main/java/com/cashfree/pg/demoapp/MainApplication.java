@@ -1,6 +1,8 @@
-package com.cashfreepgapiexample;
+package com.cashfree.pg.demoapp;
 
 import android.app.Application;
+
+import com.cashfreepgapiexample.ReactNativeFlipper;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactNativeHost;

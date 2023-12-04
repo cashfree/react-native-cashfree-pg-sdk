@@ -114,7 +114,6 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
 
     @ReactMethod
     public void doCardPayment(String data) {
-      Log.d("CashfreePgApiModule Card", data);
       CFSession cfSession = null;
       CFCard card = null;
       boolean saveCard;
@@ -129,14 +128,11 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
           .setPaymentSessionID(session.getString("payment_session_id"))
           .build();
         if (cardObject.has("instrumentId")) {
-          Log.d("CashfreePgApiModule", "Saved Card");
           card = new CFCard.CFCardBuilder()
             .setInstrumentId(cardObject.getString("instrumentId"))
             .setCVV(cardObject.getString("cardCvv"))
             .build();
         } else {
-          Log.d("CashfreePgApiModule", "Normal Card");
-          Log.d("CashfreePgApiModule", "Save :: " + saveCard);
           card = new CFCard.CFCardBuilder()
             .setCardNumber(cardObject.getString("cardNumber"))
             .setCardHolderName(cardObject.getString("cardHolderName"))

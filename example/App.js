@@ -2,10 +2,10 @@
 import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
-import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView } from 'react-native';
+import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView, ToastAndroid } from 'react-native';
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
 import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPIIntentCheckoutPayment, SavedCard, } from 'cashfree-pg-api-contract';
-const BASE_RESPONSE_TEXT = 'Response or error will show here.';
+const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
     constructor() {
         super();
@@ -20,8 +20,13 @@ export default class App extends Component {
             sessionId: '',
             instrumentId: '',
             toggleCheckBox: false,
+            cfEnv: '',
         };
     }
+    updateStatus = (message) => {
+        this.setState({ responseText: message });
+        ToastAndroid.show(message, ToastAndroid.SHORT);
+    };
     handleCardNumber = (number) => {
         this.setState({ cardNumber: number });
     };
@@ -49,17 +54,16 @@ export default class App extends Component {
     handleSaveCardToggle = (toggleBox) => {
         this.setState({ toggleCheckBox: toggleBox });
     };
+    handleEnv = (env) => {
+        this.setState({ cfEnv: env });
+    };
     componentWillUnmount() {
         console.log('UNMOUNTED');
         CFPaymentGatewayService.removeCallback();
         CFPaymentGatewayService.removeEventSubscriber();
     }
-    changeResponseText = (message) => {
-        this.setState({
-            responseText: message,
-        });
-    };
     componentDidMount() {
+        const context = this;
         console.log('MOUNTED');
         CFPaymentGatewayService.setEventSubscriber({
             onReceivedEvent(eventName, map) {
@@ -72,18 +76,20 @@ export default class App extends Component {
         CFPaymentGatewayService.setCallback({
             onVerify(orderID) {
                 console.log('orderId is :' + orderID);
+                context.updateStatus(orderID);
             },
             onError(error, orderID) {
                 console.log('exception is : ' +
                     JSON.stringify(error) +
                     '\norderId is :' +
                     orderID);
+                context.updateStatus(JSON.stringify(error));
             },
         });
     }
     async _startCheckout() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, CFEnvironment.SANDBOX);
+            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
             const paymentModes = new CFPaymentComponentBuilder()
                 .add(CFPaymentModes.CARD)
                 .add(CFPaymentModes.UPI)
@@ -109,7 +115,7 @@ export default class App extends Component {
     }
     async _startWebCheckout() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, CFEnvironment.SANDBOX);
+            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
             console.log('Session', JSON.stringify(session));
             CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
         }
@@ -119,7 +125,7 @@ export default class App extends Component {
     }
     async _startCardPayment() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, CFEnvironment.SANDBOX);
+            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
             console.log('Session', JSON.stringify(session));
             const card = new Card(this.state.cardNumber, this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV, this.state.toggleCheckBox);
             console.log('Card', JSON.stringify(card));
@@ -132,7 +138,7 @@ export default class App extends Component {
     }
     async _startSavedCardPayment() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, CFEnvironment.SANDBOX);
+            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
             console.log('Session', JSON.stringify(session));
             const card = new SavedCard(this.state.instrumentId, this.state.cardCVV);
             const cardPayment = new CFCardPayment(session, card);
@@ -144,7 +150,7 @@ export default class App extends Component {
     }
     async _startUPICheckout() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, CFEnvironment.SANDBOX);
+            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
             const theme = new CFThemeBuilder()
                 .setNavigationBarBackgroundColor('#E64A19')
                 .setNavigationBarTextColor('#FFFFFF')
@@ -170,21 +176,29 @@ export default class App extends Component {
                         textAlign: 'center',
                     } },
                     React.createElement(TextInput, { style: styles.input, placeholder: 'Session Id', keyboardType: 'default', onChangeText: this.handleSessionId }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: 'Order Id', keyboardType: 'default', onChangeText: this.handleOrderId })),
+                    React.createElement(TextInput, { style: styles.input, placeholder: 'Order Id', keyboardType: 'default', onChangeText: this.handleOrderId }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: 'SANDBOX', keyboardType: 'default', onChangeText: this.handleEnv })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startCheckout(), title: 'Start Payment' })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startWebCheckout(), title: 'Start Web Payment' })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startUPICheckout(), title: 'Start UPI Payment' })),
-                React.createElement(Text, { style: styles.response_text },
-                    " ",
-                    this.state.responseText,
-                    " "),
                 React.createElement(View, { style: {
                         borderWidth: 1,
                         alignSelf: 'stretch',
                         textAlign: 'center',
+                        marginBottom: 10
+                    } },
+                    React.createElement(Text, { style: styles.response_text },
+                        " ",
+                        this.state.responseText,
+                        " ")),
+                React.createElement(View, { style: {
+                        borderWidth: 1,
+                        alignSelf: 'stretch',
+                        textAlign: 'center',
+                        marginBottom: 10
                     } },
                     React.createElement(View, { style: { flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' } },
                         React.createElement(TextInput, { style: styles.input, placeholder: 'Card Number', keyboardType: 'numeric', maxLength: 16, onChangeText: this.handleCardNumber }),
@@ -225,6 +239,7 @@ const styles = StyleSheet.create({
     response_text: {
         margin: 16,
         fontSize: 14,
+        color: 'black'
     },
     input: {
         height: 40,

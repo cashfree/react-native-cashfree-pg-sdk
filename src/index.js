@@ -35,7 +35,6 @@ class CFPaymentGateway {
     }
     doCardPayment(cardPayment) {
         cardPayment.version = version;
-        console.log("SDK", JSON.stringify(cardPayment));
         CashfreePgApi.doCardPayment(JSON.stringify(cardPayment));
     }
     setEventSubscriber(cfEventCallback) {
