@@ -93,9 +93,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.cashfreepgapiexample"
+    namespace "com.cashfree.pg.demoapp"
     defaultConfig {
-        applicationId "com.cashfreepgapiexample"
+        //applicationId "com.cashfree.pg.demoapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
