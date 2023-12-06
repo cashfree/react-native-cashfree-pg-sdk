@@ -12,6 +12,8 @@ import com.cashfree.pg.cf_analytics.CFEventsSubscriber;
 import com.cashfree.pg.core.api.CFSession;
 import com.cashfree.pg.core.api.base.CFPayment;
 import com.cashfree.pg.core.api.callback.CFCheckoutResponseCallback;
+import com.cashfree.pg.core.api.card.CFCard;
+import com.cashfree.pg.core.api.card.CFCardPayment;
 import com.cashfree.pg.core.api.exception.CFException;
 import com.cashfree.pg.core.api.utils.CFErrorResponse;
 import com.cashfree.pg.core.api.webcheckout.CFWebCheckoutPayment;
@@ -108,6 +110,57 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @ReactMethod
+    public void doCardPayment(String data) {
+      CFSession cfSession = null;
+      CFCard card = null;
+      boolean saveCard;
+      try {
+        JSONObject jsonObject = new JSONObject(data);
+        JSONObject session = jsonObject.getJSONObject("session");
+        JSONObject cardObject = jsonObject.getJSONObject("card");
+        saveCard = cardObject.optBoolean("saveCard", false);
+        cfSession = new CFSession.CFSessionBuilder()
+          .setEnvironment(CFSession.Environment.valueOf(session.getString("environment")))
+          .setOrderId(session.getString("orderID"))
+          .setPaymentSessionID(session.getString("payment_session_id"))
+          .build();
+        if (cardObject.has("instrumentId")) {
+          card = new CFCard.CFCardBuilder()
+            .setInstrumentId(cardObject.getString("instrumentId"))
+            .setCVV(cardObject.getString("cardCvv"))
+            .build();
+        } else {
+          card = new CFCard.CFCardBuilder()
+            .setCardNumber(cardObject.getString("cardNumber"))
+            .setCardHolderName(cardObject.getString("cardHolderName"))
+            .setCardExpiryMonth(cardObject.getString("cardExpiryMM"))
+            .setCardExpiryYear(cardObject.getString("cardExpiryYY"))
+            .setCVV(cardObject.getString("cardCvv"))
+            .build();
+        }
+      } catch (Exception exception) {
+        throw new IllegalStateException(exception.getMessage());
+      }
+      try {
+        Activity activity = getCurrentActivity();
+        CFCardPayment cardPayment = new CFCardPayment.CFCardPaymentBuilder()
+          .setSession(cfSession)
+          .setCard(card)
+          .setSaveCardDetail(saveCard)
+          .build();
+        cardPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
+        cardPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
+        if (activity != null) {
+          CFPaymentGatewayService.getInstance().doPayment(activity, cardPayment);
+        } else {
+          throw new IllegalStateException("activity is null");
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     @ReactMethod

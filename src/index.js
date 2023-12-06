@@ -33,6 +33,10 @@ class CFPaymentGateway {
     doWebPayment(cfSession) {
         CashfreePgApi.doWebPayment(cfSession);
     }
+    doCardPayment(cardPayment) {
+        cardPayment.version = version;
+        CashfreePgApi.doCardPayment(JSON.stringify(cardPayment));
+    }
     setEventSubscriber(cfEventCallback) {
         let eventFunction = (event) => {
             console.log(JSON.stringify(event));
