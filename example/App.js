@@ -2,9 +2,9 @@
 import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
-import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView, ToastAndroid } from 'react-native';
-import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
-import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPIIntentCheckoutPayment, SavedCard, } from 'cashfree-pg-api-contract';
+import { Button, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native';
+import { CFPaymentGatewayService } from 'react-native-cashfree-pg-sdk';
+import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, } from 'cashfree-pg-api-contract';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
     constructor() {
@@ -21,6 +21,7 @@ export default class App extends Component {
             instrumentId: '',
             toggleCheckBox: false,
             cfEnv: '',
+            upiId: '',
         };
     }
     updateStatus = (message) => {
@@ -57,6 +58,9 @@ export default class App extends Component {
     handleEnv = (env) => {
         this.setState({ cfEnv: env });
     };
+    handleUpi = (id) => {
+        this.setState({ upiId: id });
+    };
     componentWillUnmount() {
         console.log('UNMOUNTED');
         CFPaymentGatewayService.removeCallback();
@@ -89,7 +93,7 @@ export default class App extends Component {
     }
     async _startCheckout() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+            const session = this.getSession();
             const paymentModes = new CFPaymentComponentBuilder()
                 .add(CFPaymentModes.CARD)
                 .add(CFPaymentModes.UPI)
@@ -115,7 +119,7 @@ export default class App extends Component {
     }
     async _startWebCheckout() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+            const session = this.getSession();
             console.log('Session', JSON.stringify(session));
             CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
         }
@@ -125,12 +129,12 @@ export default class App extends Component {
     }
     async _startCardPayment() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+            const session = this.getSession();
             console.log('Session', JSON.stringify(session));
             const card = new Card(this.state.cardNumber, this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV, this.state.toggleCheckBox);
             console.log('Card', JSON.stringify(card));
             const cardPayment = new CFCardPayment(session, card);
-            CFPaymentGatewayService.doCardPayment(cardPayment);
+            CFPaymentGatewayService.makePayment(cardPayment);
         }
         catch (e) {
             console.log(e.message);
@@ -138,11 +142,11 @@ export default class App extends Component {
     }
     async _startSavedCardPayment() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+            const session = this.getSession();
             console.log('Session', JSON.stringify(session));
             const card = new SavedCard(this.state.instrumentId, this.state.cardCVV);
             const cardPayment = new CFCardPayment(session, card);
-            CFPaymentGatewayService.doCardPayment(cardPayment);
+            CFPaymentGatewayService.makePayment(cardPayment);
         }
         catch (e) {
             console.log(e.message);
@@ -150,7 +154,7 @@ export default class App extends Component {
     }
     async _startUPICheckout() {
         try {
-            const session = new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+            const session = this.getSession();
             const theme = new CFThemeBuilder()
                 .setNavigationBarBackgroundColor('#E64A19')
                 .setNavigationBarTextColor('#FFFFFF')
@@ -167,6 +171,39 @@ export default class App extends Component {
             console.log(e.message);
         }
     }
+    async _makeUpiIntentPayment() {
+        const apps = await CFPaymentGatewayService.getInstalledUpiApps();
+        console.log('Callback for Fetch UPI Apps :::==>' + apps);
+        let id = '';
+        JSON.parse(apps).forEach(item => {
+            id = item.appPackage;
+        });
+        try {
+            const session = this.getSession();
+            console.log('Session', JSON.stringify(session));
+            const upi = new CFUPI(UPIMode.INTENT, this.state.upiId);
+            const cfUpiPayment = new CFUPIPayment(session, upi);
+            CFPaymentGatewayService.makePayment(cfUpiPayment);
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
+    async _makeUpiCollectPayment() {
+        try {
+            const session = this.getSession();
+            console.log('Session', JSON.stringify(session));
+            const upi = new CFUPI(UPIMode.COLLECT, this.state.upiId);
+            const cfUpiPayment = new CFUPIPayment(session, upi);
+            CFPaymentGatewayService.makePayment(cfUpiPayment);
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
+    getSession() {
+        return new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+    }
     render() {
         return (React.createElement(ScrollView, null,
             React.createElement(View, { style: styles.container },
@@ -177,18 +214,23 @@ export default class App extends Component {
                     } },
                     React.createElement(TextInput, { style: styles.input, placeholder: 'Session Id', keyboardType: 'default', onChangeText: this.handleSessionId }),
                     React.createElement(TextInput, { style: styles.input, placeholder: 'Order Id', keyboardType: 'default', onChangeText: this.handleOrderId }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: 'SANDBOX', keyboardType: 'default', onChangeText: this.handleEnv })),
+                    React.createElement(TextInput, { style: styles.input, placeholder: 'SANDBOX', keyboardType: 'default', onChangeText: this.handleEnv }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: 'Enter VPA for Collect or PSP app package', keyboardType: 'default', onChangeText: this.handleUpi })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startCheckout(), title: 'Start Payment' })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startWebCheckout(), title: 'Start Web Payment' })),
                 React.createElement(View, { style: styles.button },
-                    React.createElement(Button, { onPress: () => this._startUPICheckout(), title: 'Start UPI Payment' })),
+                    React.createElement(Button, { onPress: () => this._startUPICheckout(), title: 'Start UPI Intent Checkout Payment' })),
+                React.createElement(View, { style: styles.button },
+                    React.createElement(Button, { onPress: () => this._makeUpiCollectPayment(), title: 'Make UPI Collect Payment' })),
+                React.createElement(View, { style: styles.button },
+                    React.createElement(Button, { onPress: () => this._makeUpiIntentPayment(), title: 'Make UPI Intent Payment' })),
                 React.createElement(View, { style: {
                         borderWidth: 1,
                         alignSelf: 'stretch',
                         textAlign: 'center',
-                        marginBottom: 10
+                        marginBottom: 10,
                     } },
                     React.createElement(Text, { style: styles.response_text },
                         " ",
@@ -198,7 +240,7 @@ export default class App extends Component {
                         borderWidth: 1,
                         alignSelf: 'stretch',
                         textAlign: 'center',
-                        marginBottom: 10
+                        marginBottom: 10,
                     } },
                     React.createElement(View, { style: { flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' } },
                         React.createElement(TextInput, { style: styles.input, placeholder: 'Card Number', keyboardType: 'numeric', maxLength: 16, onChangeText: this.handleCardNumber }),
@@ -239,7 +281,7 @@ const styles = StyleSheet.create({
     response_text: {
         margin: 16,
         fontSize: 14,
-        color: 'black'
+        color: 'black',
     },
     input: {
         height: 40,
