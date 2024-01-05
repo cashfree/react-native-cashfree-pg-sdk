@@ -4,20 +4,21 @@ import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 
-import { Button, Platform, StyleSheet, Text, View, TextInput, ScrollView, ToastAndroid } from 'react-native';
+import { Button, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native';
+import { CFErrorResponse, CFPaymentGatewayService } from 'react-native-cashfree-pg-sdk';
 import {
-  CFPaymentGatewayService,
-  CFErrorResponse,
-} from 'react-native-cashfree-pg-sdk';
-import {
-  Card, CFCardPayment,
+  Card,
+  CFCardPayment,
   CFDropCheckoutPayment,
   CFEnvironment,
   CFPaymentComponentBuilder,
   CFPaymentModes,
   CFSession,
   CFThemeBuilder,
-  CFUPIIntentCheckoutPayment, SavedCard,
+  CFUPI,
+  CFUPIIntentCheckoutPayment, CFUPIPayment,
+  SavedCard,
+  UPIMode,
 } from 'cashfree-pg-api-contract';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
@@ -38,12 +39,13 @@ export default class App extends Component {
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: '',
+      upiId: '',
     };
   }
 
   updateStatus = (message: string) => {
     this.setState({ responseText: message });
-    ToastAndroid.show(message, ToastAndroid.SHORT)
+    ToastAndroid.show(message, ToastAndroid.SHORT);
   };
   handleCardNumber = (number: string) => {
     this.setState({ cardNumber: number });
@@ -78,6 +80,10 @@ export default class App extends Component {
 
   handleEnv = (env: string) => {
     this.setState({ cfEnv: env });
+  };
+
+  handleUpi = (id: string) => {
+    this.setState({ upiId: id });
   };
 
 
@@ -119,11 +125,7 @@ export default class App extends Component {
 
   async _startCheckout() {
     try {
-      const session = new CFSession(
-        this.state.sessionId,
-        this.state.orderId,
-        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      );
+      const session = this.getSession();
       const paymentModes = new CFPaymentComponentBuilder()
         .add(CFPaymentModes.CARD)
         .add(CFPaymentModes.UPI)
@@ -153,11 +155,7 @@ export default class App extends Component {
 
   async _startWebCheckout() {
     try {
-      const session = new CFSession(
-        this.state.sessionId,
-        this.state.orderId,
-        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      );
+      const session = this.getSession();
       console.log('Session', JSON.stringify(session));
       CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
     } catch (e: any) {
@@ -167,13 +165,8 @@ export default class App extends Component {
 
   async _startCardPayment() {
     try {
-      const session = new CFSession(
-        this.state.sessionId,
-        this.state.orderId,
-        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      );
+      const session = this.getSession();
       console.log('Session', JSON.stringify(session));
-
       const card = new Card(this.state.cardNumber,
         this.state.cardHolderName,
         this.state.cardExpiryMM,
@@ -184,7 +177,7 @@ export default class App extends Component {
 
       console.log('Card', JSON.stringify(card));
       const cardPayment = new CFCardPayment(session, card);
-      CFPaymentGatewayService.doCardPayment(cardPayment);
+      CFPaymentGatewayService.makePayment(cardPayment);
     } catch (e: any) {
       console.log(e.message);
     }
@@ -192,18 +185,13 @@ export default class App extends Component {
 
   async _startSavedCardPayment() {
     try {
-      const session = new CFSession(
-        this.state.sessionId,
-        this.state.orderId,
-        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      );
+      const session = this.getSession();
       console.log('Session', JSON.stringify(session));
-
       const card = new SavedCard(
         this.state.instrumentId,
         this.state.cardCVV);
       const cardPayment = new CFCardPayment(session, card);
-      CFPaymentGatewayService.doCardPayment(cardPayment);
+      CFPaymentGatewayService.makePayment(cardPayment);
     } catch (e: any) {
       console.log(e.message);
     }
@@ -211,11 +199,7 @@ export default class App extends Component {
 
   async _startUPICheckout() {
     try {
-      const session = new CFSession(
-        this.state.sessionId,
-        this.state.orderId,
-        this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      );
+      const session = this.getSession();
       const theme = new CFThemeBuilder()
         .setNavigationBarBackgroundColor('#E64A19')
         .setNavigationBarTextColor('#FFFFFF')
@@ -230,6 +214,44 @@ export default class App extends Component {
     } catch (e: any) {
       console.log(e.message);
     }
+  }
+
+  async _makeUpiIntentPayment() {
+    const apps = await CFPaymentGatewayService.getInstalledUpiApps();
+    console.log('Callback for Fetch UPI Apps :::==>' + apps);
+    let id = '';
+    JSON.parse(apps).forEach(item => {
+      id = item.appPackage;
+    });
+    try {
+      const session = this.getSession();
+      console.log('Session', JSON.stringify(session));
+      const upi = new CFUPI(UPIMode.INTENT, this.state.upiId);
+      const cfUpiPayment = new CFUPIPayment(session, upi);
+      CFPaymentGatewayService.makePayment(cfUpiPayment);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
+  async _makeUpiCollectPayment() {
+    try {
+      const session = this.getSession();
+      console.log('Session', JSON.stringify(session));
+      const upi = new CFUPI(UPIMode.COLLECT, this.state.upiId);
+      const cfUpiPayment = new CFUPIPayment(session, upi);
+      CFPaymentGatewayService.makePayment(cfUpiPayment);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
+  private getSession(): CFSession {
+    return new CFSession(
+      this.state.sessionId,
+      this.state.orderId,
+      this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
+    );
   }
 
   render() {
@@ -259,6 +281,12 @@ export default class App extends Component {
               keyboardType='default'
               onChangeText={this.handleEnv}
             />
+            <TextInput
+              style={styles.input}
+              placeholder='Enter VPA for Collect or PSP app package'
+              keyboardType='default'
+              onChangeText={this.handleUpi}
+            />
           </View>
           <View style={styles.button}>
             <Button onPress={() => this._startCheckout()} title='Start Payment' />
@@ -272,14 +300,26 @@ export default class App extends Component {
           <View style={styles.button}>
             <Button
               onPress={() => this._startUPICheckout()}
-              title='Start UPI Payment'
+              title='Start UPI Intent Checkout Payment'
+            />
+          </View>
+          <View style={styles.button}>
+            <Button
+              onPress={() => this._makeUpiCollectPayment()}
+              title='Make UPI Collect Payment'
+            />
+          </View>
+          <View style={styles.button}>
+            <Button
+              onPress={() => this._makeUpiIntentPayment()}
+              title='Make UPI Intent Payment'
             />
           </View>
           <View style={{
             borderWidth: 1,
             alignSelf: 'stretch',
             textAlign: 'center',
-            marginBottom:10
+            marginBottom: 10,
           }}>
             <Text style={styles.response_text}> {this.state.responseText} </Text>
           </View>
@@ -287,7 +327,7 @@ export default class App extends Component {
             borderWidth: 1,
             alignSelf: 'stretch',
             textAlign: 'center',
-            marginBottom:10
+            marginBottom: 10,
           }}>
             <View style={{ flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' }}>
               <TextInput
@@ -392,7 +432,7 @@ const styles = StyleSheet.create({
   response_text: {
     margin: 16,
     fontSize: 14,
-    color:'black'
+    color: 'black',
   },
   input: {
     height: 40,

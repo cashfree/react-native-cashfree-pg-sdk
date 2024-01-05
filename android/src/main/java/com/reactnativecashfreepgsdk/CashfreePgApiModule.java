@@ -1,6 +1,10 @@
 package com.reactnativecashfreepgapi;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -9,16 +13,20 @@ import androidx.annotation.Nullable;
 import com.cashfree.pg.api.CFPaymentGatewayService;
 import com.cashfree.pg.cf_analytics.CFAnalyticsService;
 import com.cashfree.pg.cf_analytics.CFEventsSubscriber;
+import com.cashfree.pg.core.api.CFCorePaymentGatewayService;
 import com.cashfree.pg.core.api.CFSession;
 import com.cashfree.pg.core.api.base.CFPayment;
 import com.cashfree.pg.core.api.callback.CFCheckoutResponseCallback;
 import com.cashfree.pg.core.api.card.CFCard;
 import com.cashfree.pg.core.api.card.CFCardPayment;
 import com.cashfree.pg.core.api.exception.CFException;
+import com.cashfree.pg.core.api.upi.CFUPI;
+import com.cashfree.pg.core.api.upi.CFUPIPayment;
 import com.cashfree.pg.core.api.utils.CFErrorResponse;
 import com.cashfree.pg.core.api.webcheckout.CFWebCheckoutPayment;
 import com.cashfree.pg.ui.api.CFDropCheckoutPayment;
 import com.cashfree.pg.ui.api.upi.intent.CFUPIIntentCheckoutPayment;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -26,9 +34,11 @@ import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 import com.cashfree.pg.api.util.DropPaymentParser;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.List;
 import java.util.Map;
 
 @ReactModule(name = CashfreePgApiModule.NAME)
@@ -162,6 +172,69 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
         e.printStackTrace();
       }
     }
+
+    @ReactMethod
+    public void getInstalledUpiApps(Callback cb){
+      Activity activity = getCurrentActivity();
+      final Intent intent = new Intent();
+      intent.setAction(Intent.ACTION_VIEW);
+      intent.setData(Uri.parse("upi://pay"));
+      PackageManager pm = activity.getPackageManager();
+      final List<ResolveInfo> resInfo = pm.queryIntentActivities(intent, 0);
+      JSONArray packageNames = new JSONArray();
+      try {
+        for (ResolveInfo info : resInfo) {
+          JSONObject appInfo = new JSONObject();
+          String appName = (String)activity.getPackageManager().getApplicationLabel(info.activityInfo.applicationInfo);
+          appInfo.put("appName", appName);
+          appInfo.put("appPackage", info.activityInfo.packageName);
+          packageNames.put(appInfo);
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      Log.d("CashfreePgApiModule", "getInstalledUpiApps::--" + packageNames);
+      cb.invoke(packageNames.toString());
+    }
+
+  @ReactMethod
+  public void doElementUPIPayment(String upiPaymentData) {
+    Log.d("CashfreePgApiModule", upiPaymentData);
+    CFSession cfSession = null;
+    CFUPI cfupi = null;
+    try {
+      JSONObject jsonObject = new JSONObject(upiPaymentData);
+      JSONObject session = jsonObject.getJSONObject("session");
+      JSONObject upiObject = jsonObject.getJSONObject("upi");
+      cfSession = new CFSession.CFSessionBuilder()
+        .setEnvironment(CFSession.Environment.valueOf(session.getString("environment")))
+        .setOrderId(session.getString("orderID"))
+        .setPaymentSessionID(session.getString("payment_session_id"))
+        .build();
+      CFUPI.Mode mode = CFUPI.Mode.valueOf(upiObject.getString("mode"));
+      String upiId = upiObject.getString("id");
+      cfupi = new CFUPI.CFUPIBuilder()
+        .setMode(mode)
+        .setUPIID(upiId)
+        .build();
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception.getMessage());
+    }
+    try {
+      CFUPIPayment cfupiPayment = new CFUPIPayment.CFUPIPaymentBuilder()
+        .setSession(cfSession)
+        .setCfUPI(cfupi)
+        .build();
+      Activity activity = getCurrentActivity();
+      if (activity != null) {
+        CFCorePaymentGatewayService.getInstance().doPayment(activity, cfupiPayment);
+      } else {
+        throw new IllegalStateException("activity is null");
+      }
+    } catch (CFException exception) {
+      exception.printStackTrace();
+    }
+  }
 
     @ReactMethod
     public void setCallback() {
