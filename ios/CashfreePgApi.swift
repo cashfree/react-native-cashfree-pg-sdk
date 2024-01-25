@@ -57,6 +57,47 @@ class CashfreePgApi: NSObject {
         }
     }
 
+    @objc func doCardPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfCardPayment = try parseCardObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfCardPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
+    @objc func getInstalledUpiApps(){
+        let upiApplications = CFUPIUtils().getInstalledUPIApplications()
+        var appsToSend: [NSDictionary] = []
+        for upi in upiApplications {
+            if (upi["id"] ?? "").contains("cred") {
+                continue
+            }
+            appsToSend.append([
+                "appPackage": upi["id"] ?? "",
+                "appName": upi["displayName"] ?? ""
+            ])
+        }
+        CashfreeEmitter.sharedInstance.dispatch(name: "cfUpiApps", body: stringify(json: appsToSend))
+    }
+
+    @objc func doElementUPIPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfUPIPayment = try parseUpiObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfUPIPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
     @objc func setCallback() -> Void {
         CFPaymentGatewayService.getInstance().setCallback(self)
     }
@@ -67,6 +108,59 @@ class CashfreePgApi: NSObject {
 
     @objc func removeEventSubscriber() -> Void {
         analyticsCallbackEnabled = false
+    }
+
+    private func parseCardObject(paymentObject: String) throws -> CFCardPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let finalSession = getSession(paymentObject: output)
+                if let cfCard = getCard(paymentObject: output){
+                    let savePaymentMethod = isForSavePayment(paymentObject: output)
+                    print(savePaymentMethod)
+                    
+                    let cardPayment = try CFCardPayment.CFCardPaymentBuilder()
+                        .setCard(cfCard)
+                        .setSession(finalSession!)
+                        .saveInstrument(savePaymentMethod)
+                        .build()
+                    
+                    let systemVersion = UIDevice.current.systemVersion
+
+                    cardPayment.setPlatform("irnx-e-2.1.9-x-m-s-x-i-\(systemVersion.prefix(4))")
+                    
+                    return cardPayment
+                }
+                return nil
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+
+    private func parseUpiObject(paymentObject: String) throws -> CFUPIPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let finalSession = getSession(paymentObject: output)
+                let cfUPI = getUpi(paymentObject: output)
+
+                let upiPayment = try CFUPIPayment.CFUPIPaymentBuilder()
+                    .setSession(finalSession!)
+                    .setUPI(cfUPI!)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                upiPayment.setPlatform("irnx-e-2.1.9-x-m-s-x-i-\(systemVersion.prefix(4))")
+
+                return upiPayment
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
     }
 
     private func parseDropPayment(paymentObject: String) throws -> CFDropCheckoutPayment? {
@@ -158,6 +252,53 @@ class CashfreePgApi: NSObject {
                 let error = e as! CashfreeError
                 print(error.localizedDescription)
                 // Handle errors here
+            }
+        }
+        return nil
+    }
+
+    private func getCard(paymentObject: Dictionary<String,Any>) -> CFCard? {
+        let card = paymentObject["card"] as? NSDictionary ?? [:]
+            do {
+                var cardObject: CFCard!
+                if card["instrumentId"] != nil && card["instrumentId"] as? String ?? "" != "" {
+                    cardObject = try CFCard.CFCardBuilder()
+                        .setCVV(card["cardCvv"] as? String ?? "")
+                        .setInstrumentId(card["instrumentId"] as? String ?? "")
+                        .build()
+                } else {
+                    cardObject = try CFCard.CFCardBuilder()
+                        .setCVV(card["cardCvv"] as? String ?? "")
+                        .setCardNumber(card["cardNumber"] as? String ?? "")
+                        .setCardExpiryYear(card["cardExpiryYY"] as? String ?? "")
+                        .setCardExpiryMonth(card["cardExpiryMM"] as? String ?? "")
+                        .setCardHolderName(card["cardHolderName"] as? String ?? "")
+                        .build()
+                }
+                return cardObject
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+                return nil
+            }
+    }
+    
+    private func isForSavePayment(paymentObject: Dictionary<String,Any>) -> Bool {
+        let card = paymentObject["card"] as? NSDictionary ?? [:]
+        return card["saveCard"] as? Bool ?? false
+    }
+
+    private func getUpi(paymentObject: Dictionary<String,Any>) -> CFUPI?{
+        if let upi = paymentObject["upi"] as? Dictionary<String, String> {
+            do {
+                let cfUPI = try CFUPI.CFUPIBuilder()
+                    .setChannel(upi["mode"] ?? "" == "COLLECT" ? .COLLECT : .INTENT)
+                    .setUPIID(upi["id"] ?? "")
+                    .build()
+                return cfUPI
+            } catch let e {
+                let err = e as! CashfreeError
+                print(err.localizedDescription)
             }
         }
         return nil

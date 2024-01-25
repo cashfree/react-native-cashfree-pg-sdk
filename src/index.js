@@ -17,6 +17,7 @@ class CFPaymentGateway {
     successSubscription = null;
     failureSubscription = null;
     eventSubscription = null;
+    upiAppsSubscription = null;
     constructor() {
         this.emitter =
             Platform.OS === 'ios'
@@ -42,14 +43,29 @@ class CFPaymentGateway {
     }
     async getInstalledUpiApps() {
         return new Promise((resolve, reject) => {
-            CashfreePgApi.getInstalledUpiApps((apps) => {
-                if (apps) {
-                    resolve(apps);
-                }
-                else {
-                    reject('No UPI apps found');
-                }
-            });
+            if (Platform.OS === 'ios') {
+                let fetchUpiList = (apps) => {
+                    console.log(JSON.stringify(apps));
+                    if (apps) {
+                        resolve(apps);
+                    }
+                    else {
+                        reject('No UPI apps found');
+                    }
+                };
+                this.upiAppsSubscription = this.emitter.addListener('cfUpiApps', fetchUpiList);
+                CashfreePgApi.getInstalledUpiApps();
+            }
+            else {
+                CashfreePgApi.getInstalledUpiApps((apps) => {
+                    if (apps) {
+                        resolve(apps);
+                    }
+                    else {
+                        reject('No UPI apps found');
+                    }
+                });
+            }
         });
     }
     makePayment(cfPayment) {
@@ -111,6 +127,11 @@ class CFPaymentGateway {
             this.failureSubscription !== null) {
             this.failureSubscription.remove();
             this.failureSubscription = null;
+        }
+        if (this.upiAppsSubscription !== undefined &&
+            this.upiAppsSubscription !== null) {
+            this.upiAppsSubscription.remove();
+            this.upiAppsSubscription = null;
         }
     }
 }
