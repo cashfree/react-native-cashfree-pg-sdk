@@ -1,6 +1,6 @@
 {
   "name": "react-native-cashfree-pg-sdk",
-  "version": "2.1.8",
+  "version": "2.1.9-dev.0",
   "description": "Cashfree PG Plugin for React Native",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -34,7 +34,14 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "cashfree",
+    "react-native-android",
+    "react-native-ios",
+    "cashfree react-native sdk",
+    "react-native payment gateway",
+    "payment gateway",
+    "react-native-cashfree-pg-sdk"
   ],
   "repository": "https://github.com/cashfree/react-native-cashfree-pg-sdk",
   "author": "cashfree-payments <developers@cashfree.com> (https://www.cashfree.com/)",
