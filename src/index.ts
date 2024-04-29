@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { version } from '../package.json';
 import { type CheckoutPayment, type CFSession, CFUPIPayment, CFCardPayment } from 'cashfree-pg-api-contract';
+import CFCardComponent from './Card/CFCardComponent';
 
 const LINKING_ERROR =
   `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
@@ -214,4 +215,5 @@ export class CFErrorResponse {
   }
 }
 
+export const CFCard = CFCardComponent
 export const CFPaymentGatewayService = new CFPaymentGateway();
