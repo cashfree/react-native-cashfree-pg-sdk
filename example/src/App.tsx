@@ -1,11 +1,11 @@
 // @ts-nocheck
 
 import * as React from 'react';
-import { Component } from 'react';
+import { Component, useRef } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 
-import { Button, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native';
-import { CFErrorResponse, CFPaymentGatewayService } from 'react-native-cashfree-pg-sdk';
+import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native';
+import { CFErrorResponse, CFPaymentGatewayService, CFCard } from 'react-native-cashfree-pg-sdk';
 import {
   Card,
   CFCardPayment,
@@ -16,9 +16,11 @@ import {
   CFSession,
   CFThemeBuilder,
   CFUPI,
-  CFUPIIntentCheckoutPayment, CFUPIPayment,
+  CFUPIIntentCheckoutPayment,
+  CFUPIPayment,
   SavedCard,
   UPIMode,
+  ElementCard
 } from 'cashfree-pg-api-contract';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
@@ -26,7 +28,7 @@ const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
   constructor() {
     super();
-
+    this.creditCardRef = React.createRef();
     this.state = {
       responseText: BASE_RESPONSE_TEXT,
       cardNumber: '',
@@ -34,12 +36,13 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: '',
-      sessionId: '',
+      orderId: 'order_342fuAjbdkqC3DVHX18iy24dP4ArK',
+      sessionId: 'session_Ulz4xwKmTx-4nNZTIk40n5beAXmWxMiqegtqYMcgrdsqqaxnU0mqTa15NjkAlz1M4oJcwOGyjqNQCKTEhQZAm9ekeM4VIllrICSn4t80XI3o',
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: '',
       upiId: '',
+      cardNetwork: require('./assests/visa.png'),
     };
   }
 
@@ -84,6 +87,48 @@ export default class App extends Component {
 
   handleUpi = (id: string) => {
     this.setState({ upiId: id });
+  };
+
+  handleCFCardInput = (data: string) => {
+    console.log('CFCardInput FROM SDK', data);
+    const cardNetwork = JSON.parse(data)['card_network'];
+    switch (cardNetwork) {
+      case 'visa': {
+        this.setState({ cardNetwork: require('./assests/visa.png') });
+        break;
+      }
+      case 'mastercard': {
+        this.setState({ cardNetwork: require('./assests/mastercard.png') });
+        break;
+      }
+      case 'amex': {
+        this.setState({ cardNetwork: require('./assests/amex.png') });
+        break;
+      }
+      case 'maestro': {
+        this.setState({ cardNetwork: require('./assests/maestro.png') });
+        break;
+      }
+      case 'rupay': {
+        this.setState({ cardNetwork: require('./assests/rupay.png') });
+        break;
+      }
+      case 'diners': {
+        this.setState({ cardNetwork: require('./assests/diners.png') });
+        break;
+      }
+      case 'discover': {
+        this.setState({ cardNetwork: require('./assests/discover.png') });
+        break;
+      }
+      case 'jcb': {
+        this.setState({ cardNetwork: require('./assests/jcb.png') });
+        break;
+      }
+      default: {
+        this.setState({ cardNetwork: require('./assests/visa.png') });
+      }
+    }
   };
 
 
@@ -254,7 +299,31 @@ export default class App extends Component {
     );
   }
 
+  private handleSubmit = () => {
+    console.log('TYPE', this.creditCardRef);
+    if (this.creditCardRef.current) {
+      let nonPciCard = new ElementCard(this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV, this.state.toggleCheckBox);
+      console.log('KISHANTEST', JSON.stringify(nonPciCard));
+      this.creditCardRef.current.doPayment(nonPciCard);
+    }
+  };
+
   render() {
+    let cfCard = <CFCard
+      cfSession={this.getSession()}
+      style={{ flex: 1 }}
+      cardListener={this.handleCFCardInput}
+      placeholder='Enter Card Number'
+      placeholderTextColor='#0000ff'
+      underlineColorAndroid={'transparent'}
+      cursorColor={'gray'}
+      returnKeyType='next'
+      ref={this.creditCardRef}
+      onSubmitEditing={(e) => console.log('onSubmitEditing')}
+      onEndEditing={(e) => console.log('onEndEditing')}
+      onBlur={(e) => console.log('onBlur')}
+      onFocus={(e) => console.log('onFocus')}
+    />;
     return (
       <ScrollView>
         <View style={styles.container}>
@@ -329,18 +398,23 @@ export default class App extends Component {
             textAlign: 'center',
             marginBottom: 10,
           }}>
+            <View style={styles.cardContainer}>
+              {cfCard}
+              <Image
+                color='#000'
+                style={{
+                  margin: 5,
+                }}
+                source={this.state.cardNetwork} />
+            </View>
             <View style={{ flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' }}>
-              <TextInput
-                style={styles.input}
-                placeholder='Card Number'
-                keyboardType='numeric'
-                maxLength={16}
-                onChangeText={this.handleCardNumber}
-              />
               <TextInput
                 style={styles.input}
                 placeholder='Holder Name'
                 keyboardType='default'
+                placeholderTextColor='#0000ff'
+                underlineColorAndroid={'transparent'}
+                cursorColor={'gray'}
                 onChangeText={this.handleCardHolderName}
               />
             </View>
@@ -350,6 +424,9 @@ export default class App extends Component {
                 placeholder='Expiry Month'
                 keyboardType='numeric'
                 maxLength={2}
+                placeholderTextColor='#0000ff'
+                underlineColorAndroid={'transparent'}
+                cursorColor={'gray'}
                 onChangeText={this.handleCardExpiryMM}
               />
               <TextInput
@@ -357,6 +434,9 @@ export default class App extends Component {
                 placeholder='Expiry Year'
                 keyboardType='numeric'
                 maxLength={2}
+                placeholderTextColor='#0000ff'
+                underlineColorAndroid={'transparent'}
+                cursorColor={'gray'}
                 onChangeText={this.handleCardExpiryYY}
               />
               <TextInput
@@ -377,7 +457,7 @@ export default class App extends Component {
             </View>
             <View style={styles.button}>
               <Button
-                onPress={() => this._startCardPayment()}
+                onPress={() => this.handleSubmit()}
                 title='Card Payment'
               />
             </View>
@@ -439,5 +519,14 @@ const styles = StyleSheet.create({
     margin: 12,
     borderWidth: 1,
     padding: 10,
+  },
+
+  cardContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 10,
   },
 });
