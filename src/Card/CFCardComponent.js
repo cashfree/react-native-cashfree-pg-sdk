@@ -154,7 +154,6 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
     const doPayment = (cardInfo) => {
         try {
             cardInfo.cardNumber = inputNumber.replaceAll(' ', '');
-            console.log('NonPciCard', JSON.stringify(cardInfo));
             const cardPayment = new CFCardPayment(cfSession, cardInfo);
             CFPaymentGatewayService.makePayment(cardPayment);
         }
