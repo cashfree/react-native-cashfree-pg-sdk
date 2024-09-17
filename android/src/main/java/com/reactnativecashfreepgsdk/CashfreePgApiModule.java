@@ -80,7 +80,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
             Activity activity = getCurrentActivity();
             CFUPIIntentCheckoutPayment cfupiIntentCheckoutPayment = DropPaymentParser.getUPICheckoutPayment(cfPaymentString);
             cfupiIntentCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
-            cfupiIntentCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.DROP);
+            cfupiIntentCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.INTENT);
             if (activity != null) {
                 CFPaymentGatewayService.getInstance().doPayment(activity, cfupiIntentCheckoutPayment);
             } else {
@@ -149,6 +149,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
             .setCardExpiryMonth(cardObject.getString("cardExpiryMM"))
             .setCardExpiryYear(cardObject.getString("cardExpiryYY"))
             .setCVV(cardObject.getString("cardCvv"))
+            .setChannel("post")
             .build();
         }
       } catch (Exception exception) {
@@ -161,6 +162,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
           .setCard(card)
           .setSaveCardDetail(saveCard)
           .build();
+        cardPayment.setCfSDKFlow(CFPayment.CFSDKFlow.WITH_CASHFREE_FULLSCREEN_LOADER);
         cardPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
         cardPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
         if (activity != null) {
@@ -225,6 +227,9 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
         .setSession(cfSession)
         .setCfUPI(cfupi)
         .build();
+      cfupiPayment.setCfSDKFlow(CFPayment.CFSDKFlow.WITH_CASHFREE_FULLSCREEN_LOADER);
+      cfupiPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
+      cfupiPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
       Activity activity = getCurrentActivity();
       if (activity != null) {
         CFCorePaymentGatewayService.getInstance().doPayment(activity, cfupiPayment);

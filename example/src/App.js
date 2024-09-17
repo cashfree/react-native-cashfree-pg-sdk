@@ -256,7 +256,7 @@ export default class App extends Component {
         }
     };
     render() {
-        let cfCard = React.createElement(CFCard, { cfSession: this.getSession(), style: { flex: 1 }, cardListener: this.handleCFCardInput, placeholder: 'Enter Card Number', placeholderTextColor: '#0000ff', underlineColorAndroid: 'transparent', cursorColor: 'gray', returnKeyType: 'next', ref: this.creditCardRef, onSubmitEditing: (e) => console.log('onSubmitEditing', e.nativeEvent.text, '::', e.target.value), onEndEditing: (e) => console.log('onEndEditing', e.nativeEvent.text, '::', e.target.value), onBlur: (e) => console.log('onBlur', e.nativeEvent.text, '::', e.target.value), onFocus: (e) => console.log('onFocus', e.nativeEvent.text, '::', e.target.value), onSelectionchange: (e) => console.log('onSelectionchange', e.nativeEvent.text, '::', e.target.value), onKeyPress: (e) => console.log('onSelectionchange', e.nativeEvent.text, '::', e.target.value) });
+        let cfCard = React.createElement(CFCard, { cfSession: this.getSession(), style: { flex: 1 }, cardListener: this.handleCFCardInput, placeholder: 'Enter Card Number', placeholderTextColor: '#0000ff', underlineColorAndroid: 'transparent', cursorColor: 'gray', returnKeyType: 'next', ref: this.creditCardRef, onSubmitEditing: (e) => console.log('onSubmitEditing'), onEndEditing: (e) => console.log('onEndEditing'), onBlur: (e) => console.log('onBlur'), onFocus: (e) => console.log('onFocus') });
         return (React.createElement(ScrollView, null,
             React.createElement(View, { style: styles.container },
                 React.createElement(View, { style: {
