@@ -36,8 +36,8 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'order_342fuAjbdkqC3DVHX18iy24dP4ArK',
-      sessionId: 'session_Ulz4xwKmTx-4nNZTIk40n5beAXmWxMiqegtqYMcgrdsqqaxnU0mqTa15NjkAlz1M4oJcwOGyjqNQCKTEhQZAm9ekeM4VIllrICSn4t80XI3o',
+      orderId: 'order_101024392oVzaS8TCkH8psaTazGGKXFs3tL',
+      sessionId: 'session_vbN9-FyxaT2EbPSnYnzTqQE54Hk1iaqtLrf_V0AtNRehSfMd4-eBaCtELA9sD9PwC8XmaLz8nU13YzmcurEdftD9w4FRAY-W9af3ZUQ4o2cl',
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: '',
@@ -202,7 +202,7 @@ export default class App extends Component {
     try {
       const session = this.getSession();
       console.log('Session', JSON.stringify(session));
-      CFPaymentGatewayService.doWebPayment(JSON.stringify(session));
+      CFPaymentGatewayService.doWebPayment(session);
     } catch (e: any) {
       console.log(e.message);
     }
