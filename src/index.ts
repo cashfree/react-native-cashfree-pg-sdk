@@ -52,7 +52,7 @@ class CFPaymentGateway {
   }
 
   doWebPayment(cfSession: CFSession) {
-    CashfreePgApi.doWebPayment(cfSession);
+    CashfreePgApi.doWebPayment(JSON.stringify(cfSession));
   }
 
   /**

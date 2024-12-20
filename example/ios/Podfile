@@ -57,5 +57,5 @@ target 'CashfreePgApiExample' do
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
-  pod 'CashfreePG', '~> 2.0.4'
+  pod 'CashfreePG', '~> 2.0.19'
 end
