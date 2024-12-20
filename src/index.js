@@ -34,7 +34,7 @@ class CFPaymentGateway {
         CashfreePgApi.doUPIPayment(JSON.stringify(checkoutPayment));
     }
     doWebPayment(cfSession) {
-        CashfreePgApi.doWebPayment(cfSession);
+        CashfreePgApi.doWebPayment(JSON.stringify(cfSession));
     }
     /**
      * @deprecated : Instead call makePayment
