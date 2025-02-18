@@ -1,6 +1,6 @@
 import { TextInput } from 'react-native';
 import React, { forwardRef } from 'react';
-import { CFCardPayment, CFEnvironment } from 'cashfree-pg-api-contract';
+import { CFCardPayment, CFEnvironment, } from 'cashfree-pg-api-contract';
 import { CFPaymentGatewayService } from '../index';
 function luhnCheck(cardNumber) {
     if (cardNumber.length === 0) {
@@ -29,7 +29,7 @@ function luhnCheck(cardNumber) {
  */
 async function getTDR(session, bin) {
     const route = `/pg/sdk/js/${session.payment_session_id}/v2/tdr`;
-    const body = JSON.stringify({ 'code': bin, 'code_type': 'bin' });
+    const body = JSON.stringify({ code: bin, code_type: 'bin' });
     return await getInfo(session.environment, route, body);
 }
 /**
@@ -39,7 +39,7 @@ async function getTDR(session, bin) {
  */
 async function getCardBin(session, bin) {
     const route = `/pg/sdk/js/${session.payment_session_id}/cardBin`;
-    const body = JSON.stringify({ 'card_number': bin });
+    const body = JSON.stringify({ card_number: bin });
     return await getInfo(session.environment, route, body);
 }
 async function getInfo(env, route, bodyData) {
@@ -67,7 +67,10 @@ async function getInfo(env, route, bodyData) {
 }
 const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref) => {
     const [inputNumber, setInputNumber] = React.useState('');
-    React.useImperativeHandle(ref, () => ({ doPayment }));
+    React.useImperativeHandle(ref, () => ({
+        doPayment,
+        doPaymentWithPaymentSessionId,
+    }));
     let tdrJson = null;
     let cardBinJson = null;
     let firstEightDigits = '';
@@ -144,8 +147,14 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
         if (cardBinJson !== null) {
             completeResponse['card_network'] = cardBinJson['scheme'];
         }
-        completeResponse['luhn_check_info'] = 'SUCCESS';
-        if (!luhnCheck(textWithoutSpaces)) {
+        let luhnStatus = luhnCheck(textWithoutSpaces);
+        if (luhnStatus) {
+            completeResponse['luhn_check_info'] = 'SUCCESS';
+            if (textWithoutSpaces && textWithoutSpaces.length > 4) {
+                completeResponse['last_four_digit'] = textWithoutSpaces.substring(textWithoutSpaces.length - 4);
+            }
+        }
+        else {
             completeResponse['luhn_check_info'] = 'FAIL';
         }
         completeResponse['card_length'] = textWithoutSpaces.length;
@@ -156,6 +165,15 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
             cardInfo.cardNumber = inputNumber.replaceAll(' ', '');
             const cardPayment = new CFCardPayment(cfSession, cardInfo);
             CFPaymentGatewayService.makePayment(cardPayment);
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    };
+    const doPaymentWithPaymentSessionId = (cardInfo, session) => {
+        try {
+            cfSession = session;
+            doPayment(cardInfo);
         }
         catch (e) {
             console.log(e.message);
@@ -191,6 +209,6 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
     };
     const InputComponent = TextInput;
     const { onChangeText, onChange, onSubmitEditing, onEndEditing, onFocus, onBlur, ...otherProps } = props;
-    return (React.createElement(InputComponent, { keyboardType: 'numeric', inputMode: 'numeric', value: inputNumber, onChangeText: handleChange, onSubmitEditing: handleSubmitEditingEvent, onEndEditing: handleEndEditingEvent, onFocus: handleFocusEvent, onBlur: handleBlurEvent, style: style, ...otherProps }));
+    return (React.createElement(InputComponent, { keyboardType: "numeric", inputMode: 'numeric', value: inputNumber, onChangeText: handleChange, onSubmitEditing: handleSubmitEditingEvent, onEndEditing: handleEndEditingEvent, onFocus: handleFocusEvent, onBlur: handleBlurEvent, style: style, ...otherProps }));
 });
 export default CardInput;

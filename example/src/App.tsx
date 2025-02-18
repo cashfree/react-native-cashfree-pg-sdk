@@ -1,11 +1,25 @@
 // @ts-nocheck
 
 import * as React from 'react';
-import { Component, useRef } from 'react';
+import {Component} from 'react';
 import CheckBox from '@react-native-community/checkbox';
 
-import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native';
-import { CFErrorResponse, CFPaymentGatewayService, CFCard } from 'react-native-cashfree-pg-sdk';
+import {
+  Button,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  ToastAndroid,
+  View,
+} from 'react-native';
+import {
+  CFErrorResponse,
+  CFPaymentGatewayService,
+  CFCard,
+} from 'react-native-cashfree-pg-sdk';
 import {
   Card,
   CFCardPayment,
@@ -20,7 +34,7 @@ import {
   CFUPIPayment,
   SavedCard,
   UPIMode,
-  ElementCard
+  ElementCard,
 } from 'cashfree-pg-api-contract';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
@@ -36,8 +50,9 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'order_101024392oVzaS8TCkH8psaTazGGKXFs3tL',
-      sessionId: 'session_vbN9-FyxaT2EbPSnYnzTqQE54Hk1iaqtLrf_V0AtNRehSfMd4-eBaCtELA9sD9PwC8XmaLz8nU13YzmcurEdftD9w4FRAY-W9af3ZUQ4o2cl',
+      orderId: 'devstudio_76123729',
+      sessionId:
+        'session_8HWBj0N2H2PKwKntO6sz6-490xsXxjxx45wLvgywsyn_Uvzk6UlA5aRxc41wR5qDkUHRfaiuHwFIztUtOhQvpGv0I-VJDMy2DtNQheppAO7pAxDMiA0Vifcpayment',
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: '',
@@ -47,46 +62,46 @@ export default class App extends Component {
   }
 
   updateStatus = (message: string) => {
-    this.setState({ responseText: message });
+    this.setState({responseText: message});
     ToastAndroid.show(message, ToastAndroid.SHORT);
   };
   handleCardNumber = (number: string) => {
-    this.setState({ cardNumber: number });
+    this.setState({cardNumber: number});
   };
   handleCardHolderName = (name: string) => {
-    this.setState({ cardHolderName: name });
+    this.setState({cardHolderName: name});
   };
   handleCardExpiryMM = (month: string) => {
-    this.setState({ cardExpiryMM: month });
+    this.setState({cardExpiryMM: month});
   };
   handleCardExpiryYY = (year: string) => {
-    this.setState({ cardExpiryYY: year });
+    this.setState({cardExpiryYY: year});
   };
   handleCardCVV = (cvv: string) => {
-    this.setState({ cardCVV: cvv });
+    this.setState({cardCVV: cvv});
   };
 
   handleOrderId = (orderId: string) => {
-    this.setState({ orderId: orderId });
+    this.setState({orderId: orderId});
   };
   handleSessionId = (sessionId: string) => {
-    this.setState({ sessionId: sessionId });
+    this.setState({sessionId: sessionId});
   };
 
   handleInstrumentId = (instrumentId: string) => {
-    this.setState({ instrumentId: instrumentId });
+    this.setState({instrumentId: instrumentId});
   };
 
   handleSaveCardToggle = (toggleBox: boolean) => {
-    this.setState({ toggleCheckBox: toggleBox });
+    this.setState({toggleCheckBox: toggleBox});
   };
 
   handleEnv = (env: string) => {
-    this.setState({ cfEnv: env });
+    this.setState({cfEnv: env});
   };
 
   handleUpi = (id: string) => {
-    this.setState({ upiId: id });
+    this.setState({upiId: id});
   };
 
   handleCFCardInput = (data: string) => {
@@ -94,43 +109,42 @@ export default class App extends Component {
     const cardNetwork = JSON.parse(data)['card_network'];
     switch (cardNetwork) {
       case 'visa': {
-        this.setState({ cardNetwork: require('./assests/visa.png') });
+        this.setState({cardNetwork: require('./assests/visa.png')});
         break;
       }
       case 'mastercard': {
-        this.setState({ cardNetwork: require('./assests/mastercard.png') });
+        this.setState({cardNetwork: require('./assests/mastercard.png')});
         break;
       }
       case 'amex': {
-        this.setState({ cardNetwork: require('./assests/amex.png') });
+        this.setState({cardNetwork: require('./assests/amex.png')});
         break;
       }
       case 'maestro': {
-        this.setState({ cardNetwork: require('./assests/maestro.png') });
+        this.setState({cardNetwork: require('./assests/maestro.png')});
         break;
       }
       case 'rupay': {
-        this.setState({ cardNetwork: require('./assests/rupay.png') });
+        this.setState({cardNetwork: require('./assests/rupay.png')});
         break;
       }
       case 'diners': {
-        this.setState({ cardNetwork: require('./assests/diners.png') });
+        this.setState({cardNetwork: require('./assests/diners.png')});
         break;
       }
       case 'discover': {
-        this.setState({ cardNetwork: require('./assests/discover.png') });
+        this.setState({cardNetwork: require('./assests/discover.png')});
         break;
       }
       case 'jcb': {
-        this.setState({ cardNetwork: require('./assests/jcb.png') });
+        this.setState({cardNetwork: require('./assests/jcb.png')});
         break;
       }
       default: {
-        this.setState({ cardNetwork: require('./assests/visa.png') });
+        this.setState({cardNetwork: require('./assests/visa.png')});
       }
     }
   };
-
 
   componentWillUnmount() {
     console.log('UNMOUNTED');
@@ -145,9 +159,9 @@ export default class App extends Component {
       onReceivedEvent(eventName: string, map: Map<string, string>): void {
         console.log(
           'Event recieved on screen: ' +
-          eventName +
-          ' map: ' +
-          JSON.stringify(map),
+            eventName +
+            ' map: ' +
+            JSON.stringify(map),
         );
       },
     });
@@ -159,15 +173,18 @@ export default class App extends Component {
       onError(error: CFErrorResponse, orderID: string): void {
         console.log(
           'exception is : ' +
-          JSON.stringify(error) +
-          '\norderId is :' +
-          orderID,
+            JSON.stringify(error) +
+            '\norderId is :' +
+            orderID,
         );
         context.updateStatus(JSON.stringify(error));
       },
     });
   }
 
+  /**
+   * @deprecated This is deprecated now. Please use WebCheckout or UPIIntentcheckout flow.
+   */
   async _startCheckout() {
     try {
       const session = this.getSession();
@@ -208,11 +225,15 @@ export default class App extends Component {
     }
   }
 
+  /**
+   * Use this method for card payment. This will require PCI-DSS certification to use.
+   */
   async _startCardPayment() {
     try {
       const session = this.getSession();
       console.log('Session', JSON.stringify(session));
-      const card = new Card(this.state.cardNumber,
+      const card = new Card(
+        this.state.cardNumber,
         this.state.cardHolderName,
         this.state.cardExpiryMM,
         this.state.cardExpiryYY,
@@ -232,9 +253,7 @@ export default class App extends Component {
     try {
       const session = this.getSession();
       console.log('Session', JSON.stringify(session));
-      const card = new SavedCard(
-        this.state.instrumentId,
-        this.state.cardCVV);
+      const card = new SavedCard(this.state.instrumentId, this.state.cardCVV);
       const cardPayment = new CFCardPayment(session, card);
       CFPaymentGatewayService.makePayment(cardPayment);
     } catch (e: any) {
@@ -295,101 +314,120 @@ export default class App extends Component {
     return new CFSession(
       this.state.sessionId,
       this.state.orderId,
-      this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
+      this.state.cfEnv === 'PROD'
+        ? CFEnvironment.PRODUCTION
+        : CFEnvironment.SANDBOX,
     );
   }
 
   private handleSubmit = () => {
     console.log('TYPE', this.creditCardRef);
     if (this.creditCardRef.current) {
-      let nonPciCard = new ElementCard(this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV, this.state.toggleCheckBox);
+      let nonPciCard = new ElementCard(
+        this.state.cardHolderName,
+        this.state.cardExpiryMM,
+        this.state.cardExpiryYY,
+        this.state.cardCVV,
+        this.state.toggleCheckBox,
+      );
+      this.handleSessionId(
+        'session_iZt0C2k4_50oExGN2WFOidE4Z5KbTIGC5BpNpf_qgztd-Yg-q1TpQ0-7jNeIR1UiRjWuI8jpDp3FgcRdBAI5uT8lmW-OEqFJ8tjbg4l4zA4R6lpO90Iipd8payment',
+      );
       console.log('KISHANTEST', JSON.stringify(nonPciCard));
-      this.creditCardRef.current.doPayment(nonPciCard);
+      this.creditCardRef.current.doPaymentWithPaymentSessionId(
+        nonPciCard,
+        this.getSession(),
+      );
     }
   };
 
   render() {
     let cfCard = <CFCard
-      cfSession={this.getSession()}
-      style={{ flex: 1 }}
-      cardListener={this.handleCFCardInput}
-      placeholder='Enter Card Number'
-      placeholderTextColor='#0000ff'
-      underlineColorAndroid={'transparent'}
-      cursorColor={'gray'}
-      returnKeyType='next'
-      ref={this.creditCardRef}
-      onSubmitEditing={(e) => console.log('onSubmitEditing')}
-      onEndEditing={(e) => console.log('onEndEditing')}
-      onBlur={(e) => console.log('onBlur')}
-      onFocus={(e) => console.log('onFocus')}
-    />;
+        cfSession={this.getSession()}
+        style={{flex: 1}}
+        cardListener={this.handleCFCardInput}
+        placeholder="Enter Card Number"
+        placeholderTextColor="#0000ff"
+        underlineColorAndroid={'transparent'}
+        cursorColor={'gray'}
+        returnKeyType="next"
+        ref={this.creditCardRef}
+        onSubmitEditing={_ => console.log('onSubmitEditing')}
+        onEndEditing={_ => console.log('onEndEditing')}
+        onBlur={_ => console.log('onBlur')}
+        onFocus={_ => console.log('onFocus')}
+     />;
     return (
       <ScrollView>
         <View style={styles.container}>
-          <View style={{
-            borderWidth: 1,
-            alignSelf: 'stretch',
-            textAlign: 'center',
-          }}>
+          <View
+            style={{
+              borderWidth: 1,
+              alignSelf: 'stretch',
+              textAlign: 'center',
+            }}>
             <TextInput
               style={styles.input}
-              placeholder='Session Id'
-              keyboardType='default'
+              placeholder="Session Id"
+              keyboardType="default"
               onChangeText={this.handleSessionId}
             />
             <TextInput
               style={styles.input}
-              placeholder='Order Id'
-              keyboardType='default'
+              placeholder="Order Id"
+              keyboardType="default"
               onChangeText={this.handleOrderId}
             />
             <TextInput
               style={styles.input}
-              placeholder='SANDBOX'
-              keyboardType='default'
+              placeholder="SANDBOX"
+              keyboardType="default"
               onChangeText={this.handleEnv}
             />
             <TextInput
               style={styles.input}
-              placeholder='Enter VPA for Collect or PSP app package'
-              keyboardType='default'
+              placeholder="Enter VPA for Collect or PSP app package"
+              keyboardType="default"
               onChangeText={this.handleUpi}
             />
           </View>
           <View style={styles.button}>
-            <Button onPress={() => this._startCheckout()} title='Start Payment' />
+            <Button
+              onPress={() => this._startCheckout()}
+              title="Start Payment"
+            />
           </View>
           <View style={styles.button}>
             <Button
               onPress={() => this._startWebCheckout()}
-              title='Start Web Payment'
+              title="Start Web Payment"
             />
           </View>
           <View style={styles.button}>
             <Button
               onPress={() => this._startUPICheckout()}
-              title='Start UPI Intent Checkout Payment'
+              title="Start UPI Intent Checkout Payment"
             />
           </View>
           <View style={styles.button}>
             <Button
               onPress={() => this._makeUpiCollectPayment()}
-              title='Make UPI Collect Payment'
+              title="Make UPI Collect Payment"
             />
           </View>
           <View style={styles.button}>
             <Button
               onPress={() => this._makeUpiIntentPayment()}
-              title='Make UPI Intent Payment'
+              title="Make UPI Intent Payment"
             />
           </View>
-          <View style={{
+          <View
+            style={{
             borderWidth: 1,
             alignSelf: 'stretch',
             textAlign: 'center',
-            marginBottom: 10,
-          }}>
+              marginBottom: 10,
+            }}>
             <Text style={styles.response_text}> {this.state.responseText} </Text>
           </View>
           <View style={{
@@ -401,54 +439,66 @@ export default class App extends Component {
             <View style={styles.cardContainer}>
               {cfCard}
               <Image
-                color='#000'
+                color="#000"
                 style={{
                   margin: 5,
                 }}
-                source={this.state.cardNetwork} />
+                source={this.state.cardNetwork}
+              />
             </View>
-            <View style={{ flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'column',
+                alignSelf: 'stretch',
+                textAlign: 'center',
+              }}>
               <TextInput
                 style={styles.input}
-                placeholder='Holder Name'
-                keyboardType='default'
-                placeholderTextColor='#0000ff'
+                placeholder="Holder Name"
+                keyboardType="default"
+                placeholderTextColor="#0000ff"
                 underlineColorAndroid={'transparent'}
                 cursorColor={'gray'}
                 onChangeText={this.handleCardHolderName}
               />
             </View>
-            <View style={{ flexDirection: 'row', alignSelf: 'stretch' }}>
+            <View style={{flexDirection: 'row', alignSelf: 'stretch'}}>
               <TextInput
                 style={styles.input}
-                placeholder='Expiry Month'
-                keyboardType='numeric'
+                placeholder="Expiry Month"
+                keyboardType="numeric"
                 maxLength={2}
-                placeholderTextColor='#0000ff'
+                placeholderTextColor="#0000ff"
                 underlineColorAndroid={'transparent'}
                 cursorColor={'gray'}
                 onChangeText={this.handleCardExpiryMM}
               />
               <TextInput
                 style={styles.input}
-                placeholder='Expiry Year'
-                keyboardType='numeric'
+                placeholder="Expiry Year"
+                keyboardType="numeric"
                 maxLength={2}
-                placeholderTextColor='#0000ff'
+                placeholderTextColor="#0000ff"
                 underlineColorAndroid={'transparent'}
                 cursorColor={'gray'}
                 onChangeText={this.handleCardExpiryYY}
               />
               <TextInput
                 style={styles.input}
-                placeholder='CVV'
-                keyboardType='numeric'
+                placeholder="CVV"
+                keyboardType="numeric"
                 maxLength={3}
                 secureTextEntry={true}
                 onChangeText={this.handleCardCVV}
               />
             </View>
-            <View style={{ flexDirection: 'row', alignSelf: 'stretch', alignItems: 'center', textAlign: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignSelf: 'stretch',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}>
               <CheckBox
                 value={this.state.toggleCheckBox}
                 onValueChange={this.handleSaveCardToggle}
@@ -458,7 +508,7 @@ export default class App extends Component {
             <View style={styles.button}>
               <Button
                 onPress={() => this.handleSubmit()}
-                title='Card Payment'
+                title="Card Payment"
               />
             </View>
           </View>
@@ -467,17 +517,22 @@ export default class App extends Component {
             borderWidth: 1,
             alignSelf: 'stretch',
           }}>
-            <View style={{ flexDirection: 'column', textAlign: 'center', alignSelf: 'stretch' }}>
+            <View
+              style={{
+                flexDirection: 'column',
+                textAlign: 'center',
+                alignSelf: 'stretch',
+              }}>
               <TextInput
                 style={styles.input}
-                placeholder='Instrument Id'
-                keyboardType='default'
+                placeholder="Instrument Id"
+                keyboardType="default"
                 onChangeText={this.handleInstrumentId}
               />
               <TextInput
                 style={styles.input}
-                placeholder='CVV'
-                keyboardType='numeric'
+                placeholder="CVV"
+                keyboardType="numeric"
                 maxLength={3}
                 secureTextEntry={true}
                 onChangeText={this.handleCardCVV}
@@ -486,7 +541,7 @@ export default class App extends Component {
             <View style={styles.button}>
               <Button
                 onPress={() => this._startSavedCardPayment()}
-                title='Saved Card Payment'
+                title="Saved Card Payment"
               />
             </View>
           </View>

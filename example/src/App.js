@@ -2,9 +2,9 @@
 import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
-import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native';
-import { CFPaymentGatewayService, CFCard } from 'react-native-cashfree-pg-sdk';
-import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard } from 'cashfree-pg-api-contract';
+import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
+import { CFPaymentGatewayService, CFCard, } from 'react-native-cashfree-pg-sdk';
+import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard, } from 'cashfree-pg-api-contract';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
     constructor() {
@@ -17,8 +17,8 @@ export default class App extends Component {
             cardExpiryMM: '',
             cardExpiryYY: '',
             cardCVV: '',
-            orderId: 'order_101024392oVzaS8TCkH8psaTazGGKXFs3tL',
-            sessionId: 'session_vbN9-FyxaT2EbPSnYnzTqQE54Hk1iaqtLrf_V0AtNRehSfMd4-eBaCtELA9sD9PwC8XmaLz8nU13YzmcurEdftD9w4FRAY-W9af3ZUQ4o2cl',
+            orderId: 'devstudio_76123729',
+            sessionId: 'session_8HWBj0N2H2PKwKntO6sz6-490xsXxjxx45wLvgywsyn_Uvzk6UlA5aRxc41wR5qDkUHRfaiuHwFIztUtOhQvpGv0I-VJDMy2DtNQheppAO7pAxDMiA0Vifcpayment',
             instrumentId: '',
             toggleCheckBox: false,
             cfEnv: '',
@@ -134,6 +134,9 @@ export default class App extends Component {
             },
         });
     }
+    /**
+     * @deprecated This is deprecated now. Please use WebCheckout or UPIIntentcheckout flow.
+     */
     async _startCheckout() {
         try {
             const session = this.getSession();
@@ -170,6 +173,9 @@ export default class App extends Component {
             console.log(e.message);
         }
     }
+    /**
+     * Use this method for card payment. This will require PCI-DSS certification to use.
+     */
     async _startCardPayment() {
         try {
             const session = this.getSession();
@@ -245,18 +251,21 @@ export default class App extends Component {
         }
     }
     getSession() {
-        return new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX);
+        return new CFSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD'
+            ? CFEnvironment.PRODUCTION
+            : CFEnvironment.SANDBOX);
     }
     handleSubmit = () => {
         console.log('TYPE', this.creditCardRef);
         if (this.creditCardRef.current) {
             let nonPciCard = new ElementCard(this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV, this.state.toggleCheckBox);
+            this.handleSessionId('session_iZt0C2k4_50oExGN2WFOidE4Z5KbTIGC5BpNpf_qgztd-Yg-q1TpQ0-7jNeIR1UiRjWuI8jpDp3FgcRdBAI5uT8lmW-OEqFJ8tjbg4l4zA4R6lpO90Iipd8payment');
             console.log('KISHANTEST', JSON.stringify(nonPciCard));
-            this.creditCardRef.current.doPayment(nonPciCard);
+            this.creditCardRef.current.doPaymentWithPaymentSessionId(nonPciCard, this.getSession());
         }
     };
     render() {
-        let cfCard = React.createElement(CFCard, { cfSession: this.getSession(), style: { flex: 1 }, cardListener: this.handleCFCardInput, placeholder: 'Enter Card Number', placeholderTextColor: '#0000ff', underlineColorAndroid: 'transparent', cursorColor: 'gray', returnKeyType: 'next', ref: this.creditCardRef, onSubmitEditing: (e) => console.log('onSubmitEditing'), onEndEditing: (e) => console.log('onEndEditing'), onBlur: (e) => console.log('onBlur'), onFocus: (e) => console.log('onFocus') });
+        let cfCard = React.createElement(CFCard, { cfSession: this.getSession(), style: { flex: 1 }, cardListener: this.handleCFCardInput, placeholder: "Enter Card Number", placeholderTextColor: "#0000ff", underlineColorAndroid: 'transparent', cursorColor: 'gray', returnKeyType: "next", ref: this.creditCardRef, onSubmitEditing: _ => console.log('onSubmitEditing'), onEndEditing: _ => console.log('onEndEditing'), onBlur: _ => console.log('onBlur'), onFocus: _ => console.log('onFocus') });
         return (React.createElement(ScrollView, null,
             React.createElement(View, { style: styles.container },
                 React.createElement(View, { style: {
@@ -264,20 +273,20 @@ export default class App extends Component {
                         alignSelf: 'stretch',
                         textAlign: 'center',
                     } },
-                    React.createElement(TextInput, { style: styles.input, placeholder: 'Session Id', keyboardType: 'default', onChangeText: this.handleSessionId }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: 'Order Id', keyboardType: 'default', onChangeText: this.handleOrderId }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: 'SANDBOX', keyboardType: 'default', onChangeText: this.handleEnv }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: 'Enter VPA for Collect or PSP app package', keyboardType: 'default', onChangeText: this.handleUpi })),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Session Id", keyboardType: "default", onChangeText: this.handleSessionId }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", keyboardType: "default", onChangeText: this.handleOrderId }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "SANDBOX", keyboardType: "default", onChangeText: this.handleEnv }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Enter VPA for Collect or PSP app package", keyboardType: "default", onChangeText: this.handleUpi })),
                 React.createElement(View, { style: styles.button },
-                    React.createElement(Button, { onPress: () => this._startCheckout(), title: 'Start Payment' })),
+                    React.createElement(Button, { onPress: () => this._startCheckout(), title: "Start Payment" })),
                 React.createElement(View, { style: styles.button },
-                    React.createElement(Button, { onPress: () => this._startWebCheckout(), title: 'Start Web Payment' })),
+                    React.createElement(Button, { onPress: () => this._startWebCheckout(), title: "Start Web Payment" })),
                 React.createElement(View, { style: styles.button },
-                    React.createElement(Button, { onPress: () => this._startUPICheckout(), title: 'Start UPI Intent Checkout Payment' })),
+                    React.createElement(Button, { onPress: () => this._startUPICheckout(), title: "Start UPI Intent Checkout Payment" })),
                 React.createElement(View, { style: styles.button },
-                    React.createElement(Button, { onPress: () => this._makeUpiCollectPayment(), title: 'Make UPI Collect Payment' })),
+                    React.createElement(Button, { onPress: () => this._makeUpiCollectPayment(), title: "Make UPI Collect Payment" })),
                 React.createElement(View, { style: styles.button },
-                    React.createElement(Button, { onPress: () => this._makeUpiIntentPayment(), title: 'Make UPI Intent Payment' })),
+                    React.createElement(Button, { onPress: () => this._makeUpiIntentPayment(), title: "Make UPI Intent Payment" })),
                 React.createElement(View, { style: {
                         borderWidth: 1,
                         alignSelf: 'stretch',
@@ -296,29 +305,42 @@ export default class App extends Component {
                     } },
                     React.createElement(View, { style: styles.cardContainer },
                         cfCard,
-                        React.createElement(Image, { color: '#000', style: {
+                        React.createElement(Image, { color: "#000", style: {
                                 margin: 5,
                             }, source: this.state.cardNetwork })),
-                    React.createElement(View, { style: { flexDirection: 'column', alignSelf: 'stretch', textAlign: 'center' } },
-                        React.createElement(TextInput, { style: styles.input, placeholder: 'Holder Name', keyboardType: 'default', placeholderTextColor: '#0000ff', underlineColorAndroid: 'transparent', cursorColor: 'gray', onChangeText: this.handleCardHolderName })),
+                    React.createElement(View, { style: {
+                            flexDirection: 'column',
+                            alignSelf: 'stretch',
+                            textAlign: 'center',
+                        } },
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Holder Name", keyboardType: "default", placeholderTextColor: "#0000ff", underlineColorAndroid: 'transparent', cursorColor: 'gray', onChangeText: this.handleCardHolderName })),
                     React.createElement(View, { style: { flexDirection: 'row', alignSelf: 'stretch' } },
-                        React.createElement(TextInput, { style: styles.input, placeholder: 'Expiry Month', keyboardType: 'numeric', maxLength: 2, placeholderTextColor: '#0000ff', underlineColorAndroid: 'transparent', cursorColor: 'gray', onChangeText: this.handleCardExpiryMM }),
-                        React.createElement(TextInput, { style: styles.input, placeholder: 'Expiry Year', keyboardType: 'numeric', maxLength: 2, placeholderTextColor: '#0000ff', underlineColorAndroid: 'transparent', cursorColor: 'gray', onChangeText: this.handleCardExpiryYY }),
-                        React.createElement(TextInput, { style: styles.input, placeholder: 'CVV', keyboardType: 'numeric', maxLength: 3, secureTextEntry: true, onChangeText: this.handleCardCVV })),
-                    React.createElement(View, { style: { flexDirection: 'row', alignSelf: 'stretch', alignItems: 'center', textAlign: 'center' } },
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Expiry Month", keyboardType: "numeric", maxLength: 2, placeholderTextColor: "#0000ff", underlineColorAndroid: 'transparent', cursorColor: 'gray', onChangeText: this.handleCardExpiryMM }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Expiry Year", keyboardType: "numeric", maxLength: 2, placeholderTextColor: "#0000ff", underlineColorAndroid: 'transparent', cursorColor: 'gray', onChangeText: this.handleCardExpiryYY }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, onChangeText: this.handleCardCVV })),
+                    React.createElement(View, { style: {
+                            flexDirection: 'row',
+                            alignSelf: 'stretch',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                        } },
                         React.createElement(CheckBox, { value: this.state.toggleCheckBox, onValueChange: this.handleSaveCardToggle }),
                         React.createElement(Text, null, "Saved Card for future payment")),
                     React.createElement(View, { style: styles.button },
-                        React.createElement(Button, { onPress: () => this.handleSubmit(), title: 'Card Payment' }))),
+                        React.createElement(Button, { onPress: () => this.handleSubmit(), title: "Card Payment" }))),
                 React.createElement(View, { style: {
                         borderWidth: 1,
                         alignSelf: 'stretch',
                     } },
-                    React.createElement(View, { style: { flexDirection: 'column', textAlign: 'center', alignSelf: 'stretch' } },
-                        React.createElement(TextInput, { style: styles.input, placeholder: 'Instrument Id', keyboardType: 'default', onChangeText: this.handleInstrumentId }),
-                        React.createElement(TextInput, { style: styles.input, placeholder: 'CVV', keyboardType: 'numeric', maxLength: 3, secureTextEntry: true, onChangeText: this.handleCardCVV })),
+                    React.createElement(View, { style: {
+                            flexDirection: 'column',
+                            textAlign: 'center',
+                            alignSelf: 'stretch',
+                        } },
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Instrument Id", keyboardType: "default", onChangeText: this.handleInstrumentId }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, onChangeText: this.handleCardCVV })),
                     React.createElement(View, { style: styles.button },
-                        React.createElement(Button, { onPress: () => this._startSavedCardPayment(), title: 'Saved Card Payment' }))))));
+                        React.createElement(Button, { onPress: () => this._startSavedCardPayment(), title: "Saved Card Payment" }))))));
     }
 }
 const styles = StyleSheet.create({
