@@ -59,6 +59,27 @@ export default class App extends Component {
       upiId: '',
       cardNetwork: require('./assests/visa.png'),
     };
+    this.cfCardInstance = this.createCFCard();
+  }
+
+  createCFCard() {
+    return (
+      <CFCard
+        cfSession={this.getFixSession()}
+        style={{flex: 1}}
+        cardListener={this.handleCFCardInput}
+        placeholder="Enter Card Number"
+        placeholderTextColor="#0000ff"
+        underlineColorAndroid="transparent"
+        cursorColor="gray"
+        returnKeyType="next"
+        ref={this.creditCardRef}
+        onSubmitEditing={() => console.log('onSubmitEditing')}
+        onEndEditing={() => console.log('onEndEditing')}
+        onBlur={() => console.log('onBlur')}
+        onFocus={() => console.log('onFocus')}
+      />
+    );
   }
 
   updateStatus = (message: string) => {
@@ -320,8 +341,23 @@ export default class App extends Component {
     );
   }
 
+  /**
+   * 
+   * @returns This is to handle Custom Card component. 
+   * Initially we will pass paymentSessionId to get view rendered properly. During payment, merchant will update or pass updated sessionId.
+   * To handle scenario where merchant can't create order beforehand or before rendering.
+   */
+  private getFixSession(): CFSession {
+    return new CFSession(
+      'session_4HgWsBw3mS_0abA1dkj_OPG5KLCSOAAlh3eTQnJ_3P-qSLDvoxzdbD_MTdQd64W5IW3_Y9CBu8W_cyNb0VJ1lYMPPxof-IWHK8T--H4X8oaQseY2lB9aVDApayment',
+      'devstudio_91538541',
+      this.state.cfEnv === 'PROD'
+        ? CFEnvironment.PRODUCTION
+        : CFEnvironment.SANDBOX,
+    );
+  }
+
   private handleSubmit = () => {
-    console.log('TYPE', this.creditCardRef);
     if (this.creditCardRef.current) {
       let nonPciCard = new ElementCard(
         this.state.cardHolderName,
@@ -330,10 +366,7 @@ export default class App extends Component {
         this.state.cardCVV,
         this.state.toggleCheckBox,
       );
-      this.handleSessionId(
-        'session_iZt0C2k4_50oExGN2WFOidE4Z5KbTIGC5BpNpf_qgztd-Yg-q1TpQ0-7jNeIR1UiRjWuI8jpDp3FgcRdBAI5uT8lmW-OEqFJ8tjbg4l4zA4R6lpO90Iipd8payment',
-      );
-      console.log('KISHANTEST', JSON.stringify(nonPciCard));
+      console.log('Custom Card NonPCI', JSON.stringify(nonPciCard));
       this.creditCardRef.current.doPaymentWithPaymentSessionId(
         nonPciCard,
         this.getSession(),
@@ -342,21 +375,6 @@ export default class App extends Component {
   };
 
   render() {
-    let cfCard = <CFCard
-        cfSession={this.getSession()}
-        style={{flex: 1}}
-        cardListener={this.handleCFCardInput}
-        placeholder="Enter Card Number"
-        placeholderTextColor="#0000ff"
-        underlineColorAndroid={'transparent'}
-        cursorColor={'gray'}
-        returnKeyType="next"
-        ref={this.creditCardRef}
-        onSubmitEditing={_ => console.log('onSubmitEditing')}
-        onEndEditing={_ => console.log('onEndEditing')}
-        onBlur={_ => console.log('onBlur')}
-        onFocus={_ => console.log('onFocus')}
-     />;
     return (
       <ScrollView>
         <View style={styles.container}>
@@ -437,7 +455,7 @@ export default class App extends Component {
             marginBottom: 10,
           }}>
             <View style={styles.cardContainer}>
-              {cfCard}
+              {this.cfCardInstance}
               <Image
                 color="#000"
                 style={{
