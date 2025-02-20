@@ -97,6 +97,8 @@ export type CardInputProps = {
 const CardInput: any = forwardRef<CardPaymentHandle, CardInputProps>(
   ({ cfSession, cardListener, style, ...props }: CardInputProps, ref) => {
     const [inputNumber, setInputNumber] = React.useState('');
+    const inputNumberRef = React.useRef('');
+    const sessionRef = React.useRef(cfSession);
     React.useImperativeHandle(ref, () => ({
       doPayment,
       doPaymentWithPaymentSessionId,
@@ -124,6 +126,7 @@ const CardInput: any = forwardRef<CardPaymentHandle, CardInputProps>(
           if (end !== textWithoutSpaces.length) {
             formattedText += ' ';
           }
+          inputNumberRef.current = formattedText;
           setInputNumber(formattedText);
         }
 
@@ -205,8 +208,9 @@ const CardInput: any = forwardRef<CardPaymentHandle, CardInputProps>(
 
     const doPayment = (cardInfo: ElementCard) => {
       try {
-        cardInfo.cardNumber = inputNumber.replaceAll(' ', '');
-        const cardPayment = new CFCardPayment(cfSession, cardInfo);
+        let cfCardNumber = inputNumberRef.current;
+        cardInfo.cardNumber = cfCardNumber.replaceAll(' ', '');
+        const cardPayment = new CFCardPayment(sessionRef.current, cardInfo);
         CFPaymentGatewayService.makePayment(cardPayment);
       } catch (e: any) {
         console.log(e.message);
@@ -218,7 +222,7 @@ const CardInput: any = forwardRef<CardPaymentHandle, CardInputProps>(
       session: CFSession
     ) => {
       try {
-        cfSession = session;
+        sessionRef.current = session;
         doPayment(cardInfo);
       } catch (e: any) {
         console.log(e.message);

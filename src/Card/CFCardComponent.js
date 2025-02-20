@@ -67,6 +67,8 @@ async function getInfo(env, route, bodyData) {
 }
 const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref) => {
     const [inputNumber, setInputNumber] = React.useState('');
+    const inputNumberRef = React.useRef('');
+    const sessionRef = React.useRef(cfSession);
     React.useImperativeHandle(ref, () => ({
         doPayment,
         doPaymentWithPaymentSessionId,
@@ -92,6 +94,7 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
             if (end !== textWithoutSpaces.length) {
                 formattedText += ' ';
             }
+            inputNumberRef.current = formattedText;
             setInputNumber(formattedText);
         }
         let tdrResponse = null;
@@ -162,8 +165,9 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
     }, [cardListener]);
     const doPayment = (cardInfo) => {
         try {
-            cardInfo.cardNumber = inputNumber.replaceAll(' ', '');
-            const cardPayment = new CFCardPayment(cfSession, cardInfo);
+            let cfCardNumber = inputNumberRef.current;
+            cardInfo.cardNumber = cfCardNumber.replaceAll(' ', '');
+            const cardPayment = new CFCardPayment(sessionRef.current, cardInfo);
             CFPaymentGatewayService.makePayment(cardPayment);
         }
         catch (e) {
@@ -172,7 +176,7 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
     };
     const doPaymentWithPaymentSessionId = (cardInfo, session) => {
         try {
-            cfSession = session;
+            sessionRef.current = session;
             doPayment(cardInfo);
         }
         catch (e) {
