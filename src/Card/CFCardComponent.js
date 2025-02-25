@@ -22,6 +22,24 @@ function luhnCheck(cardNumber) {
     }
     return sum % 10 === 0;
 }
+function getInputValidationDetails(cardBinResponse) {
+    if (!cardBinResponse || !cardBinResponse.scheme) {
+        return null;
+    }
+    let schemeType = cardBinResponse.scheme.toLowerCase();
+    let inputValidationDetails;
+    switch (schemeType) {
+        case 'amex':
+            inputValidationDetails = { max_input_length: 15, cvv_length: 4 };
+            break;
+        case 'diners':
+            inputValidationDetails = { max_input_length: 14, cvv_length: 3 };
+            break;
+        default: // Covers visa, mastercard, rupay, jcb, discover, and unknown schemes
+            inputValidationDetails = { max_input_length: 16, cvv_length: 3 };
+    }
+    return inputValidationDetails;
+}
 /**
  * Fetching Tdr info with card bin data & cfSession object
  * @param session :  for payment sessionId & env
@@ -73,9 +91,9 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
         doPayment,
         doPaymentWithPaymentSessionId,
     }));
-    let tdrJson = null;
-    let cardBinJson = null;
-    let firstEightDigits = '';
+    const tdrJsonRef = React.useRef(null);
+    const cardBinJsonRef = React.useRef(null);
+    const firstEightDigitsRef = React.useRef('');
     const handleChange = React.useCallback(async (cardNumber) => {
         let completeResponse = {};
         const textWithoutSpaces = cardNumber.replaceAll(' ', '');
@@ -95,7 +113,7 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
                 formattedText += ' ';
             }
             inputNumberRef.current = formattedText;
-            setInputNumber(formattedText);
+            setInputNumber((prev) => prev === formattedText ? prev : formattedText);
         }
         let tdrResponse = null;
         let cardBinResponse = null;
@@ -106,6 +124,7 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
             await getTDR(cfSession, textWithoutSpaces)
                 .then((response) => {
                 tdrResponse = response;
+                firstEightDigitsRef.current = textWithoutSpaces.substring(0, 8);
             })
                 .catch(() => {
                 tdrResponse = null;
@@ -113,56 +132,57 @@ const CardInput = forwardRef(({ cfSession, cardListener, style, ...props }, ref)
             await getCardBin(cfSession, textWithoutSpaces)
                 .then((response) => {
                 cardBinResponse = response;
+                firstEightDigitsRef.current = textWithoutSpaces.substring(0, 8);
             })
                 .catch(() => {
                 cardBinResponse = null;
             });
             if (tdrResponse) {
-                tdrJson = tdrResponse;
-                completeResponse['tdr_info'] = tdrJson;
+                tdrJsonRef.current = tdrResponse;
+                completeResponse.tdr_info = tdrJsonRef.current;
             }
             if (cardBinResponse) {
-                cardBinJson = cardBinResponse;
-                completeResponse['card_bin_info'] = cardBinJson;
+                cardBinJsonRef.current = cardBinResponse;
+                completeResponse.card_bin_info = cardBinJsonRef.current;
+                completeResponse.input_validation = getInputValidationDetails(cardBinJsonRef.current);
             }
         }
         if (textWithoutSpaces.length === 8) {
-            firstEightDigits = textWithoutSpaces;
             await fetchDataAndSet();
         }
         else if (textWithoutSpaces.length > 8) {
-            if (firstEightDigits === textWithoutSpaces.substring(0, 8)) {
-                completeResponse['tdr_info'] = tdrJson;
-                completeResponse['card_bin_info'] = cardBinJson;
+            if (firstEightDigitsRef.current === textWithoutSpaces.substring(0, 8)) {
+                completeResponse.tdr_info = tdrJsonRef.current;
+                completeResponse.card_bin_info = cardBinJsonRef.current;
+                completeResponse.input_validation = getInputValidationDetails(cardBinJsonRef.current);
             }
             else {
-                firstEightDigits = textWithoutSpaces.substring(0, 8);
-                tdrJson = null;
-                cardBinJson = null;
+                tdrJsonRef.current = null;
+                cardBinJsonRef.current = null;
                 await fetchDataAndSet();
             }
         }
         if (textWithoutSpaces.length < 8) {
-            cardBinJson = null;
-            tdrJson = null;
-            firstEightDigits = '';
+            tdrJsonRef.current = null;
+            cardBinJsonRef.current = null;
+            firstEightDigitsRef.current = '';
         }
-        if (cardBinJson !== null) {
-            completeResponse['card_network'] = cardBinJson['scheme'];
+        if (cardBinJsonRef.current !== null) {
+            completeResponse.card_network = cardBinJsonRef.current.scheme;
         }
         let luhnStatus = luhnCheck(textWithoutSpaces);
         if (luhnStatus) {
-            completeResponse['luhn_check_info'] = 'SUCCESS';
+            completeResponse.luhn_check_info = 'SUCCESS';
             if (textWithoutSpaces && textWithoutSpaces.length > 4) {
-                completeResponse['last_four_digit'] = textWithoutSpaces.substring(textWithoutSpaces.length - 4);
+                completeResponse.last_four_digit = textWithoutSpaces.substring(textWithoutSpaces.length - 4);
             }
         }
         else {
-            completeResponse['luhn_check_info'] = 'FAIL';
+            completeResponse.luhn_check_info = 'FAIL';
         }
-        completeResponse['card_length'] = textWithoutSpaces.length;
+        completeResponse.card_length = textWithoutSpaces.length;
         return cardListener(JSON.stringify(completeResponse));
-    }, [cardListener]);
+    }, [cfSession, cardListener]);
     const doPayment = (cardInfo) => {
         try {
             let cfCardNumber = inputNumberRef.current;
