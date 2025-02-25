@@ -3,8 +3,9 @@ import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
-import { CFPaymentGatewayService, CFCard, } from 'react-native-cashfree-pg-sdk';
+import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
 import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard, } from 'cashfree-pg-api-contract';
+import CustomCardInput from './CustomCardInput';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
     constructor() {
@@ -28,7 +29,7 @@ export default class App extends Component {
         this.cfCardInstance = this.createCFCard();
     }
     createCFCard() {
-        return (React.createElement(CFCard, { cfSession: this.getFixSession(), style: { flex: 1 }, cardListener: this.handleCFCardInput, placeholder: "Enter Card Number", placeholderTextColor: "#0000ff", underlineColorAndroid: "transparent", cursorColor: "gray", returnKeyType: "next", ref: this.creditCardRef, onSubmitEditing: () => console.log('onSubmitEditing'), onEndEditing: () => console.log('onEndEditing'), onBlur: () => console.log('onBlur'), onFocus: () => console.log('onFocus') }));
+        return React.createElement(CustomCardInput, { ref: this.creditCardRef, session: this.getFixSession(), cardListener: this.handleCFCardInput });
     }
     updateStatus = (message) => {
         this.setState({ responseText: message });
@@ -266,7 +267,7 @@ export default class App extends Component {
      * To handle scenario where merchant can't create order beforehand or before rendering.
      */
     getFixSession() {
-        return new CFSession('session_4HgWsBw3mS_0abA1dkj_OPG5KLCSOAAlh3eTQnJ_3P-qSLDvoxzdbD_MTdQd64W5IW3_Y9CBu8W_cyNb0VJ1lYMPPxof-IWHK8T--H4X8oaQseY2lB9aVDApayment', 'devstudio_91538541', this.state.cfEnv === 'PROD'
+        return new CFSession('session_4zxKsUyNPorU6aZbHcxf8LJmyET2xA_svlDF69vSa8k9mkjAV3Zeosc2l3__mxno38hTK3pXR6_jL8X5R5WVC9BEXoN6SPef5V5lAYJyIE234IODJE1TXtIpayment', 'devstudio_20339474', this.state.cfEnv === 'PROD'
             ? CFEnvironment.PRODUCTION
             : CFEnvironment.SANDBOX);
     }

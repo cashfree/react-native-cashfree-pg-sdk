@@ -36,6 +36,7 @@ import {
   UPIMode,
   ElementCard,
 } from 'cashfree-pg-api-contract';
+import CustomCardInput from './CustomCardInput';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 
@@ -63,23 +64,10 @@ export default class App extends Component {
   }
 
   createCFCard() {
-    return (
-      <CFCard
-        cfSession={this.getFixSession()}
-        style={{flex: 1}}
-        cardListener={this.handleCFCardInput}
-        placeholder="Enter Card Number"
-        placeholderTextColor="#0000ff"
-        underlineColorAndroid="transparent"
-        cursorColor="gray"
-        returnKeyType="next"
-        ref={this.creditCardRef}
-        onSubmitEditing={() => console.log('onSubmitEditing')}
-        onEndEditing={() => console.log('onEndEditing')}
-        onBlur={() => console.log('onBlur')}
-        onFocus={() => console.log('onFocus')}
-      />
-    );
+    return <CustomCardInput 
+    ref={this.creditCardRef}
+    session={this.getFixSession()}
+    cardListener={this.handleCFCardInput} />;
   }
 
   updateStatus = (message: string) => {
@@ -349,8 +337,8 @@ export default class App extends Component {
    */
   private getFixSession(): CFSession {
     return new CFSession(
-      'session_4HgWsBw3mS_0abA1dkj_OPG5KLCSOAAlh3eTQnJ_3P-qSLDvoxzdbD_MTdQd64W5IW3_Y9CBu8W_cyNb0VJ1lYMPPxof-IWHK8T--H4X8oaQseY2lB9aVDApayment',
-      'devstudio_91538541',
+      'session_4zxKsUyNPorU6aZbHcxf8LJmyET2xA_svlDF69vSa8k9mkjAV3Zeosc2l3__mxno38hTK3pXR6_jL8X5R5WVC9BEXoN6SPef5V5lAYJyIE234IODJE1TXtIpayment',
+      'devstudio_20339474',
       this.state.cfEnv === 'PROD'
         ? CFEnvironment.PRODUCTION
         : CFEnvironment.SANDBOX,
