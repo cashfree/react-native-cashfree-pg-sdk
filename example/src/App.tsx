@@ -58,7 +58,7 @@ export default class App extends Component {
       toggleCheckBox: false,
       cfEnv: '',
       upiId: '',
-      cardNetwork: require('./assests/visa.png'),
+      cardNetwork: require('./assets/visa.png'),
     };
     this.cfCardInstance = this.createCFCard();
   }
@@ -118,39 +118,39 @@ export default class App extends Component {
     const cardNetwork = JSON.parse(data)['card_network'];
     switch (cardNetwork) {
       case 'visa': {
-        this.setState({cardNetwork: require('./assests/visa.png')});
+        this.setState({cardNetwork: require('./assets/visa.png')});
         break;
       }
       case 'mastercard': {
-        this.setState({cardNetwork: require('./assests/mastercard.png')});
+        this.setState({cardNetwork: require('./assets/mastercard.png')});
         break;
       }
       case 'amex': {
-        this.setState({cardNetwork: require('./assests/amex.png')});
+        this.setState({cardNetwork: require('./assets/amex.png')});
         break;
       }
       case 'maestro': {
-        this.setState({cardNetwork: require('./assests/maestro.png')});
+        this.setState({cardNetwork: require('./assets/maestro.png')});
         break;
       }
       case 'rupay': {
-        this.setState({cardNetwork: require('./assests/rupay.png')});
+        this.setState({cardNetwork: require('./assets/rupay.png')});
         break;
       }
       case 'diners': {
-        this.setState({cardNetwork: require('./assests/diners.png')});
+        this.setState({cardNetwork: require('./assets/diners.png')});
         break;
       }
       case 'discover': {
-        this.setState({cardNetwork: require('./assests/discover.png')});
+        this.setState({cardNetwork: require('./assets/discover.png')});
         break;
       }
       case 'jcb': {
-        this.setState({cardNetwork: require('./assests/jcb.png')});
+        this.setState({cardNetwork: require('./assets/jcb.png')});
         break;
       }
       default: {
-        this.setState({cardNetwork: require('./assests/visa.png')});
+        this.setState({cardNetwork: require('./assets/visa.png')});
       }
     }
   };

@@ -127,7 +127,7 @@ class CashfreePgApi: NSObject {
                     
                     let systemVersion = UIDevice.current.systemVersion
 
-                    cardPayment.setPlatform("irnx-e-2.1.9-x-m-s-x-i-\(systemVersion.prefix(4))")
+                    cardPayment.setPlatform("irnx-e-2.2.1-x-m-s-x-i-\(systemVersion.prefix(4))")
                     
                     return cardPayment
                 }
@@ -152,7 +152,7 @@ class CashfreePgApi: NSObject {
                     .setUPI(cfUPI!)
                     .build()
                 let systemVersion = UIDevice.current.systemVersion
-                upiPayment.setPlatform("irnx-e-2.1.9-x-m-s-x-i-\(systemVersion.prefix(4))")
+                upiPayment.setPlatform("irnx-e-2.2.1-x-m-s-x-i-\(systemVersion.prefix(4))")
 
                 return upiPayment
             } catch let e {
