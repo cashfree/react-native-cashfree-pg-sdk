@@ -53,5 +53,5 @@ target 'CashfreePgApiExample' do
       :mac_catalyst_enabled => false
     )
   end
-  pod 'CashfreePG', '2.2.1'
+  pod 'CashfreePG', '2.2.4'
 end
