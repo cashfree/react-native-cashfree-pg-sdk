@@ -35,6 +35,7 @@ import {
   SavedCard,
   UPIMode,
   ElementCard,
+  CFSubscriptionSession,
 } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
 
@@ -51,12 +52,12 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'devstudio_76123729',
+      orderId: 'subs_m1e2345e8s345699',
       sessionId:
-        'session_8HWBj0N2H2PKwKntO6sz6-490xsXxjxx45wLvgywsyn_Uvzk6UlA5aRxc41wR5qDkUHRfaiuHwFIztUtOhQvpGv0I-VJDMy2DtNQheppAO7pAxDMiA0Vifcpayment',
+        'sub_session_CFwR3vi_Mkx5skIwOxZx6heS0xnQCOSGmht5ddLMwaGZJ9pknISozyLWrfE-uAGEFZjRcl6bhxxw3LpchVThrQEvQJvBevKmT3zMqkqGL8Eitv_gO55wvBp3A5spayment',
       instrumentId: '',
       toggleCheckBox: false,
-      cfEnv: '',
+      cfEnv: 'SANDBOX',
       upiId: '',
       cardNetwork: require('./assets/visa.png'),
     };
@@ -64,10 +65,13 @@ export default class App extends Component {
   }
 
   createCFCard() {
-    return <CustomCardInput 
-    ref={this.creditCardRef}
-    session={this.getFixSession()}
-    cardListener={this.handleCFCardInput} />;
+    return (
+      <CustomCardInput
+        ref={this.creditCardRef}
+        session={this.getFixSession()}
+        cardListener={this.handleCFCardInput}
+      />
+    );
   }
 
   updateStatus = (message: string) => {
@@ -234,6 +238,16 @@ export default class App extends Component {
     }
   }
 
+  async _startSubscriptionCheckout() {
+    try {
+      const subscriptionSession = this.getSubscriptionSession();
+      console.log('Subscription Session', JSON.stringify(subscriptionSession));
+      CFPaymentGatewayService.doSubscriptionPayment(subscriptionSession);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
   /**
    * Use this method for card payment. This will require PCI-DSS certification to use.
    */
@@ -329,9 +343,19 @@ export default class App extends Component {
     );
   }
 
+  private getSubscriptionSession(): CFSubscriptionSession {
+    return new CFSubscriptionSession(
+      this.state.sessionId,
+      this.state.orderId,
+      this.state.cfEnv === 'PROD'
+        ? CFEnvironment.PRODUCTION
+        : CFEnvironment.SANDBOX,
+    );
+  }
+
   /**
-   * 
-   * @returns This is to handle Custom Card component. 
+   *
+   * @returns This is to handle Custom Card component.
    * Initially we will pass paymentSessionId to get view rendered properly. During payment, merchant will update or pass updated sessionId.
    * To handle scenario where merchant can't create order beforehand or before rendering.
    */
@@ -376,18 +400,21 @@ export default class App extends Component {
               style={styles.input}
               placeholder="Session Id"
               keyboardType="default"
+              value={this.state.sessionId}
               onChangeText={this.handleSessionId}
             />
             <TextInput
               style={styles.input}
               placeholder="Order Id"
               keyboardType="default"
+              value={this.state.orderId}
               onChangeText={this.handleOrderId}
             />
             <TextInput
               style={styles.input}
               placeholder="SANDBOX"
               keyboardType="default"
+              value={this.state.cfEnv}
               onChangeText={this.handleEnv}
             />
             <TextInput
@@ -411,6 +438,12 @@ export default class App extends Component {
           </View>
           <View style={styles.button}>
             <Button
+              onPress={() => this._startSubscriptionCheckout()}
+              title="Start Subscription Checkout"
+            />
+          </View>
+          <View style={styles.button}>
+            <Button
               onPress={() => this._startUPICheckout()}
               title="Start UPI Intent Checkout Payment"
             />
@@ -429,19 +462,23 @@ export default class App extends Component {
           </View>
           <View
             style={{
-            borderWidth: 1,
-            alignSelf: 'stretch',
-            textAlign: 'center',
+              borderWidth: 1,
+              alignSelf: 'stretch',
+              textAlign: 'center',
               marginBottom: 10,
             }}>
-            <Text style={styles.response_text}> {this.state.responseText} </Text>
+            <Text style={styles.response_text}>
+              {' '}
+              {this.state.responseText}{' '}
+            </Text>
           </View>
-          <View style={{
-            borderWidth: 1,
-            alignSelf: 'stretch',
-            textAlign: 'center',
-            marginBottom: 10,
-          }}>
+          <View
+            style={{
+              borderWidth: 1,
+              alignSelf: 'stretch',
+              textAlign: 'center',
+              marginBottom: 10,
+            }}>
             <View style={styles.cardContainer}>
               {this.cfCardInstance}
               <Image
@@ -519,10 +556,11 @@ export default class App extends Component {
             </View>
           </View>
 
-          <View style={{
-            borderWidth: 1,
-            alignSelf: 'stretch',
-          }}>
+          <View
+            style={{
+              borderWidth: 1,
+              alignSelf: 'stretch',
+            }}>
             <View
               style={{
                 flexDirection: 'column',

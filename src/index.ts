@@ -7,25 +7,31 @@ import {
   Platform,
 } from 'react-native';
 import { version } from '../package.json';
-import { type CheckoutPayment, type CFSession, CFUPIPayment, CFCardPayment } from 'cashfree-pg-api-contract';
+import {
+  type CheckoutPayment,
+  type CFSession,
+  type CFSubscriptionSession,
+  CFUPIPayment,
+  CFCardPayment,
+} from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
 
 const LINKING_ERROR =
   `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
-  Platform.select({ ios: '- You have run \'pod install\'\n', default: '' }) +
+  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo managed workflow\n';
 
 const CashfreePgApi = NativeModules.CashfreePgApi
   ? NativeModules.CashfreePgApi
   : new Proxy(
-    {},
-    {
-      get() {
-        throw new Error(LINKING_ERROR);
-      },
-    },
-  );
+      {},
+      {
+        get() {
+          throw new Error(LINKING_ERROR);
+        },
+      }
+    );
 
 class CFPaymentGateway {
   private emitter: EventEmitter;
@@ -55,6 +61,10 @@ class CFPaymentGateway {
     CashfreePgApi.doWebPayment(JSON.stringify(cfSession));
   }
 
+  doSubscriptionPayment(cfSession: CFSubscriptionSession) {
+    CashfreePgApi.doSubscriptionPayment(JSON.stringify(cfSession));
+  }
+
   /**
    * @deprecated : Instead call makePayment
    */
@@ -64,7 +74,7 @@ class CFPaymentGateway {
 
   async getInstalledUpiApps() {
     return new Promise((resolve, reject) => {
-      if(Platform.OS === 'ios'){
+      if (Platform.OS === 'ios') {
         let fetchUpiList = (apps: string) => {
           console.log(JSON.stringify(apps));
           if (apps) {
@@ -73,10 +83,12 @@ class CFPaymentGateway {
             reject('No UPI apps found');
           }
         };
-        this.upiAppsSubscription = this.emitter.addListener('cfUpiApps', fetchUpiList);
-        CashfreePgApi.getInstalledUpiApps()
-      }
-      else {
+        this.upiAppsSubscription = this.emitter.addListener(
+          'cfUpiApps',
+          fetchUpiList
+        );
+        CashfreePgApi.getInstalledUpiApps();
+      } else {
         CashfreePgApi.getInstalledUpiApps((apps: string) => {
           if (apps) {
             resolve(apps);
@@ -138,11 +150,11 @@ class CFPaymentGateway {
     };
     this.successSubscription = this.emitter.addListener(
       'cfSuccess',
-      successFunction,
+      successFunction
     );
     this.failureSubscription = this.emitter.addListener(
       'cfFailure',
-      failureFunction,
+      failureFunction
     );
     CashfreePgApi.setCallback();
   }
@@ -215,5 +227,5 @@ export class CFErrorResponse {
   }
 }
 
-export const CFCard = CFCardComponent
+export const CFCard = CFCardComponent;
 export const CFPaymentGatewayService = new CFPaymentGateway();

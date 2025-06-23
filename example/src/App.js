@@ -4,7 +4,7 @@ import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
-import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard, } from 'cashfree-pg-api-contract';
+import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard, CFSubscriptionSession, } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
@@ -18,18 +18,18 @@ export default class App extends Component {
             cardExpiryMM: '',
             cardExpiryYY: '',
             cardCVV: '',
-            orderId: 'devstudio_76123729',
-            sessionId: 'session_8HWBj0N2H2PKwKntO6sz6-490xsXxjxx45wLvgywsyn_Uvzk6UlA5aRxc41wR5qDkUHRfaiuHwFIztUtOhQvpGv0I-VJDMy2DtNQheppAO7pAxDMiA0Vifcpayment',
+            orderId: 'subs_m1e2345e8s345699',
+            sessionId: 'sub_session_CFwR3vi_Mkx5skIwOxZx6heS0xnQCOSGmht5ddLMwaGZJ9pknISozyLWrfE-uAGEFZjRcl6bhxxw3LpchVThrQEvQJvBevKmT3zMqkqGL8Eitv_gO55wvBp3A5spayment',
             instrumentId: '',
             toggleCheckBox: false,
-            cfEnv: '',
+            cfEnv: 'SANDBOX',
             upiId: '',
             cardNetwork: require('./assets/visa.png'),
         };
         this.cfCardInstance = this.createCFCard();
     }
     createCFCard() {
-        return React.createElement(CustomCardInput, { ref: this.creditCardRef, session: this.getFixSession(), cardListener: this.handleCFCardInput });
+        return (React.createElement(CustomCardInput, { ref: this.creditCardRef, session: this.getFixSession(), cardListener: this.handleCFCardInput }));
     }
     updateStatus = (message) => {
         this.setState({ responseText: message });
@@ -178,6 +178,16 @@ export default class App extends Component {
             console.log(e.message);
         }
     }
+    async _startSubscriptionCheckout() {
+        try {
+            const subscriptionSession = this.getSubscriptionSession();
+            console.log('Subscription Session', JSON.stringify(subscriptionSession));
+            CFPaymentGatewayService.doSubscriptionPayment(subscriptionSession);
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     /**
      * Use this method for card payment. This will require PCI-DSS certification to use.
      */
@@ -260,6 +270,11 @@ export default class App extends Component {
             ? CFEnvironment.PRODUCTION
             : CFEnvironment.SANDBOX);
     }
+    getSubscriptionSession() {
+        return new CFSubscriptionSession(this.state.sessionId, this.state.orderId, this.state.cfEnv === 'PROD'
+            ? CFEnvironment.PRODUCTION
+            : CFEnvironment.SANDBOX);
+    }
     /**
      *
      * @returns This is to handle Custom Card component.
@@ -286,14 +301,16 @@ export default class App extends Component {
                         alignSelf: 'stretch',
                         textAlign: 'center',
                     } },
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Session Id", keyboardType: "default", onChangeText: this.handleSessionId }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", keyboardType: "default", onChangeText: this.handleOrderId }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "SANDBOX", keyboardType: "default", onChangeText: this.handleEnv }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Session Id", keyboardType: "default", value: this.state.sessionId, onChangeText: this.handleSessionId }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", keyboardType: "default", value: this.state.orderId, onChangeText: this.handleOrderId }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "SANDBOX", keyboardType: "default", value: this.state.cfEnv, onChangeText: this.handleEnv }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Enter VPA for Collect or PSP app package", keyboardType: "default", onChangeText: this.handleUpi })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startCheckout(), title: "Start Payment" })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startWebCheckout(), title: "Start Web Payment" })),
+                React.createElement(View, { style: styles.button },
+                    React.createElement(Button, { onPress: () => this._startSubscriptionCheckout(), title: "Start Subscription Checkout" })),
                 React.createElement(View, { style: styles.button },
                     React.createElement(Button, { onPress: () => this._startUPICheckout(), title: "Start UPI Intent Checkout Payment" })),
                 React.createElement(View, { style: styles.button },
@@ -307,9 +324,9 @@ export default class App extends Component {
                         marginBottom: 10,
                     } },
                     React.createElement(Text, { style: styles.response_text },
-                        " ",
+                        ' ',
                         this.state.responseText,
-                        " ")),
+                        ' ')),
                 React.createElement(View, { style: {
                         borderWidth: 1,
                         alignSelf: 'stretch',

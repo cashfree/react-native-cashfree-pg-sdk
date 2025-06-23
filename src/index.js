@@ -1,9 +1,9 @@
 import { NativeAppEventEmitter, NativeEventEmitter, NativeModules, Platform, } from 'react-native';
 import { version } from '../package.json';
-import { CFUPIPayment, CFCardPayment } from 'cashfree-pg-api-contract';
+import { CFUPIPayment, CFCardPayment, } from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
 const LINKING_ERROR = `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
-    Platform.select({ ios: '- You have run \'pod install\'\n', default: '' }) +
+    Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
     '- You rebuilt the app after installing the package\n' +
     '- You are not using Expo managed workflow\n';
 const CashfreePgApi = NativeModules.CashfreePgApi
@@ -35,6 +35,9 @@ class CFPaymentGateway {
     }
     doWebPayment(cfSession) {
         CashfreePgApi.doWebPayment(JSON.stringify(cfSession));
+    }
+    doSubscriptionPayment(cfSession) {
+        CashfreePgApi.doSubscriptionPayment(JSON.stringify(cfSession));
     }
     /**
      * @deprecated : Instead call makePayment
@@ -118,6 +121,28 @@ class CFPaymentGateway {
         this.failureSubscription = this.emitter.addListener('cfFailure', failureFunction);
         CashfreePgApi.setCallback();
     }
+    // setSubscriptionCallback(cfCallback: CFCallback) {
+    //   let successFunction = (orderID: string) => {
+    //     console.log('Subscription response is : ' + JSON.stringify(orderID));
+    //     cfCallback.onVerify(orderID);
+    //   };
+    //   let failureFunction = (error: string) => {
+    //     console.log('Subscription Error reason: ' + JSON.stringify(error));
+    //     const response = new CFErrorResponse();
+    //     const message = JSON.parse(error);
+    //     response.fromJSON(message.error);
+    //     cfCallback.onError(response, message.orderID);
+    //   };
+    //   this.successSubscription = this.emitter.addListener(
+    //     'cfSuccess',
+    //     successFunction
+    //   );
+    //   this.failureSubscription = this.emitter.addListener(
+    //     'cfFailure',
+    //     failureFunction
+    //   );
+    //   CashfreePgApi.setSubscriptionCallback();
+    // }
     removeCallback() {
         if (this.successSubscription !== undefined &&
             this.successSubscription !== null) {
