@@ -121,28 +121,6 @@ class CFPaymentGateway {
         this.failureSubscription = this.emitter.addListener('cfFailure', failureFunction);
         CashfreePgApi.setCallback();
     }
-    // setSubscriptionCallback(cfCallback: CFCallback) {
-    //   let successFunction = (orderID: string) => {
-    //     console.log('Subscription response is : ' + JSON.stringify(orderID));
-    //     cfCallback.onVerify(orderID);
-    //   };
-    //   let failureFunction = (error: string) => {
-    //     console.log('Subscription Error reason: ' + JSON.stringify(error));
-    //     const response = new CFErrorResponse();
-    //     const message = JSON.parse(error);
-    //     response.fromJSON(message.error);
-    //     cfCallback.onError(response, message.orderID);
-    //   };
-    //   this.successSubscription = this.emitter.addListener(
-    //     'cfSuccess',
-    //     successFunction
-    //   );
-    //   this.failureSubscription = this.emitter.addListener(
-    //     'cfFailure',
-    //     failureFunction
-    //   );
-    //   CashfreePgApi.setSubscriptionCallback();
-    // }
     removeCallback() {
         if (this.successSubscription !== undefined &&
             this.successSubscription !== null) {

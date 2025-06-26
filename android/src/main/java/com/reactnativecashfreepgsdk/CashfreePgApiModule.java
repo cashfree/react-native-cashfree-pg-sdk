@@ -128,7 +128,6 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
 
   @ReactMethod
   public void doSubscriptionPayment(String sessionString) {
-    Log.d("CashfreePgApiModule Web", sessionString);
     CFSubscriptionSession cfSubsSession = null;
     try {
       JSONObject jsonObject = new JSONObject(sessionString);
