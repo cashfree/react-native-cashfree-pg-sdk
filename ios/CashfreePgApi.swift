@@ -6,6 +6,7 @@ import CashfreePG
 class CashfreePgApi: NSObject {
 
     var analyticsCallbackEnabled: Bool = false
+    private let versionNumber = "2.2.4"
 
     override init() {
         super.init()
@@ -40,6 +41,24 @@ class CashfreePgApi: NSObject {
                 print (error)
             }
         }
+
+    @objc func doSubscriptionPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let subscriptionSessionObj = try parseSubscriptionSession(paymentObject: "\(paymentObject)") {
+                let subscriptionWebCheckoutPayment = try! CFSubscriptionPayment.CFSubscriptionPaymentBuilder()
+                    .setSession(subscriptionSessionObj)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                subscriptionWebCheckoutPayment.setPlatform("irnx-sbc-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().startSubscription(subscriptionWebCheckoutPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
 
     @objc func doWebPayment(_ paymentObject: NSString) -> Void {
         do {
@@ -127,7 +146,7 @@ class CashfreePgApi: NSObject {
                     
                     let systemVersion = UIDevice.current.systemVersion
 
-                    cardPayment.setPlatform("irnx-e-2.2.1-x-m-s-x-i-\(systemVersion.prefix(4))")
+                    cardPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
                     
                     return cardPayment
                 }
@@ -152,7 +171,7 @@ class CashfreePgApi: NSObject {
                     .setUPI(cfUPI!)
                     .build()
                 let systemVersion = UIDevice.current.systemVersion
-                upiPayment.setPlatform("irnx-e-2.2.1-x-m-s-x-i-\(systemVersion.prefix(4))")
+                upiPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
 
                 return upiPayment
             } catch let e {
@@ -234,6 +253,42 @@ class CashfreePgApi: NSObject {
         return nil
     }
 
+
+  private func parseSubscriptionSession(paymentObject: String) throws -> CFSubscriptionSession? {
+      let data = paymentObject.data(using: .utf8)!
+      do {
+          if let output = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+              let paymentObj = ["session":output]
+              let session = getSubscriptionSession(paymentObject: paymentObj)
+              return session
+          }
+      } catch let e {
+          let error = e as! CashfreeError
+          print(error.localizedDescription)
+      }
+      return nil
+  }
+ 
+    private func getSubscriptionSession(paymentObject: Dictionary<String,Any>) -> CFSubscriptionSession? {
+        if let sessionDict = paymentObject["session"] as? Dictionary<String, String> {
+            do {
+                let subscriptionBuilder =  CFSubscriptionSession.CFSubscriptionSessionBuilder()
+                    .setSubscriptionId(sessionDict["subscription_id"] ?? "")
+                    .setSubscriptionSessionId(sessionDict["subscription_session_id"] ?? "")
+                if (sessionDict["environment"] == "SANDBOX") {
+                  subscriptionBuilder.setEnvironment(CFENVIRONMENT.SANDBOX)
+                } else {
+                  subscriptionBuilder.setEnvironment(CFENVIRONMENT.PRODUCTION)
+                }
+                let subscriptionSession = try subscriptionBuilder.build()
+                return subscriptionSession
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
 
     private func getSession(paymentObject: Dictionary<String,Any>) -> CFSession? {
         if let sessionDict = paymentObject["session"] as? Dictionary<String, String> {

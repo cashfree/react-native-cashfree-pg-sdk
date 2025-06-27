@@ -15,14 +15,18 @@ import com.cashfree.pg.cf_analytics.CFAnalyticsService;
 import com.cashfree.pg.cf_analytics.CFEventsSubscriber;
 import com.cashfree.pg.core.api.CFCorePaymentGatewayService;
 import com.cashfree.pg.core.api.CFSession;
+import com.cashfree.pg.core.api.CFSubscriptionSession;
 import com.cashfree.pg.core.api.base.CFPayment;
 import com.cashfree.pg.core.api.callback.CFCheckoutResponseCallback;
+import com.cashfree.pg.core.api.callback.CFSubscriptionResponseCallback;
 import com.cashfree.pg.core.api.card.CFCard;
 import com.cashfree.pg.core.api.card.CFCardPayment;
 import com.cashfree.pg.core.api.exception.CFException;
+import com.cashfree.pg.core.api.subscription.CFSubscriptionPayment;
 import com.cashfree.pg.core.api.upi.CFUPI;
 import com.cashfree.pg.core.api.upi.CFUPIPayment;
 import com.cashfree.pg.core.api.utils.CFErrorResponse;
+import com.cashfree.pg.core.api.utils.CFSubscriptionResponse;
 import com.cashfree.pg.core.api.webcheckout.CFWebCheckoutPayment;
 import com.cashfree.pg.ui.api.CFDropCheckoutPayment;
 import com.cashfree.pg.ui.api.upi.intent.CFUPIIntentCheckoutPayment;
@@ -42,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 @ReactModule(name = CashfreePgApiModule.NAME)
-public class CashfreePgApiModule extends ReactContextBaseJavaModule implements CFCheckoutResponseCallback, CFEventsSubscriber {
+public class CashfreePgApiModule extends ReactContextBaseJavaModule implements CFCheckoutResponseCallback, CFEventsSubscriber, CFSubscriptionResponseCallback {
     public static final String NAME = "CashfreePgApi";
 
     public CashfreePgApiModule(ReactApplicationContext reactContext) {
@@ -121,6 +125,37 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
             e.printStackTrace();
         }
     }
+
+  @ReactMethod
+  public void doSubscriptionPayment(String sessionString) {
+    CFSubscriptionSession cfSubsSession = null;
+    try {
+      JSONObject jsonObject = new JSONObject(sessionString);
+      cfSubsSession = new CFSubscriptionSession.CFSubscriptionSessionBuilder()
+        .setEnvironment(CFSubscriptionSession.Environment.valueOf(jsonObject.getString("environment")))
+        .setSubscriptionId(jsonObject.getString("subscription_id"))
+        .setSubscriptionSessionID(jsonObject.getString("subscription_session_id"))
+        .build();
+    } catch (Exception exception) {
+      throw new IllegalStateException("Subscription Session is invalid");
+    }
+    try {
+      Activity activity = getCurrentActivity();
+      CFSubscriptionPayment cfSubscriptionPayment = new CFSubscriptionPayment.CFSubscriptionCheckoutBuilder()
+        .setSubscriptionSession(cfSubsSession)
+        .build();
+      cfSubscriptionPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
+      cfSubscriptionPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.SUBSCRIPTION);
+      if (activity != null) {
+        CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+        CFPaymentGatewayService.getInstance().doSubscriptionPayment(activity, cfSubscriptionPayment);
+      } else {
+        throw new IllegalStateException("activity is null");
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
     @ReactMethod
     public void doCardPayment(String data) {
@@ -277,7 +312,9 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("error", cfErrorResponse.toJSON().toString());
-            jsonObject.put("orderID", orderID);
+            if(orderID !=null && !orderID.isEmpty()) {
+              jsonObject.put("orderID", orderID);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -305,4 +342,14 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
                 .getJSModule(RCTNativeAppEventEmitter.class)
                 .emit("cfEvent", jsonObject.toString());
     }
+
+  @Override
+  public void onSubscriptionVerify(CFSubscriptionResponse cfSubscriptionResponse) {
+      onPaymentVerify(cfSubscriptionResponse.getSubscriptionId());
+  }
+
+  @Override
+  public void onSubscriptionFailure(CFErrorResponse cfErrorResponse) {
+      onPaymentFailure(cfErrorResponse, "");
+  }
 }

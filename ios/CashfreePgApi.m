@@ -8,6 +8,7 @@ RCT_EXTERN_METHOD(doPayment:(NSString)paymentObject)
 RCT_EXTERN_METHOD(doUPIPayment:(NSString)paymentObject)
 
 RCT_EXTERN_METHOD(doWebPayment:(NSString)paymentObject)
+RCT_EXTERN_METHOD(doSubscriptionPayment:(NSString)paymentObject)
 RCT_EXTERN_METHOD(doCardPayment:(NSString)paymentObject)
 RCT_EXTERN_METHOD(doElementUPIPayment:(NSString)paymentObject)
 RCT_EXTERN_METHOD(getInstalledUpiApps)
