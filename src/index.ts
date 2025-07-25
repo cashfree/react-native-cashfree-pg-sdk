@@ -1,6 +1,5 @@
 import {
   EmitterSubscription,
-  EventEmitter,
   NativeAppEventEmitter,
   NativeEventEmitter,
   NativeModules,
@@ -34,7 +33,7 @@ const CashfreePgApi = NativeModules.CashfreePgApi
     );
 
 class CFPaymentGateway {
-  private emitter: EventEmitter;
+  private emitter: NativeEventEmitter | typeof NativeAppEventEmitter;
   private successSubscription: EmitterSubscription | null = null;
   private failureSubscription: EmitterSubscription | null = null;
   private eventSubscription: EmitterSubscription | null = null;

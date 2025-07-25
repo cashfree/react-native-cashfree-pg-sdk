@@ -18,7 +18,6 @@ import {
 import {
   CFErrorResponse,
   CFPaymentGatewayService,
-  CFCard,
 } from 'react-native-cashfree-pg-sdk';
 import {
   Card,
@@ -52,9 +51,9 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'sub_120ws0s028ww',
+      orderId: 'devstudio_7354422570518932919',
       sessionId:
-        'sub_session_deKRTo_wrG38KXsp7BRVn3eYwDuFsRR_VkTSGY7LvCbao4kJQ488BLd4_HUOSkizUnICsu-Z4S7ffqPVwGdiHa8dNAtCeQRp8qTT19lFszMhY9vb44NZ',
+        'session_QRyuDMxoFEbU8I50KKp60QyAv-fQ28VoVXqp3xmNTG-3QYP0DcVLd_E7x8LJfQw1kWSqUaG6TEzIwilkK6d5DAR8FJKkbBpR_npwHjgsN--7OiFjOF598OFvY6Apayment',
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: 'SANDBOX',

@@ -1,4 +1,4 @@
-package com.reactnativecashfreepgapi;
+package com.reactnativecashfreepgsdk;
 
 import androidx.annotation.NonNull;
 
