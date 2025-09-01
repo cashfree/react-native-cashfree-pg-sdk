@@ -33,6 +33,7 @@ class CFPaymentGateway {
   private failureSubscription: EmitterSubscription | null = null;
   private eventSubscription: EmitterSubscription | null = null;
   private upiAppsSubscription: EmitterSubscription | null = null;
+  private sdkCallback: CFCallback | null = null;
 
   constructor() {
     this.emitter =
@@ -97,6 +98,18 @@ class CFPaymentGateway {
       CashfreePgApi.doCardPayment(paymentData);
     } else {
       console.log('makePayment::==> Wrong payment object');
+      if (this.sdkCallback) {
+        const response = new CFErrorResponse();
+        response.fromJSON(
+          JSON.stringify({
+            status: 'FAILED',
+            message: 'Wrong payment object',
+            code: 'invalid_payment_object',
+            type: 'request_failed',
+          }),
+        );
+        this.sdkCallback.onError(response, '');
+      }
     }
   }
 
@@ -122,7 +135,7 @@ class CFPaymentGateway {
   }
 
   setCallback(cfCallback: CFCallback) {
-    // this.cfCallback = cfCallback;
+    this.sdkCallback = cfCallback;
     let successFunction = (orderID: string) => {
       console.log('response is : ' + JSON.stringify(orderID));
       cfCallback.onVerify(orderID);
@@ -169,6 +182,7 @@ class CFPaymentGateway {
       this.upiAppsSubscription.remove();
       this.upiAppsSubscription = null;
     }
+    this.sdkCallback = null;
   }
 }
 

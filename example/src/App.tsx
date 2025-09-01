@@ -51,9 +51,9 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'devstudio_76123729',
+      orderId: 'devstudio_7368179596948957908',
       sessionId:
-        'session_8HWBj0N2H2PKwKntO6sz6-490xsXxjxx45wLvgywsyn_Uvzk6UlA5aRxc41wR5qDkUHRfaiuHwFIztUtOhQvpGv0I-VJDMy2DtNQheppAO7pAxDMiA0Vifcpayment',
+        'session_7lNCMJtF16EzvqicV_XDzw3PQJNADMH4z0zYoS9GsqXfx2HvjtN12W8KlHwT4pMPkpvJQZMcO5KLjBF33nQLIFvEojyGDbUfgj1w-zKxlMx1t7hJR9-hGSDy47Apayment',
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: '',
