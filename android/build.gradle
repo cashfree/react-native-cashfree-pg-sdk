@@ -3,29 +3,21 @@ buildscript {
         repositories {
             google()
             mavenCentral()
-            jcenter()
         }
 
         dependencies {
-            classpath 'com.android.tools.build:gradle:3.5.4'
+            classpath 'com.android.tools.build:gradle:8.6.1'
         }
     }
 }
 
 apply plugin: 'com.android.library'
 
-def safeExtGet(prop, fallback) {
-    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
-}
-
 android {
-    compileSdkVersion safeExtGet('CashfreePgApi_compileSdkVersion', 29)
+  namespace "com.reactnativecashfreepgsdk"
     defaultConfig {
-        minSdkVersion safeExtGet('CashfreePgApi_minSdkVersion', 19)
-        targetSdkVersion safeExtGet('CashfreePgApi_targetSdkVersion', 29)
-        versionCode 1
-        versionName "1.0"
-
+      minSdkVersion 21
+      compileSdk 35
     }
 
     buildTypes {
@@ -50,15 +42,12 @@ repositories {
     }
     google()
     mavenCentral()
-    jcenter()
 }
 
 rootProject.allprojects {
   repositories {
     google()
     mavenCentral()
-    jcenter()
-    maven { url 'https://maven.cashfree.com/release'}
   }
 }
 
@@ -69,7 +58,6 @@ dependencies {
   implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
   implementation 'androidx.gridlayout:gridlayout:1.0.0'
 
-  implementation 'com.cashfree.pg:api:1.0.10'
-
+  implementation 'com.cashfree.pg:api:2.2.8'
   implementation "com.facebook.react:react-native:+"  // From node_modules
 }

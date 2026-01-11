@@ -1,23 +1,45 @@
 {
-  "name": "react-native-cashfree-pg-api-example",
-  "description": "Example app for react-native-cashfree-pg-sdk",
-  "version": "0.1.1",
+  "name": "CashfreePgApiExample",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "start": "react-native start"
+    "lint": "eslint .",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-native start",
+    "test": "jest"
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "^1.0.0",
-    "react": "16.13.1",
-    "react-native": "0.63.4",
-    "react-native-cashfree-pg-sdk": "^1.0.1"
+    "@react-native-community/checkbox": "^0.5.16",
+    "react": "18.2.0",
+    "react-native": "0.73.0",
+    "react-native-cashfree-pg-sdk": "git+https://github.com/cashfree/react-native-cashfree-pg-sdk.git#feature/android_35_migration"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.10",
-    "@babel/runtime": "^7.12.5",
-    "babel-plugin-module-resolver": "^4.0.0",
-    "metro-react-native-babel-preset": "^0.64.0"
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@babel/runtime": "^7.20.0",
+    "@react-native-community/eslint-config": "^3.2.0",
+    "@react-native/babel-preset": "^0.73.18",
+    "@react-native/eslint-config": "^0.73.1",
+    "@react-native/metro-config": "^0.73.2",
+    "@react-native/typescript-config": "^0.73.1",
+    "@tsconfig/react-native": "^3.0.0",
+    "@types/jest": "^29.2.1",
+    "@types/react": "^18.2.6",
+    "@types/react-test-renderer": "^18.0.0",
+    "babel-jest": "^29.6.3",
+    "eslint": "^8.19.0",
+    "jest": "^29.6.3",
+    "metro-react-native-babel-preset": "0.76.5",
+    "prettier": "2.8.8",
+    "react-test-renderer": "18.2.0",
+    "typescript": "5.0.4"
+  },
+  "jest": {
+    "preset": "react-native"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

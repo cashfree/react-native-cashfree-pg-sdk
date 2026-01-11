@@ -5,6 +5,17 @@ import CashfreePG
 @objc(CashfreePgApi)
 class CashfreePgApi: NSObject {
 
+    var analyticsCallbackEnabled: Bool = false
+    private let versionNumber = "2.2.4"
+
+    override init() {
+        super.init()
+    }
+
+    @objc static func requiresMainQueueSetup() -> Bool {
+        return false
+    }
+
     @objc func doPayment(_ paymentObject: NSString) -> Void {
         do {
             let dropObject = try! parseDropPayment(paymentObject: "\(paymentObject)")
@@ -18,8 +29,157 @@ class CashfreePgApi: NSObject {
         }
     }
 
+    @objc func doUPIPayment(_ paymentObject: NSString) -> Void {
+            do {
+                let upiObject = try! parseUPIPayment(paymentObject: "\(paymentObject)")
+                if (upiObject != nil) {
+                    let vc = RCTPresentedViewController()
+                    try CFPaymentGatewayService.getInstance().doPayment(upiObject!, viewController: vc!)
+                }
+            }
+            catch {
+                print (error)
+            }
+        }
+
+    @objc func doSubscriptionPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let subscriptionSessionObj = try parseSubscriptionSession(paymentObject: "\(paymentObject)") {
+                let subscriptionWebCheckoutPayment = try! CFSubscriptionPayment.CFSubscriptionPaymentBuilder()
+                    .setSession(subscriptionSessionObj)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                subscriptionWebCheckoutPayment.setPlatform("irnx-sbc-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().startSubscription(subscriptionWebCheckoutPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
+    @objc func doWebPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let sessionObj = try parseWebPayment(paymentObject: "\(paymentObject)") {
+                let cfPaymentObject = try! CFWebCheckoutPayment.CFWebCheckoutPaymentBuilder()
+                    .setSession(sessionObj)
+                    .build()
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfPaymentObject, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
+    @objc func doCardPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfCardPayment = try parseCardObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfCardPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
+    @objc func getInstalledUpiApps(){
+        let upiApplications = CFUPIUtils().getInstalledUPIApplications()
+        var appsToSend: [NSDictionary] = []
+        for upi in upiApplications {
+            if (upi["id"] ?? "").contains("cred") {
+                continue
+            }
+            appsToSend.append([
+                "appPackage": upi["id"] ?? "",
+                "appName": upi["displayName"] ?? ""
+            ])
+        }
+        CashfreeEmitter.sharedInstance.dispatch(name: "cfUpiApps", body: stringify(json: appsToSend))
+    }
+
+    @objc func doElementUPIPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfUPIPayment = try parseUpiObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfUPIPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
     @objc func setCallback() -> Void {
         CFPaymentGatewayService.getInstance().setCallback(self)
+    }
+
+    @objc func setEventSubscriber() -> Void {
+        analyticsCallbackEnabled = true
+    }
+
+    @objc func removeEventSubscriber() -> Void {
+        analyticsCallbackEnabled = false
+    }
+
+    private func parseCardObject(paymentObject: String) throws -> CFCardPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let finalSession = getSession(paymentObject: output)
+                if let cfCard = getCard(paymentObject: output){
+                    let savePaymentMethod = isForSavePayment(paymentObject: output)
+                    print(savePaymentMethod)
+                    
+                    let cardPayment = try CFCardPayment.CFCardPaymentBuilder()
+                        .setCard(cfCard)
+                        .setSession(finalSession!)
+                        .saveInstrument(savePaymentMethod)
+                        .build()
+                    
+                    let systemVersion = UIDevice.current.systemVersion
+
+                    cardPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                    
+                    return cardPayment
+                }
+                return nil
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+
+    private func parseUpiObject(paymentObject: String) throws -> CFUPIPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let finalSession = getSession(paymentObject: output)
+                let cfUPI = getUpi(paymentObject: output)
+
+                let upiPayment = try CFUPIPayment.CFUPIPaymentBuilder()
+                    .setSession(finalSession!)
+                    .setUPI(cfUPI!)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                upiPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+
+                return upiPayment
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
     }
 
     private func parseDropPayment(paymentObject: String) throws -> CFDropCheckoutPayment? {
@@ -36,7 +196,8 @@ class CashfreePgApi: NSObject {
                     .setTheme(theme!)
                     .setComponent(component!)
                     .build()
-                nativePayment.setPlatform( "ios-rn-" + (((output["version"]) as? String) ?? ""))
+                //                 let systemVersion = UIDevice.current.systemVersion
+                //                 nativePayment.setPlatform("irnx-d-" + (((output["version"]) as? String) ?? "") + "-3.3.9-m-s-x-i-\(systemVersion.prefix(4))")
                 return nativePayment
 
             } catch let e {
@@ -48,12 +209,93 @@ class CashfreePgApi: NSObject {
         return nil
     }
 
+    private func parseUPIPayment(paymentObject: String) throws -> CFDropCheckoutPayment? {
+                //        print(paymentObject)
+                let data = paymentObject.data(using: .utf8)!
+                if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+                    do {
+                        let session = getSession(paymentObject: output)
+                        let paymentComponents = try CFPaymentComponent.CFPaymentComponentBuilder()
+                                            .enableComponents(["upi"])
+                                            .build()
+                        let theme = getTheme(paymentObject: output)
+
+                        let nativePayment = try CFDropCheckoutPayment.CFDropCheckoutPaymentBuilder()
+                            .setSession(session!)
+                            .setTheme(theme!)
+                            .setComponent(paymentComponents)
+                            .build()
+                        return nativePayment
+
+                    } catch let e {
+                        let error = e as! CashfreeError
+                        print(error.localizedDescription)
+                        // Handle errors here
+                    }
+                }
+                return nil
+            }
+
+    private func parseWebPayment(paymentObject: String) throws -> CFSession? {
+        //        print(paymentObject)
+        let data = paymentObject.data(using: .utf8)!
+        do {
+            if let output = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+                let paymentObj = ["session":output]
+                let session = getSession(paymentObject: paymentObj)
+                return session
+            }
+        } catch let e {
+            let error = e as! CashfreeError
+            print(error.localizedDescription)
+            // Handle errors here
+        }
+        return nil
+    }
+
+
+  private func parseSubscriptionSession(paymentObject: String) throws -> CFSubscriptionSession? {
+      let data = paymentObject.data(using: .utf8)!
+      do {
+          if let output = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+              let paymentObj = ["session":output]
+              let session = getSubscriptionSession(paymentObject: paymentObj)
+              return session
+          }
+      } catch let e {
+          let error = e as! CashfreeError
+          print(error.localizedDescription)
+      }
+      return nil
+  }
+ 
+    private func getSubscriptionSession(paymentObject: Dictionary<String,Any>) -> CFSubscriptionSession? {
+        if let sessionDict = paymentObject["session"] as? Dictionary<String, String> {
+            do {
+                let subscriptionBuilder =  CFSubscriptionSession.CFSubscriptionSessionBuilder()
+                    .setSubscriptionId(sessionDict["subscription_id"] ?? "")
+                    .setSubscriptionSessionId(sessionDict["subscription_session_id"] ?? "")
+                if (sessionDict["environment"] == "SANDBOX") {
+                  subscriptionBuilder.setEnvironment(CFENVIRONMENT.SANDBOX)
+                } else {
+                  subscriptionBuilder.setEnvironment(CFENVIRONMENT.PRODUCTION)
+                }
+                let subscriptionSession = try subscriptionBuilder.build()
+                return subscriptionSession
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+
     private func getSession(paymentObject: Dictionary<String,Any>) -> CFSession? {
         if let sessionDict = paymentObject["session"] as? Dictionary<String, String> {
             do {
                 let builder =  CFSession.CFSessionBuilder()
                     .setOrderID(sessionDict["orderID"] ?? "")
-                    .setOrderToken(sessionDict["token"] ?? "")
+                    .setPaymentSessionId(sessionDict["payment_session_id"] ?? "")
                 if (sessionDict["environment"] == "SANDBOX") {
                     builder.setEnvironment(CFENVIRONMENT.SANDBOX)
                 } else {
@@ -65,6 +307,53 @@ class CashfreePgApi: NSObject {
                 let error = e as! CashfreeError
                 print(error.localizedDescription)
                 // Handle errors here
+            }
+        }
+        return nil
+    }
+
+    private func getCard(paymentObject: Dictionary<String,Any>) -> CFCard? {
+        let card = paymentObject["card"] as? NSDictionary ?? [:]
+            do {
+                var cardObject: CFCard!
+                if card["instrumentId"] != nil && card["instrumentId"] as? String ?? "" != "" {
+                    cardObject = try CFCard.CFCardBuilder()
+                        .setCVV(card["cardCvv"] as? String ?? "")
+                        .setInstrumentId(card["instrumentId"] as? String ?? "")
+                        .build()
+                } else {
+                    cardObject = try CFCard.CFCardBuilder()
+                        .setCVV(card["cardCvv"] as? String ?? "")
+                        .setCardNumber(card["cardNumber"] as? String ?? "")
+                        .setCardExpiryYear(card["cardExpiryYY"] as? String ?? "")
+                        .setCardExpiryMonth(card["cardExpiryMM"] as? String ?? "")
+                        .setCardHolderName(card["cardHolderName"] as? String ?? "")
+                        .build()
+                }
+                return cardObject
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+                return nil
+            }
+    }
+    
+    private func isForSavePayment(paymentObject: Dictionary<String,Any>) -> Bool {
+        let card = paymentObject["card"] as? NSDictionary ?? [:]
+        return card["saveCard"] as? Bool ?? false
+    }
+
+    private func getUpi(paymentObject: Dictionary<String,Any>) -> CFUPI?{
+        if let upi = paymentObject["upi"] as? Dictionary<String, String> {
+            do {
+                let cfUPI = try CFUPI.CFUPIBuilder()
+                    .setChannel(upi["mode"] ?? "" == "COLLECT" ? .COLLECT : .INTENT)
+                    .setUPIID(upi["id"] ?? "")
+                    .build()
+                return cfUPI
+            } catch let e {
+                let err = e as! CashfreeError
+                print(err.localizedDescription)
             }
         }
         return nil
@@ -137,12 +426,12 @@ class CashfreePgApi: NSObject {
     func stringify(json: Any) -> String {
         var options: JSONSerialization.WritingOptions = []
         do {
-          let data = try JSONSerialization.data(withJSONObject: json, options: options)
-          if let string = String(data: data, encoding: String.Encoding.utf8) {
-            return string
-          }
+            let data = try JSONSerialization.data(withJSONObject: json, options: options)
+            if let string = String(data: data, encoding: String.Encoding.utf8) {
+                return string
+            }
         } catch {
-          print(error)
+            print(error)
         }
 
         return ""
@@ -163,5 +452,14 @@ extension CashfreePgApi: CFResponseDelegate {
     func verifyPayment(order_id: String) {
         print(order_id)
         CashfreeEmitter.sharedInstance.dispatch(name: "cfSuccess", body: order_id)
+    }
+
+    func receivedEvent(event_name: String, meta_data: Dictionary<String, Any>) {
+        if (analyticsCallbackEnabled) {
+            print(event_name)
+            let data: [String: Any] = ["eventName": event_name
+                                       , "meta": meta_data]
+            CashfreeEmitter.sharedInstance.dispatch(name: "cfEvent", body: stringify(json: data))
+        }
     }
 }
