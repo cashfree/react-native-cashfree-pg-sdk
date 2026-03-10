@@ -4,7 +4,7 @@ import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 import { Button, Image, Platform, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
-import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard, CFSubscriptionSession, } from 'cashfree-pg-api-contract';
+import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, SavedCard, UPIMode, ElementCard, CFSubscriptionSession, CFSubsCardPayment, } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 export default class App extends Component {
@@ -18,8 +18,8 @@ export default class App extends Component {
             cardExpiryMM: '',
             cardExpiryYY: '',
             cardCVV: '',
-            orderId: 'devstudio_7354422570518932919',
-            sessionId: 'session_QRyuDMxoFEbU8I50KKp60QyAv-fQ28VoVXqp3xmNTG-3QYP0DcVLd_E7x8LJfQw1kWSqUaG6TEzIwilkK6d5DAR8FJKkbBpR_npwHjgsN--7OiFjOF598OFvY6Apayment',
+            orderId: 'devstudio_subs_7436757734765534284',
+            sessionId: 'sub_session_g9jf7wWoyPn4UgZNDEWPBK9v9vV3lQfjJ-DkM8Y_UfosK2H0R7gEvYpiW7zSlUNkdYWJ2ADLAQdigQRXt3AVTkQrUceFhIPgpFxOFvPJTPwaJlkQn3LLqUQ-Z0aGqTcpayment',
             instrumentId: '',
             toggleCheckBox: false,
             cfEnv: 'SANDBOX',
@@ -204,6 +204,19 @@ export default class App extends Component {
             console.log(e.message);
         }
     }
+    async _startSubsCardPayment() {
+        try {
+            const session = this.getSubscriptionSession();
+            console.log('SubsSession', JSON.stringify(session));
+            const card = new Card(this.state.cardNumber, this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV);
+            console.log('SubsCard', JSON.stringify(card));
+            const cardPayment = new CFSubsCardPayment(session, card);
+            CFPaymentGatewayService.makeSubsPayment(cardPayment);
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     async _startSavedCardPayment() {
         try {
             const session = this.getSession();
@@ -357,7 +370,9 @@ export default class App extends Component {
                         React.createElement(CheckBox, { value: this.state.toggleCheckBox, onValueChange: this.handleSaveCardToggle }),
                         React.createElement(Text, null, "Saved Card for future payment")),
                     React.createElement(View, { style: styles.button },
-                        React.createElement(Button, { onPress: () => this.handleSubmit(), title: "Card Payment" }))),
+                        React.createElement(Button, { onPress: () => this.handleSubmit(), title: "Card Payment" })),
+                    React.createElement(View, { style: styles.button },
+                        React.createElement(Button, { onPress: () => this._startSubsCardPayment(), title: "Subs Card Payment" }))),
                 React.createElement(View, { style: {
                         borderWidth: 1,
                         alignSelf: 'stretch',

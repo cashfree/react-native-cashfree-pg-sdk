@@ -1,6 +1,6 @@
 {
   "name": "react-native-cashfree-pg-sdk",
-  "version": "2.2.6",
+  "version": "2.3.0",
   "description": "Cashfree PG Plugin for React Native",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -153,6 +153,6 @@
     ]
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "2.0.9"
+    "cashfree-pg-api-contract": "github:cashfree-tech/cashfree-pg-api-contract#feature/subscription_core_contract"
   }
 }
