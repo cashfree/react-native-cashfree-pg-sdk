@@ -35,6 +35,7 @@ import {
   UPIMode,
   ElementCard,
   CFSubscriptionSession,
+  CFSubsCardPayment,
 } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
 
@@ -51,9 +52,9 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'devstudio_7440635048698411642',
+      orderId: 'devstudio_subs_7436757734765534284',
       sessionId:
-        'session_Ivf6gFkwtiAY4WxqgjuyPkAq9MpAQRe6WOi5BrJNzpEduX0w5BK-DwWpntSL3Lj9Xto9wFzJHAESbKVNLeeWOFec0HtCrXUusNFYdc7BVLfk3RenGY_DDvP-sAcpayment',
+        'sub_session_g9jf7wWoyPn4UgZNDEWPBK9v9vV3lQfjJ-DkM8Y_UfosK2H0R7gEvYpiW7zSlUNkdYWJ2ADLAQdigQRXt3AVTkQrUceFhIPgpFxOFvPJTPwaJlkQn3LLqUQ-Z0aGqTcpayment',
       instrumentId: '',
       toggleCheckBox: false,
       cfEnv: 'PRODUCTION',
@@ -270,6 +271,27 @@ export default class App extends Component {
       console.log(e.message);
     }
   }
+
+  async _startSubsCardPayment() {
+    try {
+      const session = this.getSubscriptionSession();
+      console.log('SubsSession', JSON.stringify(session));
+      const card = new Card(
+        this.state.cardNumber,
+        this.state.cardHolderName,
+        this.state.cardExpiryMM,
+        this.state.cardExpiryYY,
+        this.state.cardCVV,
+      );
+
+      console.log('SubsCard', JSON.stringify(card));
+      const cardPayment = new CFSubsCardPayment(session, card);
+      CFPaymentGatewayService.makeSubsPayment(cardPayment);
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
 
   async _startSavedCardPayment() {
     try {
@@ -551,6 +573,12 @@ export default class App extends Component {
               <Button
                 onPress={() => this.handleSubmit()}
                 title="Card Payment"
+              />
+            </View>
+            <View style={styles.button}>
+              <Button
+                onPress={() => this._startSubsCardPayment()}
+                title="Subs Card Payment"
               />
             </View>
           </View>
