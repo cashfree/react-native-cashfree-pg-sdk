@@ -7,6 +7,11 @@ import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
 import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, ElementCard, SavedCard, UPIMode, } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
+const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
+const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+function generateOrderId() {
+    return 'devstudio_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
+}
 export default class PGScreen extends Component {
     constructor(props) {
         super(props);
@@ -18,10 +23,11 @@ export default class PGScreen extends Component {
             cardExpiryMM: '',
             cardExpiryYY: '',
             cardCVV: '',
-            orderId: 'devstudio_7437084183356325255',
-            sessionId: 'session_mfznm6PwVPrk3NQZqipYNv4VUb3cmkQBVuAFXBTBYgF9CFg50-w1uNbcoEWfczEmry0gO3N9eHNFjFIxmeZBvbDKX9JHDqGYbCKBWpiVmcCvfkXFhf_rnOHJUUopayment',
+            orderId: '',
+            sessionId: '',
             instrumentId: '',
             toggleCheckBox: false,
+            isCreatingOrder: false,
             cfEnv: 'SANDBOX',
             upiId: 'testfailure@gocash',
             cardNetwork: require('./assets/visa.png'),
@@ -82,6 +88,51 @@ export default class PGScreen extends Component {
         return new CFSession('session_4zxKsUyNPorU6aZbHcxf8LJmyET2xA_svlDF69vSa8k9mkjAV3Zeosc2l3__mxno38hTK3pXR6_jL8X5R5WVC9BEXoN6SPef5V5lAYJyIE234IODJE1TXtIpayment', 'devstudio_20339474', this.state.cfEnv === 'PROD'
             ? CFEnvironment.PRODUCTION
             : CFEnvironment.SANDBOX);
+    }
+    async createOrder() {
+        this.setState({ isCreatingOrder: true, responseText: 'Creating order...' });
+        const orderId = generateOrderId();
+        try {
+            const response = await fetch('https://sandbox.cashfree.com/pg/orders', {
+                method: 'POST',
+                headers: {
+                    'x-client-id': CF_CLIENT_ID,
+                    'x-client-secret': CF_CLIENT_SECRET,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'x-api-version': '2025-01-01',
+                },
+                body: JSON.stringify({
+                    order_amount: 1.00,
+                    order_currency: 'INR',
+                    order_id: orderId,
+                    customer_details: {
+                        customer_id: 'devstudio_user',
+                        customer_phone: '9876543210',
+                    },
+                    order_meta: {
+                        return_url: `https://www.cashfree.com/devstudio/preview/pg/seamless?order_id={order_id}`,
+                    },
+                }),
+            });
+            const data = await response.json();
+            if (data.payment_session_id) {
+                this.setState({
+                    orderId: data.order_id,
+                    sessionId: data.payment_session_id,
+                    responseText: 'Order created: ' + data.order_id,
+                });
+            }
+            else {
+                this.setState({ responseText: 'Order creation failed: ' + JSON.stringify(data) });
+            }
+        }
+        catch (e) {
+            this.setState({ responseText: 'Error: ' + e.message });
+        }
+        finally {
+            this.setState({ isCreatingOrder: false });
+        }
     }
     /** @deprecated Use WebCheckout or UPIIntent instead */
     async _startCheckout() {
@@ -188,6 +239,8 @@ export default class PGScreen extends Component {
             React.createElement(View, { style: styles.container },
                 React.createElement(View, { style: styles.section },
                     React.createElement(Text, { style: styles.sectionTitle }, "Session"),
+                    React.createElement(Button, { title: this.state.isCreatingOrder ? 'Creating Order...' : 'Create Order', disabled: this.state.isCreatingOrder, onPress: () => this.createOrder() }),
+                    React.createElement(View, { style: styles.divider }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Session Id", value: this.state.sessionId, onChangeText: v => this.setState({ sessionId: v }) }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", value: this.state.orderId, onChangeText: v => this.setState({ orderId: v }) }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Environment (SANDBOX / PRODUCTION)", value: this.state.cfEnv, onChangeText: v => this.setState({ cfEnv: v }) }),
@@ -341,5 +394,8 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         fontSize: 14,
         color: '#333',
+    },
+    divider: {
+        height: 12,
     },
 });
