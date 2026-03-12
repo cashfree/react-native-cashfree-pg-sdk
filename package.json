@@ -153,6 +153,6 @@
     ]
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "github:cashfree-tech/cashfree-pg-api-contract#feature/subscription_core_contract"
+    "cashfree-pg-api-contract": "2.1.0"
   }
 }
