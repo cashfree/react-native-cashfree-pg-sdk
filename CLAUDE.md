@@ -52,8 +52,9 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 
 ### Source (`src/`)
 
-- [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which wraps `NativeModules.CashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types.
+- [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which wraps `NativeModules.CashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types. Key methods: `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `makePayment` (element routing), `makeSubsPayment` (subscription element routing).
 - [src/Card/CFCardComponent.tsx](src/Card/CFCardComponent.tsx) — `CFCard` React component for card element payments. Handles Luhn validation, card network detection (Visa, MC, Amex, RuPay, etc.), BIN-based TDR fetching, and exposes an imperative handle (`doPayment`, `doPaymentWithPaymentSessionId`) via `forwardRef`. Makes live HTTP calls to `https://api.cashfree.com/pg/sdk/js/{sessionId}/cardBin` and `.../v2/tdr` during card input (uses `sandbox.cashfree.com` for `SANDBOX` environment).
+- [src/Card/index.ts](src/Card/index.ts) — Re-exports `CFCard` from `CFCardComponent`.
 
 ### Native modules
 
@@ -65,7 +66,7 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 - CocoaPod: `CashfreePG ~> 2.2.7` (declared in `react-native-cashfree-pg-sdk.podspec`).
 
 **Android** ([android/](android/)):
-- [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`.
+- [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`. Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`).
 - `CashfreePgApiPackage.java` — Registers the module with React Native.
 - Gradle dependency: `com.cashfree.pg:api:2.3.0`.
 
@@ -85,9 +86,21 @@ The `react-native` field in package.json points to `src/index` so Metro uses the
 **Subscription types** (added in v2.1.0):
 - `CFSubscriptionSession` — session object with `subscription_session_id`, `subscription_id`, and `CFEnvironment`
 - `CFSubscriptionCheckoutPayment` — web checkout flow for subscriptions
-- `CFSubsCardPayment` — card-based subscription payment
-- `CFSubsUPIPayment` — UPI-based subscription payment
-- `CFSubsNBPayment` — net banking subscription payment (`CFSubsNB` holds bank details)
+- `CFSubsCardPayment` — card-based subscription payment (element flow)
+- `CFSubsUPIPayment` — UPI-based subscription payment (element flow)
+- `CFSubsNBPayment` — net banking subscription payment (`CFSubsNB` holds bank details, element flow)
+
+**Subscription element payment routing** (`makeSubsPayment`):
+```
+CFPaymentGatewayService.makeSubsPayment(payment)
+  ↓ identifies type (CFSubsUPIPayment | CFSubsCardPayment | CFSubsNBPayment)
+  ↓ calls native: doSubsUPIPayment / doSubsCardPayment / doSubsNBPayment
+  ↓ emits cfSuccess / cfFailure events
+```
+
+**Example app screens:**
+- `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card)
+- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element, net banking element, UPI intent
 
 ## Development conventions
 

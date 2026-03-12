@@ -39,6 +39,13 @@ import CustomCardInput from './CustomCardInput';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 
+const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
+const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+
+function generateOrderId(): string {
+  return 'devstudio_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
+}
+
 interface Props {
   onBack: () => void;
 }
@@ -54,11 +61,11 @@ export default class PGScreen extends Component<Props> {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'devstudio_7437084183356325255',
-      sessionId:
-        'session_mfznm6PwVPrk3NQZqipYNv4VUb3cmkQBVuAFXBTBYgF9CFg50-w1uNbcoEWfczEmry0gO3N9eHNFjFIxmeZBvbDKX9JHDqGYbCKBWpiVmcCvfkXFhf_rnOHJUUopayment',
+      orderId: '',
+      sessionId: '',
       instrumentId: '',
       toggleCheckBox: false,
+      isCreatingOrder: false,
       cfEnv: 'SANDBOX',
       upiId: 'testfailure@gocash',
       cardNetwork: require('./assets/visa.png'),
@@ -140,6 +147,49 @@ export default class PGScreen extends Component<Props> {
         ? CFEnvironment.PRODUCTION
         : CFEnvironment.SANDBOX,
     );
+  }
+
+  async createOrder() {
+    this.setState({isCreatingOrder: true, responseText: 'Creating order...'});
+    const orderId = generateOrderId();
+    try {
+      const response = await fetch('https://sandbox.cashfree.com/pg/orders', {
+        method: 'POST',
+        headers: {
+          'x-client-id': CF_CLIENT_ID,
+          'x-client-secret': CF_CLIENT_SECRET,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'x-api-version': '2025-01-01',
+        },
+        body: JSON.stringify({
+          order_amount: 1.00,
+          order_currency: 'INR',
+          order_id: orderId,
+          customer_details: {
+            customer_id: 'devstudio_user',
+            customer_phone: '9876543210',
+          },
+          order_meta: {
+            return_url: `https://www.cashfree.com/devstudio/preview/pg/seamless?order_id={order_id}`,
+          },
+        }),
+      });
+      const data = await response.json();
+      if (data.payment_session_id) {
+        this.setState({
+          orderId: data.order_id,
+          sessionId: data.payment_session_id,
+          responseText: 'Order created: ' + data.order_id,
+        });
+      } else {
+        this.setState({responseText: 'Order creation failed: ' + JSON.stringify(data)});
+      }
+    } catch (e: any) {
+      this.setState({responseText: 'Error: ' + e.message});
+    } finally {
+      this.setState({isCreatingOrder: false});
+    }
   }
 
   /** @deprecated Use WebCheckout or UPIIntent instead */
@@ -282,6 +332,12 @@ export default class PGScreen extends Component<Props> {
           {/* Session Inputs */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Session</Text>
+            <Button
+              title={this.state.isCreatingOrder ? 'Creating Order...' : 'Create Order'}
+              disabled={this.state.isCreatingOrder}
+              onPress={() => this.createOrder()}
+            />
+            <View style={styles.divider} />
             <TextInput
               style={styles.input}
               placeholder="Session Id"
@@ -571,5 +627,8 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     color: '#333',
+  },
+  divider: {
+    height: 12,
   },
 });

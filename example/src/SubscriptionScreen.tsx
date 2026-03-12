@@ -31,6 +31,13 @@ import {
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 
+const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
+const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+
+function generateSubscriptionId(): string {
+  return 'devstudio_subs_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
+}
+
 interface Props {
   onBack: () => void;
 }
@@ -40,10 +47,10 @@ export default class SubscriptionScreen extends Component<Props> {
     super(props);
     this.state = {
       responseText: BASE_RESPONSE_TEXT,
-      orderId: 'devstudio_subs_7436757734765534284',
-      sessionId:
-        'sub_session_g9jf7wWoyPn4UgZNDEWPBK9v9vV3lQfjJ-DkM8Y_UfosK2H0R7gEvYpiW7zSlUNkdYWJ2ADLAQdigQRXt3AVTkQrUceFhIPgpFxOFvPJTPwaJlkQn3LLqUQ-Z0aGqTcpayment',
+      orderId: '',
+      sessionId: '',
       cfEnv: 'SANDBOX',
+      isCreatingOrder: false,
       cardHolderName: 'Kishan Maurya',
       cardNumber: '',
       cardExpiryMM: '09',
@@ -90,6 +97,62 @@ export default class SubscriptionScreen extends Component<Props> {
         ? CFEnvironment.PRODUCTION
         : CFEnvironment.SANDBOX,
     );
+  }
+
+  async createSubscription() {
+    this.setState({isCreatingOrder: true, responseText: 'Creating subscription...'});
+    const subscriptionId = generateSubscriptionId();
+    try {
+      const response = await fetch('https://sandbox.cashfree.com/pg/subscriptions', {
+        method: 'POST',
+        headers: {
+          'x-client-id': CF_CLIENT_ID,
+          'x-client-secret': CF_CLIENT_SECRET,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'x-api-version': '2025-01-01',
+        },
+        body: JSON.stringify({
+          subscription_id: subscriptionId,
+          customer_details: {
+            customer_name: 'Harshith',
+            customer_email: 'test@cashfree.com',
+            customer_phone: '9876543210',
+          },
+          plan_details: {
+            plan_name: 'devstudio_subs_plan',
+            plan_type: 'ON_DEMAND',
+            plan_currency: 'INR',
+            plan_amount: 1,
+            plan_max_amount: 100,
+            plan_max_cycles: 0,
+            plan_note: 'on demand INR 1 plan',
+          },
+          authorization_details: {
+            authorization_amount: 1,
+            authorization_amount_refund: true,
+          },
+          subscription_meta: {
+            return_url: 'https://www.cashfree.com/devstudio/preview/subs/seamless',
+          },
+          subscription_expiry_time: '2027-03-12T09:51:01.688Z',
+        }),
+      });
+      const data = await response.json();
+      if (data.subscription_session_id) {
+        this.setState({
+          orderId: data.subscription_id,
+          sessionId: data.subscription_session_id,
+          responseText: 'Subscription created: ' + data.subscription_id,
+        });
+      } else {
+        this.setState({responseText: 'Subscription creation failed: ' + JSON.stringify(data)});
+      }
+    } catch (e: any) {
+      this.setState({responseText: 'Error: ' + e.message});
+    } finally {
+      this.setState({isCreatingOrder: false});
+    }
   }
 
   async _startSubscriptionCheckout() {
@@ -166,6 +229,12 @@ export default class SubscriptionScreen extends Component<Props> {
           {/* Session Inputs */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Session</Text>
+            <Button
+              title={this.state.isCreatingOrder ? 'Creating Subscription...' : 'Create Subscription'}
+              disabled={this.state.isCreatingOrder}
+              onPress={() => this.createSubscription()}
+            />
+            <View style={styles.divider} />
             <TextInput
               style={styles.input}
               placeholder="Subscription Session Id"
@@ -372,5 +441,8 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
+  },
+  divider: {
+    height: 12,
   },
 });
