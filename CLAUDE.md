@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **2.2.6** (iOS native: 2.2.7, Android native: 2.2.9)
+Current version: **2.3.0** (iOS native: 2.2.7, Android native: 2.3.0)
 
 ## Commands
 
@@ -67,7 +67,7 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 **Android** ([android/](android/)):
 - [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`.
 - `CashfreePgApiPackage.java` — Registers the module with React Native.
-- Gradle dependency: `com.cashfree.pg:api:2.2.9`.
+- Gradle dependency: `com.cashfree.pg:api:2.3.0`.
 
 ### Build output (`lib/`)
 
@@ -80,7 +80,14 @@ The `react-native` field in package.json points to `src/index` so Metro uses the
 
 ### Key API contract dependency
 
-`cashfree-pg-api-contract` (v2.0.9) provides the TypeScript types and payment session contract shared between the JS layer and native modules. Payment objects (e.g., `CFDropCheckoutPayment`, `CFWebCheckoutPayment`, `CFCardPayment`) come from this package.
+`cashfree-pg-api-contract` (v2.1.0) provides the TypeScript types and payment session contract shared between the JS layer and native modules. Payment objects (e.g., `CFDropCheckoutPayment`, `CFWebCheckoutPayment`, `CFCardPayment`) come from this package.
+
+**Subscription types** (added in v2.1.0):
+- `CFSubscriptionSession` — session object with `subscription_session_id`, `subscription_id`, and `CFEnvironment`
+- `CFSubscriptionCheckoutPayment` — web checkout flow for subscriptions
+- `CFSubsCardPayment` — card-based subscription payment
+- `CFSubsUPIPayment` — UPI-based subscription payment
+- `CFSubsNBPayment` — net banking subscription payment (`CFSubsNB` holds bank details)
 
 ## Development conventions
 
