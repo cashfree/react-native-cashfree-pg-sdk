@@ -10,6 +10,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   ToastAndroid,
@@ -39,8 +40,11 @@ import CustomCardInput from './CustomCardInput';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 
-const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
-const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+const SANDBOX_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
+const SANDBOX_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+const PROD_CLIENT_ID = '';
+const PROD_CLIENT_SECRET = '';
+
 
 function generateOrderId(): string {
   return 'devstudio_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
@@ -66,7 +70,7 @@ export default class PGScreen extends Component<Props> {
       instrumentId: '',
       toggleCheckBox: false,
       isCreatingOrder: false,
-      cfEnv: 'SANDBOX',
+      isSandbox: true,
       upiId: 'testfailure@gocash',
       cardNetwork: require('./assets/visa.png'),
     };
@@ -129,41 +133,58 @@ export default class PGScreen extends Component<Props> {
     });
   }
 
+  private getEnv(): CFEnvironment {
+    return this.state.isSandbox
+      ? CFEnvironment.SANDBOX
+      : CFEnvironment.PRODUCTION;
+  }
+
   private getSession(): CFSession {
-    return new CFSession(
-      this.state.sessionId,
+    const env = this.getEnv();
+    console.log(
+      '[PGScreen] getSession → env:',
+      this.state.isSandbox ? 'SANDBOX' : 'PRODUCTION',
+      '| orderId:',
       this.state.orderId,
-      this.state.cfEnv === 'PROD'
-        ? CFEnvironment.PRODUCTION
-        : CFEnvironment.SANDBOX,
     );
+    return new CFSession(this.state.sessionId, this.state.orderId, env);
   }
 
   private getFixSession(): CFSession {
     return new CFSession(
       'session_4zxKsUyNPorU6aZbHcxf8LJmyET2xA_svlDF69vSa8k9mkjAV3Zeosc2l3__mxno38hTK3pXR6_jL8X5R5WVC9BEXoN6SPef5V5lAYJyIE234IODJE1TXtIpayment',
       'devstudio_20339474',
-      this.state.cfEnv === 'PROD'
-        ? CFEnvironment.PRODUCTION
-        : CFEnvironment.SANDBOX,
+      this.getEnv(),
     );
   }
 
   async createOrder() {
     this.setState({isCreatingOrder: true, responseText: 'Creating order...'});
     const orderId = generateOrderId();
+    const {isSandbox} = this.state;
+    const apiUrl = isSandbox
+      ? 'https://sandbox.cashfree.com/pg/orders'
+      : 'https://api.cashfree.com/pg/orders';
+    const clientId = isSandbox ? SANDBOX_CLIENT_ID : PROD_CLIENT_ID;
+    const clientSecret = isSandbox ? SANDBOX_CLIENT_SECRET : PROD_CLIENT_SECRET;
+    console.log(
+      '[PGScreen] createOrder → API:',
+      apiUrl,
+      '| env:',
+      isSandbox ? 'SANDBOX' : 'PRODUCTION',
+    );
     try {
-      const response = await fetch('https://sandbox.cashfree.com/pg/orders', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'x-client-id': CF_CLIENT_ID,
-          'x-client-secret': CF_CLIENT_SECRET,
+          'x-client-id': clientId,
+          'x-client-secret': clientSecret,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'x-api-version': '2025-01-01',
         },
         body: JSON.stringify({
-          order_amount: 1.00,
+          order_amount: 1.0,
           order_currency: 'INR',
           order_id: orderId,
           customer_details: {
@@ -350,12 +371,39 @@ export default class PGScreen extends Component<Props> {
               value={this.state.orderId}
               onChangeText={v => this.setState({orderId: v})}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Environment (SANDBOX / PRODUCTION)"
-              value={this.state.cfEnv}
-              onChangeText={v => this.setState({cfEnv: v})}
-            />
+            <View style={styles.envToggleRow}>
+              <Text
+                style={[
+                  styles.envLabel,
+                  this.state.isSandbox && styles.envLabelActive,
+                ]}>
+                SANDBOX
+              </Text>
+              <Switch
+                value={!this.state.isSandbox}
+                onValueChange={v => this.setState({isSandbox: !v})}
+                thumbColor={this.state.isSandbox ? '#2ecc71' : '#e74c3c'}
+                trackColor={{false: '#a8e6c1', true: '#f5a8a8'}}
+              />
+              <Text
+                style={[
+                  styles.envLabel,
+                  !this.state.isSandbox && styles.envLabelActive,
+                ]}>
+                PRODUCTION
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.envBadge,
+                this.state.isSandbox
+                  ? styles.envBadgeSandbox
+                  : styles.envBadgeProd,
+              ]}>
+              <Text style={styles.envBadgeText}>
+                {this.state.isSandbox ? '🟢 SANDBOX' : '🔴 PRODUCTION'}
+              </Text>
+            </View>
             <TextInput
               style={styles.input}
               placeholder="VPA / PSP app package (UPI)"
@@ -630,5 +678,38 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 12,
+  },
+  envToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  envLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#aaa',
+  },
+  envLabelActive: {
+    color: '#1a1a2e',
+  },
+  envBadge: {
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  envBadgeSandbox: {
+    backgroundColor: '#2ecc71',
+  },
+  envBadgeProd: {
+    backgroundColor: '#e74c3c',
+  },
+  envBadgeText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
