@@ -43,7 +43,10 @@
     "payment gateway",
     "react-native-cashfree-pg-sdk"
   ],
-  "repository": "https://github.com/cashfree/react-native-cashfree-pg-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cashfree/react-native-cashfree-pg-sdk.git"
+  },
   "author": "cashfree-payments <developers@cashfree.com> (https://www.cashfree.com/)",
   "license": "MIT",
   "bugs": {
@@ -52,6 +55,9 @@
   "homepage": "https://docs.cashfree.com/docs/react-native-integration",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
+  },
+  "expo": {
+    "plugin": "./app.plugin.js"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^11.0.0",
