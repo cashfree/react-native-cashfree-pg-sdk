@@ -1,6 +1,34 @@
 #import "AppDelegate.h"
 
 #import <React/RCTBundleURLProvider.h>
+#import <WebKit/WebKit.h>
+#import <objc/runtime.h>
+
+#if DEBUG
+@interface WKWebView (Inspectable)
+@end
+
+@implementation WKWebView (Inspectable)
+
++ (void)load {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    Method original = class_getInstanceMethod(self, @selector(initWithFrame:configuration:));
+    Method swizzled = class_getInstanceMethod(self, @selector(cf_initWithFrame:configuration:));
+    method_exchangeImplementations(original, swizzled);
+  });
+}
+
+- (instancetype)cf_initWithFrame:(CGRect)frame configuration:(WKWebViewConfiguration *)configuration {
+  WKWebView *webView = [self cf_initWithFrame:frame configuration:configuration];
+  if ([webView respondsToSelector:@selector(setInspectable:)]) {
+    [webView setInspectable:YES];
+  }
+  return webView;
+}
+
+@end
+#endif
 
 @implementation AppDelegate
 

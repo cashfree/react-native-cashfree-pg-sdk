@@ -13,7 +13,7 @@
     "@react-native-community/checkbox": "^0.5.16",
     "react": "18.2.0",
     "react-native": "0.73.0",
-    "react-native-cashfree-pg-sdk": "github:cashfree/react-native-cashfree-pg-sdk#sdk_version_update"
+    "react-native-cashfree-pg-sdk": "github:cashfree/react-native-cashfree-pg-sdk#feature/ios_sdk_update"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
