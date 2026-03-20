@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **2.3.0** (iOS native: 2.2.7, Android native: 2.3.0)
+Current version: **2.3.0** (iOS native: 2.3.1, Android native: 2.3.0)
 
 ## Commands
 
@@ -63,7 +63,7 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 - `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the active `CashfreeEventEmitter` and calls `sendEvent`. The `allEvents` array here must match JS listener names.
 - `CashfreeEventEmitter.swift` — `RCTEventEmitter` subclass that registers itself with `CashfreeEmitter.sharedInstance` on init.
 - `CashfreePgApi.m` — Objective-C bridge exposing both `CashfreePgApi` and `CashfreeEventEmitter` to React Native.
-- CocoaPod: `CashfreePG ~> 2.2.7` (declared in `react-native-cashfree-pg-sdk.podspec`).
+- CocoaPod: `CashfreePG 2.3.1` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
 
 **Android** ([android/](android/)):
 - [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`. Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`).
