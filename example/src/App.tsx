@@ -51,12 +51,12 @@ export default class App extends Component {
       cardExpiryMM: '',
       cardExpiryYY: '',
       cardCVV: '',
-      orderId: 'devstudio_7354422570518932919',
+      orderId: 'devstudio_7440635048698411642',
       sessionId:
-        'session_QRyuDMxoFEbU8I50KKp60QyAv-fQ28VoVXqp3xmNTG-3QYP0DcVLd_E7x8LJfQw1kWSqUaG6TEzIwilkK6d5DAR8FJKkbBpR_npwHjgsN--7OiFjOF598OFvY6Apayment',
+        'session_Ivf6gFkwtiAY4WxqgjuyPkAq9MpAQRe6WOi5BrJNzpEduX0w5BK-DwWpntSL3Lj9Xto9wFzJHAESbKVNLeeWOFec0HtCrXUusNFYdc7BVLfk3RenGY_DDvP-sAcpayment',
       instrumentId: '',
       toggleCheckBox: false,
-      cfEnv: 'SANDBOX',
+      cfEnv: 'PRODUCTION',
       upiId: '',
       cardNetwork: require('./assets/visa.png'),
     };
@@ -336,7 +336,7 @@ export default class App extends Component {
     return new CFSession(
       this.state.sessionId,
       this.state.orderId,
-      this.state.cfEnv === 'PROD'
+      this.state.cfEnv === 'PRODUCTION'
         ? CFEnvironment.PRODUCTION
         : CFEnvironment.SANDBOX,
     );
