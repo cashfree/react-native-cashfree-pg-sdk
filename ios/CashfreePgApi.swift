@@ -474,11 +474,11 @@ class CashfreePgApi: NSObject {
                     .setChannel("link")
                     .build()
                 let cardSubsPayment = try CFCardSubsPayment.CFCardPaymentSubsBuilder()
-                    .setCard(cfCardSubs!)
+                    .setCard(cfCardSubs)
                     .setSession(subsSession)
                     .build()
                 let systemVersion = UIDevice.current.systemVersion
-                cardSubsPayment?.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                cardSubsPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
                 return cardSubsPayment
             } catch let e {
                 let error = e as! CashfreeError
@@ -498,11 +498,11 @@ class CashfreePgApi: NSObject {
                     .setUPIID(upiDict["id"] ?? "")
                     .build()
                 let upiSubsPayment = try CFUPISubsPayment.CFUPIPaymentSubsBuilder()
-                    .setUPI(cfUPISubs!)
+                    .setUPI(cfUPISubs)
                     .setSession(subsSession)
                     .build()
                 let systemVersion = UIDevice.current.systemVersion
-                upiSubsPayment?.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                upiSubsPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
                 return upiSubsPayment
             } catch let e {
                 let error = e as! CashfreeError
@@ -526,10 +526,10 @@ class CashfreePgApi: NSObject {
                     .build()
                 let nbSubsPayment = try CFNetbankingSubsPayment.CFNetbankingSubsPaymentBuilder()
                     .setSession(subsSession)
-                    .setNetbanking(cfNetBankingSubs!)
+                    .setNetbanking(cfNetBankingSubs)
                     .build()
                 let systemVersion = UIDevice.current.systemVersion
-                nbSubsPayment?.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                nbSubsPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
                 return nbSubsPayment
             } catch let e {
                 let error = e as! CashfreeError
