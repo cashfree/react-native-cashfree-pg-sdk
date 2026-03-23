@@ -24,12 +24,13 @@ yarn release          # Cut a release with release-it
 
 ### Example App
 
+> **Important:** The example app uses **npm** (has `package-lock.json`). Always use `npm`, never `yarn`, for example app commands — Yarn Berry treats it as a separate project and fails.
+
 ```sh
-yarn example          # Shortcut: runs yarn in example/ directory
-yarn pods             # Install iOS CocoaPods for example app
-cd example && yarn android    # Run example on Android
-cd example && yarn ios        # Run example on iOS
-cd example && yarn start      # Start Metro bundler
+yarn pods                      # Install iOS CocoaPods for example app (run from repo root)
+cd example && npm run android  # Run example on Android
+cd example && npm run ios      # Run example on iOS (add -- --simulator "iPhone 16 Pro" to target simulator)
+cd example && npm start        # Start Metro bundler
 ```
 
 ### Single test file
@@ -59,7 +60,7 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 ### Native modules
 
 **iOS** ([ios/](ios/)):
-- [CashfreePgApi.swift](ios/CashfreePgApi.swift) — Primary Swift native module. Implements `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `getInstalledUpiApps`. Emits `cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps` (iOS-only) events back to JS via `CashfreeEmitter`.
+- [CashfreePgApi.swift](ios/CashfreePgApi.swift) — Primary Swift native module. Implements `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `getInstalledUpiApps`, `doElementUPIPayment`, and subscription element methods `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment`. All payment methods (including subscription element) use `CFPaymentGatewayService`. Callback is registered via `setCallback()` which calls `CFPaymentGatewayService.getInstance().setCallback(self)`. Implements `CFResponseDelegate` with `verifyPayment(order_id:)` (emits `cfSuccess`), `onError(_:order_id:)` (emits `cfFailure`), and `receivedEvent(event_name:meta_data:)` (emits `cfEvent`). Emits `cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps` (iOS-only) events back to JS via `CashfreeEmitter`.
 - `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the active `CashfreeEventEmitter` and calls `sendEvent`. The `allEvents` array here must match JS listener names.
 - `CashfreeEventEmitter.swift` — `RCTEventEmitter` subclass that registers itself with `CashfreeEmitter.sharedInstance` on init.
 - `CashfreePgApi.m` — Objective-C bridge exposing both `CashfreePgApi` and `CashfreeEventEmitter` to React Native.
@@ -100,7 +101,11 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 
 **Example app screens:**
 - `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card)
-- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element, net banking element, UPI intent
+- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element, net banking element, UPI intent. Key behaviours:
+  - `showAlert(message)` — module-level helper that wraps `Alert.alert('Response', message)`. Used for all payment responses.
+  - `onVerify` / `onError` callbacks call `showAlert()` with the result.
+  - UPI intent: calls `getInstalledUpiApps()`, shows a `Modal` + `FlatList` bottom sheet. Falls back to hardcoded `[tez, phonepe, paytmmp, bhim]` if list is empty or call fails. `appPackage` passed to `CFUPI(UPIMode.INTENT, appPackage)` must be the scheme name only (e.g. `'tez'`, not `'tez://'`).
+  - Pre-filled test data: card `4400060119105004`, expiry `09/30`, CVV `123`; NB account `123456789`, bank `UTIB`, type `SAVINGS`.
 
 ## Development conventions
 
@@ -114,5 +119,13 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 
 - **iOS minimum deployment target:** 10.0
 - **Android minSdkVersion:** 21, compileSdkVersion: 35
-- When changing the podspec or `build.gradle`, verify the example app still builds (`yarn pods` + `yarn example ios/android`).
+- When changing the podspec or `build.gradle`, verify the example app still builds (`yarn pods` + `cd example && npm run ios/android`).
 - The native event names (`cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps`) must stay in sync between the native emitters and the JS listeners in `src/index.ts`. On iOS, `CashfreeEmitter.swift`'s `allEvents` array is the authoritative list.
+- **iOS build cache:** If you get `'CFCardSubsPayment' is unavailable: cannot find Swift declaration for this class` errors, the `XCFrameworkIntermediates` build cache is stale. Fix: `rm -rf example/ios/build/Debug-iphonesimulator/XCFrameworkIntermediates` then rebuild.
+- **iOS simulator UPI testing:** To test UPI app selection on simulator, install dummy apps with UPI URL schemes. See script below — uses `xcrun simctl install` with minimal `.app` bundles (binary compiled via `xcrun -sdk iphonesimulator clang`). Use `cat` instead of `cp` to copy binaries (hooks may intercept `cp`).
+  ```sh
+  # Schemes to cover: tez, phonepe, paytmmp, bhim
+  xcrun -sdk iphonesimulator clang -target arm64-apple-ios14.0-simulator main.c -o dummy_bin
+  # Then create .app bundle with Info.plist registering CFBundleURLTypes, install with:
+  xcrun simctl install <SIMULATOR_ID> DummyApp.app
+  ```

@@ -117,6 +117,42 @@ class CashfreePgApi: NSObject {
         }
     }
 
+    @objc func doSubsCardPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfCardSubsPayment = try parseSubsCardObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doSubsPayment(cfCardSubsPayment, viewController: vc)
+                }
+            }
+        } catch {
+            print(error)
+        }
+    }
+
+    @objc func doSubsUPIPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfUPISubsPayment = try parseSubsUPIObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doSubsPayment(cfUPISubsPayment, viewController: vc)
+                }
+            }
+        } catch {
+            print(error)
+        }
+    }
+
+    @objc func doSubsNBPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfNBSubsPayment = try parseSubsNBObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doSubsPayment(cfNBSubsPayment, viewController: vc)
+                }
+            }
+        } catch {
+            print(error)
+        }
+    }
+
     @objc func setCallback() -> Void {
         CFPaymentGatewayService.getInstance().setCallback(self)
     }
@@ -419,6 +455,86 @@ class CashfreePgApi: NSObject {
             }
             //            return CFTheme.CFThemeBuilder().build()
             //                .setNavigationBarBackgroundColor(theme["navigationBarBackgroundColor"] ?? "")
+        }
+        return nil
+    }
+
+    private func parseSubsCardObject(paymentObject: String) throws -> CFCardSubsPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let subsSession = getSubscriptionSession(paymentObject: output)!
+                let cardDict = output["card"] as? NSDictionary ?? [:]
+                let cfCardSubs = try CFCardSubs.CFCardSubsBuilder()
+                    .setCardNumber(cardDict["cardNumber"] as? String ?? "")
+                    .setCardHolderName(cardDict["cardHolderName"] as? String ?? "")
+                    .setCardExpiryMonth(cardDict["cardExpiryMM"] as? String ?? "")
+                    .setCardExpiryYear(cardDict["cardExpiryYY"] as? String ?? "")
+                    .setCVV(cardDict["cardCvv"] as? String ?? "")
+                    .setChannel("link")
+                    .build()
+                let cardSubsPayment = try CFCardSubsPayment.CFCardPaymentSubsBuilder()
+                    .setCard(cfCardSubs!)
+                    .setSession(subsSession)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                cardSubsPayment?.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                return cardSubsPayment
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+
+    private func parseSubsUPIObject(paymentObject: String) throws -> CFUPISubsPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let subsSession = getSubscriptionSession(paymentObject: output)!
+                let upiDict = output["upi"] as? Dictionary<String, String> ?? [:]
+                let cfUPISubs = try CFUPISubs.CFUPISubsBuilder()
+                    .setUPIID(upiDict["id"] ?? "")
+                    .build()
+                let upiSubsPayment = try CFUPISubsPayment.CFUPIPaymentSubsBuilder()
+                    .setUPI(cfUPISubs!)
+                    .setSession(subsSession)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                upiSubsPayment?.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                return upiSubsPayment
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+
+    private func parseSubsNBObject(paymentObject: String) throws -> CFNetbankingSubsPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let subsSession = getSubscriptionSession(paymentObject: output)!
+                let nbDict = output["nb"] as? NSDictionary ?? [:]
+                let cfNetBankingSubs = try CFNetBankingSubs.CFNetbankingSubsBuilder()
+                    .setAccountHolderName(nbDict["accountHolderName"] as? String ?? "")
+                    .setAccountNumber(nbDict["accountNumber"] as? String ?? "")
+                    .setBankAccountCode(nbDict["accountBankCode"] as? String ?? "")
+                    .setAccountType(nbDict["accountType"] as? String ?? "")
+                    .build()
+                let nbSubsPayment = try CFNetbankingSubsPayment.CFNetbankingSubsPaymentBuilder()
+                    .setSession(subsSession)
+                    .setNetbanking(cfNetBankingSubs!)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                nbSubsPayment?.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                return nbSubsPayment
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
         }
         return nil
     }

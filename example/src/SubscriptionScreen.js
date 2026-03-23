@@ -1,14 +1,16 @@
 // @ts-nocheck
 import * as React from 'react';
 import { Component } from 'react';
-import { Button, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
+import { Alert, Button, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
 import { Card, CFEnvironment, CFSubsCardPayment, CFSubsNB, CFSubsNBPayment, CFSubsUPIPayment, CFSubscriptionSession, CFUPI, UPIMode, } from 'cashfree-pg-api-contract';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
+const showAlert = (message) => Alert.alert('Response', message, [{ text: 'OK' }]);
 const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
 const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
 function generateSubscriptionId() {
-    return 'devstudio_subs_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
+    return ('devstudio_subs_' +
+        Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString());
 }
 export default class SubscriptionScreen extends Component {
     constructor(props) {
@@ -20,14 +22,16 @@ export default class SubscriptionScreen extends Component {
             cfEnv: 'SANDBOX',
             isCreatingOrder: false,
             cardHolderName: 'Kishan Maurya',
-            cardNumber: '',
+            cardNumber: '4400060119105004',
             cardExpiryMM: '09',
             cardExpiryYY: '30',
             cardCVV: '123',
             upiId: '',
+            upiApps: [],
+            showUpiSheet: false,
             nbAccountHolderName: 'Kishan Maurya',
-            nbAccountNumber: '',
-            nbAccountBankCode: '',
+            nbAccountNumber: '123456789',
+            nbAccountBankCode: 'UTIB',
             nbAccountType: 'SAVINGS',
         };
     }
@@ -46,10 +50,12 @@ export default class SubscriptionScreen extends Component {
             onVerify(orderID) {
                 console.log('onVerify Called', orderID);
                 context.updateStatus('Verified: ' + orderID);
+                showAlert(`Subs ID: ${orderID}`);
             },
             onError(error, orderID) {
                 console.log('onError Called', error.getMessage());
                 context.updateStatus(JSON.stringify(error));
+                showAlert(`Order ID: ${orderID}\nCode: ${error.getCode()}\nMessage: ${error.getMessage()}`);
             },
         });
     }
@@ -59,7 +65,10 @@ export default class SubscriptionScreen extends Component {
             : CFEnvironment.SANDBOX);
     }
     async createSubscription() {
-        this.setState({ isCreatingOrder: true, responseText: 'Creating subscription...' });
+        this.setState({
+            isCreatingOrder: true,
+            responseText: 'Creating subscription...',
+        });
         const subscriptionId = generateSubscriptionId();
         try {
             const response = await fetch('https://sandbox.cashfree.com/pg/subscriptions', {
@@ -67,7 +76,7 @@ export default class SubscriptionScreen extends Component {
                 headers: {
                     'x-client-id': CF_CLIENT_ID,
                     'x-client-secret': CF_CLIENT_SECRET,
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'Content-Type': 'application/json',
                     'x-api-version': '2025-01-01',
                 },
@@ -106,7 +115,10 @@ export default class SubscriptionScreen extends Component {
                 });
             }
             else {
-                this.setState({ responseText: 'Subscription creation failed: ' + JSON.stringify(data) });
+                this.setState({
+                    responseText: 'Subscription creation failed: ' + JSON.stringify(data),
+                });
+                showAlert(this.state.responseText);
             }
         }
         catch (e) {
@@ -124,6 +136,7 @@ export default class SubscriptionScreen extends Component {
         }
         catch (e) {
             console.log(e.message);
+            showAlert(e.message);
         }
     }
     async _startSubsCardPayment() {
@@ -133,6 +146,7 @@ export default class SubscriptionScreen extends Component {
         }
         catch (e) {
             console.log(e.message);
+            showAlert(e.message);
         }
     }
     async _startSubsNBPayment() {
@@ -142,62 +156,89 @@ export default class SubscriptionScreen extends Component {
         }
         catch (e) {
             console.log(e.message);
+            showAlert(e.message);
         }
     }
     async _makeSubsUpiIntentPayment() {
-        const apps = await CFPaymentGatewayService.getInstalledUpiApps();
-        let id = '';
-        JSON.parse(apps).forEach((item) => {
-            id = item.appPackage;
-        });
+        const FALLBACK_UPI_APPS = [
+            { appName: 'Google Pay', appPackage: 'tez://' },
+            { appName: 'PhonePe', appPackage: 'phonepe://' },
+            { appName: 'Paytm', appPackage: 'paytmmp://' },
+            { appName: 'BHIM', appPackage: 'bhim://' },
+        ];
         try {
-            const upi = new CFUPI(UPIMode.INTENT, this.state.upiId || id);
-            CFPaymentGatewayService.makeSubsPayment(new CFSubsUPIPayment(this.getSubscriptionSession(), upi));
+            const apps = await CFPaymentGatewayService.getInstalledUpiApps();
+            const parsed = JSON.parse(apps);
+            const list = parsed.length > 0 ? parsed : FALLBACK_UPI_APPS;
+            this.setState({ upiApps: list, showUpiSheet: true });
         }
         catch (e) {
             console.log(e.message);
+            this.setState({ upiApps: FALLBACK_UPI_APPS, showUpiSheet: true });
+        }
+    }
+    async _doSubsUpiPayment(appPackage) {
+        this.setState({ upiId: appPackage, showUpiSheet: false });
+        try {
+            const upi = new CFUPI(UPIMode.INTENT, appPackage);
+            const subsUpiPayment = new CFSubsUPIPayment(this.getSubscriptionSession(), upi);
+            console.log(JSON.stringify(subsUpiPayment));
+            CFPaymentGatewayService.makeSubsPayment(subsUpiPayment);
+        }
+        catch (e) {
+            console.log(e.message);
+            showAlert(e.message);
         }
     }
     render() {
-        return (React.createElement(ScrollView, { style: styles.screen },
-            React.createElement(View, { style: styles.header },
-                React.createElement(Pressable, { onPress: this.props.onBack, style: styles.backBtn },
-                    React.createElement(Text, { style: styles.backBtnText }, "\u2190 Back")),
-                React.createElement(Text, { style: styles.headerTitle }, "Subscription")),
-            React.createElement(View, { style: styles.container },
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Session"),
-                    React.createElement(Button, { title: this.state.isCreatingOrder ? 'Creating Subscription...' : 'Create Subscription', disabled: this.state.isCreatingOrder, onPress: () => this.createSubscription() }),
-                    React.createElement(View, { style: styles.divider }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Subscription Session Id", value: this.state.sessionId, onChangeText: v => this.setState({ sessionId: v }) }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", value: this.state.orderId, onChangeText: v => this.setState({ orderId: v }) }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Environment (SANDBOX / PRODUCTION)", value: this.state.cfEnv, onChangeText: v => this.setState({ cfEnv: v }) })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Checkout"),
-                    React.createElement(Button, { title: "Start Subscription Checkout", onPress: () => this._startSubscriptionCheckout() })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Response"),
-                    React.createElement(Text, { style: styles.responseText }, this.state.responseText)),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Card Payment"),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Card Number", keyboardType: "numeric", onChangeText: v => this.setState({ cardNumber: v }) }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Holder Name", value: this.state.cardHolderName, onChangeText: v => this.setState({ cardHolderName: v }) }),
-                    React.createElement(View, { style: styles.row },
-                        React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "MM", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryMM, onChangeText: v => this.setState({ cardExpiryMM: v }) }),
-                        React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "YY", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryYY, onChangeText: v => this.setState({ cardExpiryYY: v }) }),
-                        React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, value: this.state.cardCVV, onChangeText: v => this.setState({ cardCVV: v }) })),
-                    React.createElement(Button, { title: "Pay with Card", onPress: () => this._startSubsCardPayment() })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Net Banking Payment"),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Account Holder Name", value: this.state.nbAccountHolderName, onChangeText: v => this.setState({ nbAccountHolderName: v }) }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Account Number", keyboardType: "numeric", onChangeText: v => this.setState({ nbAccountNumber: v }) }),
-                    React.createElement(TextInput, { style: styles.input, autoCapitalize: "characters", placeholder: "Bank Code (e.g. UTIB)", onChangeText: v => this.setState({ nbAccountBankCode: v.toUpperCase() }) }),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "Account Type (e.g. SAVINGS)", autoCapitalize: "characters", value: this.state.nbAccountType, onChangeText: v => this.setState({ nbAccountType: v.toUpperCase() }) }),
-                    React.createElement(Button, { title: "Pay with Net Banking", onPress: () => this._startSubsNBPayment() })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "UPI Payment"),
-                    React.createElement(TextInput, { style: styles.input, placeholder: "PSP app package", onChangeText: v => this.setState({ upiId: v }) }),
-                    React.createElement(Button, { title: "Pay with UPI Intent", onPress: () => this._makeSubsUpiIntentPayment() })))));
+        return (React.createElement(React.Fragment, null,
+            React.createElement(ScrollView, { style: styles.screen },
+                React.createElement(View, { style: styles.header },
+                    React.createElement(Pressable, { onPress: this.props.onBack, style: styles.backBtn },
+                        React.createElement(Text, { style: styles.backBtnText }, "\u2190 Back")),
+                    React.createElement(Text, { style: styles.headerTitle }, "Subscription")),
+                React.createElement(View, { style: styles.container },
+                    React.createElement(View, { style: styles.section },
+                        React.createElement(Text, { style: styles.sectionTitle }, "Session"),
+                        React.createElement(Button, { title: this.state.isCreatingOrder
+                                ? 'Creating Subscription...'
+                                : 'Create Subscription', disabled: this.state.isCreatingOrder, onPress: () => this.createSubscription() }),
+                        React.createElement(View, { style: styles.divider }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Subscription Session Id", value: this.state.sessionId, onChangeText: v => this.setState({ sessionId: v }) }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", value: this.state.orderId, onChangeText: v => this.setState({ orderId: v }) }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Environment (SANDBOX / PRODUCTION)", value: this.state.cfEnv, onChangeText: v => this.setState({ cfEnv: v }) })),
+                    React.createElement(View, { style: styles.section },
+                        React.createElement(Text, { style: styles.sectionTitle }, "Checkout"),
+                        React.createElement(Button, { title: "Start Subscription Checkout", onPress: () => this._startSubscriptionCheckout() })),
+                    React.createElement(View, { style: styles.section },
+                        React.createElement(Text, { style: styles.sectionTitle }, "Response"),
+                        React.createElement(Text, { style: styles.responseText }, this.state.responseText)),
+                    React.createElement(View, { style: styles.section },
+                        React.createElement(Text, { style: styles.sectionTitle }, "Card Payment"),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Card Number", keyboardType: "numeric", value: this.state.cardNumber, onChangeText: v => this.setState({ cardNumber: v }) }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Holder Name", value: this.state.cardHolderName, onChangeText: v => this.setState({ cardHolderName: v }) }),
+                        React.createElement(View, { style: styles.row },
+                            React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "MM", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryMM, onChangeText: v => this.setState({ cardExpiryMM: v }) }),
+                            React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "YY", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryYY, onChangeText: v => this.setState({ cardExpiryYY: v }) }),
+                            React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, value: this.state.cardCVV, onChangeText: v => this.setState({ cardCVV: v }) })),
+                        React.createElement(Button, { title: "Pay with Card", onPress: () => this._startSubsCardPayment() })),
+                    React.createElement(View, { style: styles.section },
+                        React.createElement(Text, { style: styles.sectionTitle }, "Net Banking Payment"),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Account Holder Name", value: this.state.nbAccountHolderName, onChangeText: v => this.setState({ nbAccountHolderName: v }) }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Account Number", keyboardType: "numeric", value: this.state.nbAccountNumber, onChangeText: v => this.setState({ nbAccountNumber: v }) }),
+                        React.createElement(TextInput, { style: styles.input, autoCapitalize: "characters", placeholder: "Bank Code (e.g. UTIB)", value: this.state.nbAccountBankCode, onChangeText: v => this.setState({ nbAccountBankCode: v.toUpperCase() }) }),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Account Type (e.g. SAVINGS)", autoCapitalize: "characters", value: this.state.nbAccountType, onChangeText: v => this.setState({ nbAccountType: v.toUpperCase() }) }),
+                        React.createElement(Button, { title: "Pay with Net Banking", onPress: () => this._startSubsNBPayment() })),
+                    React.createElement(View, { style: styles.section },
+                        React.createElement(Text, { style: styles.sectionTitle }, "UPI Payment"),
+                        React.createElement(Button, { title: "Pay with UPI Intent", onPress: () => this._makeSubsUpiIntentPayment() })))),
+            React.createElement(Modal, { visible: this.state.showUpiSheet, transparent: true, animationType: "slide", onRequestClose: () => this.setState({ showUpiSheet: false }) },
+                React.createElement(Pressable, { style: styles.sheetBackdrop, onPress: () => this.setState({ showUpiSheet: false }) }),
+                React.createElement(View, { style: styles.sheet },
+                    React.createElement(Text, { style: styles.sheetTitle }, "Select UPI App"),
+                    React.createElement(FlatList, { data: this.state.upiApps, keyExtractor: (item) => item.appPackage, renderItem: ({ item }) => (React.createElement(Pressable, { style: styles.sheetItem, onPress: () => this._doSubsUpiPayment(item.appPackage) },
+                            React.createElement(Text, { style: styles.sheetItemText }, item.appName),
+                            React.createElement(Text, { style: styles.sheetItemSub }, item.appPackage))), ListEmptyComponent: React.createElement(Text, { style: styles.sheetEmpty }, "No UPI apps found") })))));
     }
 }
 const styles = StyleSheet.create({
@@ -269,5 +310,44 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 12,
+    },
+    sheetBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    sheet: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+        maxHeight: '60%',
+    },
+    sheetTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1a1a2e',
+        marginBottom: 12,
+    },
+    sheetItem: {
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    sheetItemText: {
+        fontSize: 15,
+        color: '#1a1a2e',
+        fontWeight: '500',
+    },
+    sheetItemSub: {
+        fontSize: 12,
+        color: '#888',
+        marginTop: 2,
+    },
+    sheetEmpty: {
+        textAlign: 'center',
+        color: '#888',
+        paddingVertical: 24,
     },
 });
