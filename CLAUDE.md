@@ -103,8 +103,13 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 - `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card)
 - `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element, net banking element, UPI intent. Key behaviours:
   - `showAlert(message)` — module-level helper that wraps `Alert.alert('Response', message)`. Used for all payment responses.
-  - `onVerify` / `onError` callbacks call `showAlert()` with the result.
-  - UPI intent: calls `getInstalledUpiApps()`, shows a `Modal` + `FlatList` bottom sheet. Falls back to hardcoded `[tez, phonepe, paytmmp, bhim]` if list is empty or call fails. `appPackage` passed to `CFUPI(UPIMode.INTENT, appPackage)` must be the scheme name only (e.g. `'tez'`, not `'tez://'`).
+  - `onVerify` / `onError` callbacks call `showAlert()` with the result. `onVerify` also clears the `upiScheme` state so the UPI input is reset after a successful payment.
+  - **Auto-create on mount:** `createSubscription()` is called in `componentDidMount`, so a subscription order is created as soon as the screen loads. The "Create Subscription" button still works to refresh/retry.
+  - UPI intent: a `upiScheme` text input is shown above the "Pay with UPI Intent" button.
+    - If the field has a value, pressing the button calls `_doSubsUpiPayment` directly with that scheme (no sheet shown).
+    - If the field is empty, `getInstalledUpiApps()` is called and a `Modal` + `FlatList` bottom sheet is shown. Falls back to hardcoded `[tez://, phonepe://, paytmmp://, bhim://]` if the list is empty or the call fails.
+    - On selecting from the sheet, `upiScheme` is populated with the selected `appPackage` for reference.
+    - `appPackage` passed to `CFUPI(UPIMode.INTENT, appPackage)` must use the `scheme://` format (e.g. `'tez://'`).
   - Pre-filled test data: card `4400060119105004`, expiry `09/30`, CVV `123`; NB account `123456789`, bank `UTIB`, type `SAVINGS`.
 
 ## Development conventions

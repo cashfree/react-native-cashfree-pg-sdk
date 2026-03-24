@@ -68,6 +68,7 @@ export default class SubscriptionScreen extends Component<Props> {
       cardExpiryYY: '30',
       cardCVV: '123',
       upiId: '',
+      upiScheme: '',
       upiApps: [],
       showUpiSheet: false,
       nbAccountHolderName: 'Kishan Maurya',
@@ -89,11 +90,13 @@ export default class SubscriptionScreen extends Component<Props> {
   }
 
   componentDidMount() {
+    this.createSubscription();
     const context = this;
     CFPaymentGatewayService.setCallback({
       onVerify(orderID: string): void {
         console.log('onVerify Called', orderID);
         context.updateStatus('Verified: ' + orderID);
+        context.setState({upiScheme: ''});
         showAlert(`Subs ID: ${orderID}`);
       },
       onError(error: CFErrorResponse, orderID: string): void {
@@ -229,6 +232,13 @@ export default class SubscriptionScreen extends Component<Props> {
   }
 
   async _makeSubsUpiIntentPayment() {
+    // If user typed a scheme manually, use it directly without showing sheet
+    const manualScheme = this.state.upiScheme.trim();
+    if (manualScheme.length > 0) {
+      this._doSubsUpiPayment(manualScheme);
+      return;
+    }
+
     const FALLBACK_UPI_APPS = [
       {appName: 'Google Pay', appPackage: 'tez://'},
       {appName: 'PhonePe', appPackage: 'phonepe://'},
@@ -247,14 +257,22 @@ export default class SubscriptionScreen extends Component<Props> {
   }
 
   async _doSubsUpiPayment(appPackage: string) {
-    this.setState({upiId: appPackage, showUpiSheet: false});
+    this.setState({
+      upiId: appPackage,
+      upiScheme: appPackage,
+      showUpiSheet: false,
+    });
     try {
       const upi = new CFUPI(UPIMode.INTENT, appPackage);
       const subsUpiPayment = new CFSubsUPIPayment(
         this.getSubscriptionSession(),
         upi,
       );
-      console.log(JSON.stringify(subsUpiPayment));
+      console.log(
+        'subsUpiPayment scheme:',
+        appPackage,
+        JSON.stringify(subsUpiPayment),
+      );
       CFPaymentGatewayService.makeSubsPayment(subsUpiPayment);
     } catch (e: any) {
       console.log(e.message);
@@ -415,6 +433,14 @@ export default class SubscriptionScreen extends Component<Props> {
             {/* Subscription UPI Payment */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>UPI Payment</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="UPI App Scheme (e.g. tez, phonepe) — leave empty for app list"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={this.state.upiScheme}
+                onChangeText={v => this.setState({upiScheme: v})}
+              />
               <Button
                 title="Pay with UPI Intent"
                 onPress={() => this._makeSubsUpiIntentPayment()}
