@@ -1,6 +1,6 @@
 {
   "name": "react-native-cashfree-pg-sdk",
-  "version": "2.2.7",
+  "version": "2.3.0",
   "description": "Cashfree PG Plugin for React Native",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -16,7 +16,14 @@
     "react-native-cashfree-pg-sdk.podspec",
     "!lib/typescript/example",
     "!android/build",
+    "!android/.gradle",
+    "!android/.idea",
     "!ios/build",
+    "!ios/.DS_Store",
+    "!ios/CashfreePgApi.xcodeproj/xcuserdata",
+    "!ios/CashfreePgApi.xcodeproj/project.xcworkspace/xcuserdata",
+    "!ios/CashfreePgApi.xcodeproj/project.xcworkspace/xcshareddata",
+    "!ios/CashfreePgApi.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
     "!**/__tests__",
     "!**/__fixtures__",
     "!**/__mocks__"
@@ -153,6 +160,6 @@
     ]
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "2.0.9"
+    "cashfree-pg-api-contract": "2.1.0"
   }
 }

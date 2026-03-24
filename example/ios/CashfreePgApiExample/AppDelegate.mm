@@ -5,28 +5,25 @@
 #import <objc/runtime.h>
 
 #if DEBUG
-@interface WKWebView (Inspectable)
+@interface WKWebView (CFInspectable)
 @end
 
-@implementation WKWebView (Inspectable)
-
+@implementation WKWebView (CFInspectable)
 + (void)load {
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    Method original = class_getInstanceMethod(self, @selector(initWithFrame:configuration:));
-    Method swizzled = class_getInstanceMethod(self, @selector(cf_initWithFrame:configuration:));
-    method_exchangeImplementations(original, swizzled);
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    if (@available(iOS 16.4, *)) {
+      Method orig = class_getInstanceMethod([WKWebView class], @selector(initWithFrame:configuration:));
+      Method swiz = class_getInstanceMethod([WKWebView class], @selector(cf_initWithFrame:configuration:));
+      method_exchangeImplementations(orig, swiz);
+    }
   });
 }
-
-- (instancetype)cf_initWithFrame:(CGRect)frame configuration:(WKWebViewConfiguration *)configuration {
-  WKWebView *webView = [self cf_initWithFrame:frame configuration:configuration];
-  if ([webView respondsToSelector:@selector(setInspectable:)]) {
-    [webView setInspectable:YES];
-  }
-  return webView;
+- (instancetype)cf_initWithFrame:(CGRect)frame configuration:(WKWebViewConfiguration *)config {
+  WKWebView *wv = [self cf_initWithFrame:frame configuration:config];
+  if (@available(iOS 16.4, *)) { wv.inspectable = YES; }
+  return wv;
 }
-
 @end
 #endif
 

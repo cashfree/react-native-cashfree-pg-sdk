@@ -12,6 +12,9 @@ import {
   type CFSubscriptionSession,
   CFUPIPayment,
   CFCardPayment,
+  CFSubsUPIPayment,
+  CFSubsCardPayment,
+  CFSubsNBPayment,
 } from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
 
@@ -106,6 +109,20 @@ class CFPaymentGateway {
       CashfreePgApi.doElementUPIPayment(paymentData);
     } else if (cfPayment instanceof CFCardPayment) {
       CashfreePgApi.doCardPayment(paymentData);
+    } else {
+      console.log('makePayment::==> Wrong payment object');
+    }
+  }
+
+  makeSubsPayment(cfPayment: CheckoutPayment){
+    cfPayment.version = version;
+    const paymentData = JSON.stringify(cfPayment);
+    if (cfPayment instanceof CFSubsUPIPayment) {
+      CashfreePgApi.doSubsUPIPayment(paymentData);
+    } else if (cfPayment instanceof CFSubsCardPayment) {
+      CashfreePgApi.doSubsCardPayment(paymentData);
+    } else if (cfPayment instanceof CFSubsNBPayment) {
+      CashfreePgApi.doSubsNBPayment(paymentData);
     } else {
       console.log('makePayment::==> Wrong payment object');
     }

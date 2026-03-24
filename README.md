@@ -1,7 +1,8 @@
 # react-native-cashfree-pg-sdk
 
-![GitHub](https://img.shields.io/github/license/cashfree/react-native-cashfree-pg-sdk) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/react-native-cashfree-pg-sdk/master) ![GitHub release (with filter)](https://img.shields.io/github/v/release/cashfree/react-native-cashfree-pg-sdk?label=latest) ![npm](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk) ![GitHub forks](https://img.shields.io/github/forks/cashfree/react-native-cashfree-pg-sdk)  ![GitHub Repo stars](https://img.shields.io/github/stars/cashfree/react-native-cashfree-pg-sdk)
+![GitHub](https://img.shields.io/github/license/cashfree/react-native-cashfree-pg-sdk) ![npm](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk) ![downloads](https://img.shields.io/npm/dm/react-native-cashfree-pg-sdk.svg?style=flat) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/react-native-cashfree-pg-sdk/master) [![install size](https://packagephobia.com/badge?p=react-native-cashfree-pg-sdk@2.2.7)](https://packagephobia.com/result?p=react-native-cashfree-pg-sdk@2.2.7)
 
+[![NPM](https://nodei.co/npm/react-native-cashfree-pg-sdk.svg?data=n,v,u,d)](https://nodei.co/npm/react-native-cashfree-pg-sdk/)
 
 The Cashfree React Native SDK allows you to integrate Cashfree Payment Gateway into your application and start collecting payments from your customers. The React Native SDK has been designed to minimise the complexity of handling and integrating payments in your React Native project.
 
