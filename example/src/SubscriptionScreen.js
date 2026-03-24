@@ -27,6 +27,7 @@ export default class SubscriptionScreen extends Component {
             cardExpiryYY: '30',
             cardCVV: '123',
             upiId: '',
+            upiScheme: '',
             upiApps: [],
             showUpiSheet: false,
             nbAccountHolderName: 'Kishan Maurya',
@@ -45,11 +46,13 @@ export default class SubscriptionScreen extends Component {
         CFPaymentGatewayService.removeCallback();
     }
     componentDidMount() {
+        this.createSubscription();
         const context = this;
         CFPaymentGatewayService.setCallback({
             onVerify(orderID) {
                 console.log('onVerify Called', orderID);
                 context.updateStatus('Verified: ' + orderID);
+                context.setState({ upiScheme: '' });
                 showAlert(`Subs ID: ${orderID}`);
             },
             onError(error, orderID) {
@@ -160,6 +163,12 @@ export default class SubscriptionScreen extends Component {
         }
     }
     async _makeSubsUpiIntentPayment() {
+        // If user typed a scheme manually, use it directly without showing sheet
+        const manualScheme = this.state.upiScheme.trim();
+        if (manualScheme.length > 0) {
+            this._doSubsUpiPayment(manualScheme);
+            return;
+        }
         const FALLBACK_UPI_APPS = [
             { appName: 'Google Pay', appPackage: 'tez://' },
             { appName: 'PhonePe', appPackage: 'phonepe://' },
@@ -178,11 +187,15 @@ export default class SubscriptionScreen extends Component {
         }
     }
     async _doSubsUpiPayment(appPackage) {
-        this.setState({ upiId: appPackage, showUpiSheet: false });
+        this.setState({
+            upiId: appPackage,
+            upiScheme: appPackage,
+            showUpiSheet: false,
+        });
         try {
             const upi = new CFUPI(UPIMode.INTENT, appPackage);
             const subsUpiPayment = new CFSubsUPIPayment(this.getSubscriptionSession(), upi);
-            console.log(JSON.stringify(subsUpiPayment));
+            console.log('subsUpiPayment scheme:', appPackage, JSON.stringify(subsUpiPayment));
             CFPaymentGatewayService.makeSubsPayment(subsUpiPayment);
         }
         catch (e) {
@@ -231,6 +244,7 @@ export default class SubscriptionScreen extends Component {
                         React.createElement(Button, { title: "Pay with Net Banking", onPress: () => this._startSubsNBPayment() })),
                     React.createElement(View, { style: styles.section },
                         React.createElement(Text, { style: styles.sectionTitle }, "UPI Payment"),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "UPI App Scheme (e.g. tez, phonepe) \u2014 leave empty for app list", autoCapitalize: "none", autoCorrect: false, value: this.state.upiScheme, onChangeText: v => this.setState({ upiScheme: v }) }),
                         React.createElement(Button, { title: "Pay with UPI Intent", onPress: () => this._makeSubsUpiIntentPayment() })))),
             React.createElement(Modal, { visible: this.state.showUpiSheet, transparent: true, animationType: "slide", onRequestClose: () => this.setState({ showUpiSheet: false }) },
                 React.createElement(Pressable, { style: styles.sheetBackdrop, onPress: () => this.setState({ showUpiSheet: false }) }),
