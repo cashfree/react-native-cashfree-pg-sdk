@@ -56,6 +56,12 @@ import java.util.Map;
 public class CashfreePgApiModule extends ReactContextBaseJavaModule implements CFCheckoutResponseCallback, CFEventsSubscriber, CFSubscriptionResponseCallback {
   public static final String NAME = "CashfreePgApi";
 
+  // Stored once via setBaseUrl(); reused by card component API calls.
+  // NOTE: To propagate baseUrl into CFSession builders the underlying
+  // com.cashfree.pg:api SDK also needs CFSession.setBaseUrl() support
+  // (already done in the CN branch of android-pg-api-sdk).
+  private static String storedBaseUrl = "";
+
   public CashfreePgApiModule(ReactApplicationContext reactContext) {
     super(reactContext);
   }
@@ -64,6 +70,16 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
   @NonNull
   public String getName() {
     return NAME;
+  }
+
+  /**
+   * Set the base URL once. All card component API requests reuse this value.
+   * For full baseUrl propagation into payment sessions, android-pg-api-sdk
+   * also needs CFSession.setBaseUrl() support (see android-pg-api-sdk CN branch).
+   */
+  @ReactMethod
+  public void setBaseUrl(String baseUrl) {
+    storedBaseUrl = baseUrl;
   }
 
   @ReactMethod

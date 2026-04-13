@@ -5,6 +5,9 @@ import CashfreePG
 @objc(CashfreePgApi)
 class CashfreePgApi: NSObject {
 
+    // Stored once via setBaseUrl(); reused by card component API requests.
+    static var storedBaseUrl: String = ""
+
     var analyticsCallbackEnabled: Bool = false
     private let versionNumber = "2.3.1"
 
@@ -14,6 +17,15 @@ class CashfreePgApi: NSObject {
 
     @objc static func requiresMainQueueSetup() -> Bool {
         return false
+    }
+
+    /**
+     * Set the base URL once. All card component API requests reuse this value.
+     * For full baseUrl propagation into payment sessions the underlying iOS SDK
+     * also needs CFSession.setBaseUrl() support (to be added in a future pod release).
+     */
+    @objc func setBaseUrl(_ baseUrl: NSString) -> Void {
+        CashfreePgApi.storedBaseUrl = "\(baseUrl)"
     }
 
     @objc func doPayment(_ paymentObject: NSString) -> Void {

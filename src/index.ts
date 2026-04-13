@@ -41,12 +41,27 @@ class CFPaymentGateway {
   private failureSubscription: EmitterSubscription | null = null;
   private eventSubscription: EmitterSubscription | null = null;
   private upiAppsSubscription: EmitterSubscription | null = null;
+  private storedBaseUrl: string = '';
 
   constructor() {
     this.emitter =
       Platform.OS === 'ios'
         ? new NativeEventEmitter(NativeModules.CashfreeEventEmitter)
         : NativeAppEventEmitter;
+  }
+
+  /**
+   * Set the base URL once. All subsequent payment calls and card component
+   * API requests will reuse this value.
+   * @param baseUrl - Base URL of the payment gateway (e.g. https://api.cashfree.com)
+   */
+  setBaseUrl(baseUrl: string) {
+    this.storedBaseUrl = baseUrl;
+    CashfreePgApi.setBaseUrl(baseUrl);
+  }
+
+  getBaseUrl(): string {
+    return this.storedBaseUrl;
   }
 
   doPayment(checkoutPayment: CheckoutPayment) {
