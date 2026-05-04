@@ -2,6 +2,7 @@ import { NativeAppEventEmitter, NativeEventEmitter, NativeModules, Platform, } f
 import { version } from '../package.json';
 import { CFUPIPayment, CFCardPayment, CFSubsUPIPayment, CFSubsCardPayment, CFSubsNBPayment, } from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
+import CFSubsCardComponent from './Card/CFSubsCardComponent';
 const LINKING_ERROR = `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
     Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
     '- You rebuilt the app after installing the package\n' +
@@ -183,4 +184,5 @@ export class CFErrorResponse {
     }
 }
 export const CFCard = CFCardComponent;
+export const CFSubsCard = CFSubsCardComponent;
 export const CFPaymentGatewayService = new CFPaymentGateway();
