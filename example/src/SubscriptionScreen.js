@@ -1,10 +1,52 @@
 // @ts-nocheck
 import * as React from 'react';
 import { Component } from 'react';
-import { Alert, Button, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
+import { Alert, Button, FlatList, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from 'react-native';
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
-import { Card, CFEnvironment, CFSubsCardPayment, CFSubsNB, CFSubsNBPayment, CFSubsUPIPayment, CFSubscriptionSession, CFUPI, UPIMode, } from 'cashfree-pg-api-contract';
+import { Card, CFEnvironment, CFSubsCardPayment, CFSubsNB, CFSubsNBPayment, CFSubsUPIPayment, CFSubscriptionSession, CFUPI, ElementCard, UPIMode, } from 'cashfree-pg-api-contract';
+import CustomSubsCardInput from './CustomSubsCardInput';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
+const CollapsibleSection = ({ title, children, defaultExpanded = true, }) => {
+    const [expanded, setExpanded] = React.useState(defaultExpanded);
+    return (React.createElement(View, { style: sectionStyles.section },
+        React.createElement(Pressable, { onPress: () => setExpanded(e => !e), style: sectionStyles.header },
+            React.createElement(Text, { style: sectionStyles.title }, title),
+            React.createElement(Text, { style: sectionStyles.arrow }, expanded ? '▲' : '▼')),
+        expanded && React.createElement(View, { style: sectionStyles.body }, children)));
+};
+const sectionStyles = StyleSheet.create({
+    section: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        elevation: 2,
+        overflow: 'hidden',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+    title: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1a1a2e',
+    },
+    arrow: {
+        fontSize: 11,
+        color: '#888',
+    },
+    body: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+});
 const showAlert = (message) => Alert.alert('Response', message, [{ text: 'OK' }]);
 const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
 const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
@@ -15,6 +57,7 @@ function generateSubscriptionId() {
 export default class SubscriptionScreen extends Component {
     constructor(props) {
         super(props);
+        this.subsCardRef = React.createRef();
         this.state = {
             responseText: BASE_RESPONSE_TEXT,
             orderId: '',
@@ -23,6 +66,7 @@ export default class SubscriptionScreen extends Component {
             isCreatingOrder: false,
             cardHolderName: 'Kishan Maurya',
             cardNumber: '4400060119105004',
+            subsCardNetwork: require('./assets/visa.png'),
             cardExpiryMM: '09',
             cardExpiryYY: '30',
             cardCVV: '123',
@@ -35,7 +79,29 @@ export default class SubscriptionScreen extends Component {
             nbAccountBankCode: 'UTIB',
             nbAccountType: 'SAVINGS',
         };
+        this.cfSubsCardInstance = this.createCFSubsCard();
     }
+    createCFSubsCard() {
+        const placeholderSession = new CFSubscriptionSession('sub_session_qgPMeZI6ndTwxX_i2LOzxWfc3aOiHtDMERAEcAOuzEPfZ3RhDGGlmvBYbar3qyEYFaIZf18onMEVPiyKKCtrAqW3X2drZt3KggKOGOIn2EuRaJ-eJefmekJmQLPL00Qpayment', 'devstudio_subs_7452294901250932111', CFEnvironment.SANDBOX);
+        return (React.createElement(CustomSubsCardInput, { ref: this.subsCardRef, cfSubscriptionSession: placeholderSession, cardListener: this.handleSubsCardInput }));
+    }
+    handleSubsCardInput = (data) => {
+        console.log('handleSubsCardInput Called', data);
+        const cardNetwork = JSON.parse(data)['card_network'];
+        const networkMap = {
+            visa: require('./assets/visa.png'),
+            mastercard: require('./assets/mastercard.png'),
+            amex: require('./assets/amex.png'),
+            maestro: require('./assets/maestro.png'),
+            rupay: require('./assets/rupay.png'),
+            diners: require('./assets/diners.png'),
+            discover: require('./assets/discover.png'),
+            jcb: require('./assets/jcb.png'),
+        };
+        this.setState({
+            subsCardNetwork: networkMap[cardNetwork] ?? require('./assets/visa.png'),
+        });
+    };
     updateStatus = (message) => {
         this.setState({ responseText: message });
         if (Platform.OS === 'android') {
@@ -152,6 +218,16 @@ export default class SubscriptionScreen extends Component {
             showAlert(e.message);
         }
     }
+    _startSubsCardPaymentNonPCI = () => {
+        if (this.subsCardRef.current) {
+            const elementCard = new ElementCard(this.state.cardHolderName, this.state.cardExpiryMM, this.state.cardExpiryYY, this.state.cardCVV, false);
+            // this.subsCardRef.current.doSubscriptionPaymentWithNewSession(
+            //   elementCard,
+            //   this.getSubscriptionSession(),
+            // );
+            this.subsCardRef.current.doSubscriptionPayment(elementCard);
+        }
+    };
     async _startSubsNBPayment() {
         try {
             const nb = new CFSubsNB(this.state.nbAccountHolderName, this.state.nbAccountNumber, this.state.nbAccountBankCode, this.state.nbAccountType);
@@ -211,8 +287,7 @@ export default class SubscriptionScreen extends Component {
                         React.createElement(Text, { style: styles.backBtnText }, "\u2190 Back")),
                     React.createElement(Text, { style: styles.headerTitle }, "Subscription")),
                 React.createElement(View, { style: styles.container },
-                    React.createElement(View, { style: styles.section },
-                        React.createElement(Text, { style: styles.sectionTitle }, "Session"),
+                    React.createElement(CollapsibleSection, { title: "Session" },
                         React.createElement(Button, { title: this.state.isCreatingOrder
                                 ? 'Creating Subscription...'
                                 : 'Create Subscription', disabled: this.state.isCreatingOrder, onPress: () => this.createSubscription() }),
@@ -220,14 +295,11 @@ export default class SubscriptionScreen extends Component {
                         React.createElement(TextInput, { style: styles.input, placeholder: "Subscription Session Id", value: this.state.sessionId, onChangeText: v => this.setState({ sessionId: v }) }),
                         React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", value: this.state.orderId, onChangeText: v => this.setState({ orderId: v }) }),
                         React.createElement(TextInput, { style: styles.input, placeholder: "Environment (SANDBOX / PRODUCTION)", value: this.state.cfEnv, onChangeText: v => this.setState({ cfEnv: v }) })),
-                    React.createElement(View, { style: styles.section },
-                        React.createElement(Text, { style: styles.sectionTitle }, "Checkout"),
+                    React.createElement(CollapsibleSection, { title: "Checkout" },
                         React.createElement(Button, { title: "Start Subscription Checkout", onPress: () => this._startSubscriptionCheckout() })),
-                    React.createElement(View, { style: styles.section },
-                        React.createElement(Text, { style: styles.sectionTitle }, "Response"),
+                    React.createElement(CollapsibleSection, { title: "Response" },
                         React.createElement(Text, { style: styles.responseText }, this.state.responseText)),
-                    React.createElement(View, { style: styles.section },
-                        React.createElement(Text, { style: styles.sectionTitle }, "Card Payment"),
+                    React.createElement(CollapsibleSection, { title: "Card Payment", defaultExpanded: false },
                         React.createElement(TextInput, { style: styles.input, placeholder: "Card Number", keyboardType: "numeric", value: this.state.cardNumber, onChangeText: v => this.setState({ cardNumber: v }) }),
                         React.createElement(TextInput, { style: styles.input, placeholder: "Holder Name", value: this.state.cardHolderName, onChangeText: v => this.setState({ cardHolderName: v }) }),
                         React.createElement(View, { style: styles.row },
@@ -235,15 +307,23 @@ export default class SubscriptionScreen extends Component {
                             React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "YY", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryYY, onChangeText: v => this.setState({ cardExpiryYY: v }) }),
                             React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, value: this.state.cardCVV, onChangeText: v => this.setState({ cardCVV: v }) })),
                         React.createElement(Button, { title: "Pay with Card", onPress: () => this._startSubsCardPayment() })),
-                    React.createElement(View, { style: styles.section },
-                        React.createElement(Text, { style: styles.sectionTitle }, "Net Banking Payment"),
+                    React.createElement(CollapsibleSection, { title: "Card Payment (NonPCI)", defaultExpanded: false },
+                        React.createElement(View, { style: styles.cardContainer },
+                            this.cfSubsCardInstance,
+                            React.createElement(Image, { style: styles.cardNetworkImg, source: this.state.subsCardNetwork })),
+                        React.createElement(TextInput, { style: styles.input, placeholder: "Holder Name", value: this.state.cardHolderName, onChangeText: v => this.setState({ cardHolderName: v }) }),
+                        React.createElement(View, { style: styles.row },
+                            React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "MM", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryMM, onChangeText: v => this.setState({ cardExpiryMM: v }) }),
+                            React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "YY", keyboardType: "numeric", maxLength: 2, value: this.state.cardExpiryYY, onChangeText: v => this.setState({ cardExpiryYY: v }) }),
+                            React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, value: this.state.cardCVV, onChangeText: v => this.setState({ cardCVV: v }) })),
+                        React.createElement(Button, { title: "Pay with Card (NonPCI)", onPress: this._startSubsCardPaymentNonPCI })),
+                    React.createElement(CollapsibleSection, { title: "Net Banking Payment", defaultExpanded: false },
                         React.createElement(TextInput, { style: styles.input, placeholder: "Account Holder Name", value: this.state.nbAccountHolderName, onChangeText: v => this.setState({ nbAccountHolderName: v }) }),
                         React.createElement(TextInput, { style: styles.input, placeholder: "Account Number", keyboardType: "numeric", value: this.state.nbAccountNumber, onChangeText: v => this.setState({ nbAccountNumber: v }) }),
                         React.createElement(TextInput, { style: styles.input, autoCapitalize: "characters", placeholder: "Bank Code (e.g. UTIB)", value: this.state.nbAccountBankCode, onChangeText: v => this.setState({ nbAccountBankCode: v.toUpperCase() }) }),
                         React.createElement(TextInput, { style: styles.input, placeholder: "Account Type (e.g. SAVINGS)", autoCapitalize: "characters", value: this.state.nbAccountType, onChangeText: v => this.setState({ nbAccountType: v.toUpperCase() }) }),
                         React.createElement(Button, { title: "Pay with Net Banking", onPress: () => this._startSubsNBPayment() })),
-                    React.createElement(View, { style: styles.section },
-                        React.createElement(Text, { style: styles.sectionTitle }, "UPI Payment"),
+                    React.createElement(CollapsibleSection, { title: "UPI Payment", defaultExpanded: false },
                         React.createElement(TextInput, { style: styles.input, placeholder: "UPI App Scheme (e.g. tez, phonepe) \u2014 leave empty for app list", autoCapitalize: "none", autoCorrect: false, value: this.state.upiScheme, onChangeText: v => this.setState({ upiScheme: v }) }),
                         React.createElement(Button, { title: "Pay with UPI Intent", onPress: () => this._makeSubsUpiIntentPayment() })))),
             React.createElement(Modal, { visible: this.state.showUpiSheet, transparent: true, animationType: "slide", onRequestClose: () => this.setState({ showUpiSheet: false }) },
@@ -314,6 +394,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#333',
         lineHeight: 20,
+    },
+    cardContainer: {
+        flexDirection: 'row',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        alignItems: 'center',
+        marginBottom: 8,
+        padding: 8,
+    },
+    cardNetworkImg: {
+        margin: 5,
     },
     row: {
         flexDirection: 'row',

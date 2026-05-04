@@ -6,6 +6,7 @@ import {
   Alert,
   Button,
   FlatList,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -29,10 +30,69 @@ import {
   CFSubsUPIPayment,
   CFSubscriptionSession,
   CFUPI,
+  ElementCard,
   UPIMode,
 } from 'cashfree-pg-api-contract';
+import CustomSubsCardInput from './CustomSubsCardInput';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
+
+const CollapsibleSection = ({
+  title,
+  children,
+  defaultExpanded = true,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultExpanded?: boolean;
+}) => {
+  const [expanded, setExpanded] = React.useState(defaultExpanded);
+  return (
+    <View style={sectionStyles.section}>
+      <Pressable
+        onPress={() => setExpanded(e => !e)}
+        style={sectionStyles.header}>
+        <Text style={sectionStyles.title}>{title}</Text>
+        <Text style={sectionStyles.arrow}>{expanded ? '▲' : '▼'}</Text>
+      </Pressable>
+      {expanded && <View style={sectionStyles.body}>{children}</View>}
+    </View>
+  );
+};
+
+const sectionStyles = StyleSheet.create({
+  section: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a2e',
+  },
+  arrow: {
+    fontSize: 11,
+    color: '#888',
+  },
+  body: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+});
 
 const showAlert = (message: string) =>
   Alert.alert('Response', message, [{text: 'OK'}]);
@@ -56,6 +116,7 @@ interface Props {
 export default class SubscriptionScreen extends Component<Props> {
   constructor(props: Props) {
     super(props);
+    this.subsCardRef = React.createRef();
     this.state = {
       responseText: BASE_RESPONSE_TEXT,
       orderId: '',
@@ -64,6 +125,7 @@ export default class SubscriptionScreen extends Component<Props> {
       isCreatingOrder: false,
       cardHolderName: 'Kishan Maurya',
       cardNumber: '4400060119105004',
+      subsCardNetwork: require('./assets/visa.png'),
       cardExpiryMM: '09',
       cardExpiryYY: '30',
       cardCVV: '123',
@@ -76,7 +138,41 @@ export default class SubscriptionScreen extends Component<Props> {
       nbAccountBankCode: 'UTIB',
       nbAccountType: 'SAVINGS',
     };
+    this.cfSubsCardInstance = this.createCFSubsCard();
   }
+
+  createCFSubsCard() {
+    const placeholderSession = new CFSubscriptionSession(
+      'sub_session_qgPMeZI6ndTwxX_i2LOzxWfc3aOiHtDMERAEcAOuzEPfZ3RhDGGlmvBYbar3qyEYFaIZf18onMEVPiyKKCtrAqW3X2drZt3KggKOGOIn2EuRaJ-eJefmekJmQLPL00Qpayment',
+      'devstudio_subs_7452294901250932111',
+      CFEnvironment.SANDBOX,
+    );
+    return (
+      <CustomSubsCardInput
+        ref={this.subsCardRef}
+        cfSubscriptionSession={placeholderSession}
+        cardListener={this.handleSubsCardInput}
+      />
+    );
+  }
+
+  handleSubsCardInput = (data: string) => {
+    console.log('handleSubsCardInput Called', data);
+    const cardNetwork = JSON.parse(data)['card_network'];
+    const networkMap: Record<string, any> = {
+      visa: require('./assets/visa.png'),
+      mastercard: require('./assets/mastercard.png'),
+      amex: require('./assets/amex.png'),
+      maestro: require('./assets/maestro.png'),
+      rupay: require('./assets/rupay.png'),
+      diners: require('./assets/diners.png'),
+      discover: require('./assets/discover.png'),
+      jcb: require('./assets/jcb.png'),
+    };
+    this.setState({
+      subsCardNetwork: networkMap[cardNetwork] ?? require('./assets/visa.png'),
+    });
+  };
 
   updateStatus = (message: string) => {
     this.setState({responseText: message});
@@ -214,6 +310,23 @@ export default class SubscriptionScreen extends Component<Props> {
     }
   }
 
+  _startSubsCardPaymentNonPCI = () => {
+    if (this.subsCardRef.current) {
+      const elementCard = new ElementCard(
+        this.state.cardHolderName,
+        this.state.cardExpiryMM,
+        this.state.cardExpiryYY,
+        this.state.cardCVV,
+        false,
+      );
+      // this.subsCardRef.current.doSubscriptionPaymentWithNewSession(
+      //   elementCard,
+      //   this.getSubscriptionSession(),
+      // );
+      this.subsCardRef.current.doSubscriptionPayment(elementCard);
+    }
+  };
+
   async _startSubsNBPayment() {
     try {
       const nb = new CFSubsNB(
@@ -294,8 +407,7 @@ export default class SubscriptionScreen extends Component<Props> {
 
           <View style={styles.container}>
             {/* Session Inputs */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Session</Text>
+            <CollapsibleSection title="Session">
               <Button
                 title={
                   this.state.isCreatingOrder
@@ -324,26 +436,23 @@ export default class SubscriptionScreen extends Component<Props> {
                 value={this.state.cfEnv}
                 onChangeText={v => this.setState({cfEnv: v})}
               />
-            </View>
+            </CollapsibleSection>
 
             {/* Subscription Checkout */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Checkout</Text>
+            <CollapsibleSection title="Checkout">
               <Button
                 title="Start Subscription Checkout"
                 onPress={() => this._startSubscriptionCheckout()}
               />
-            </View>
+            </CollapsibleSection>
 
             {/* Response */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Response</Text>
+            <CollapsibleSection title="Response">
               <Text style={styles.responseText}>{this.state.responseText}</Text>
-            </View>
+            </CollapsibleSection>
 
-            {/* Subscription Card Payment */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Card Payment</Text>
+            {/* Subscription Card Payment (PCI) */}
+            <CollapsibleSection title="Card Payment" defaultExpanded={false}>
               <TextInput
                 style={styles.input}
                 placeholder="Card Number"
@@ -388,11 +497,60 @@ export default class SubscriptionScreen extends Component<Props> {
                 title="Pay with Card"
                 onPress={() => this._startSubsCardPayment()}
               />
-            </View>
+            </CollapsibleSection>
+
+            {/* Subscription Card Payment (NonPCI) */}
+            <CollapsibleSection
+              title="Card Payment (NonPCI)"
+              defaultExpanded={false}>
+              <View style={styles.cardContainer}>
+                {this.cfSubsCardInstance}
+                <Image
+                  style={styles.cardNetworkImg}
+                  source={this.state.subsCardNetwork}
+                />
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Holder Name"
+                value={this.state.cardHolderName}
+                onChangeText={v => this.setState({cardHolderName: v})}
+              />
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="MM"
+                  keyboardType="numeric"
+                  maxLength={2}
+                  value={this.state.cardExpiryMM}
+                  onChangeText={v => this.setState({cardExpiryMM: v})}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="YY"
+                  keyboardType="numeric"
+                  maxLength={2}
+                  value={this.state.cardExpiryYY}
+                  onChangeText={v => this.setState({cardExpiryYY: v})}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="CVV"
+                  keyboardType="numeric"
+                  maxLength={3}
+                  secureTextEntry
+                  value={this.state.cardCVV}
+                  onChangeText={v => this.setState({cardCVV: v})}
+                />
+              </View>
+              <Button
+                title="Pay with Card (NonPCI)"
+                onPress={this._startSubsCardPaymentNonPCI}
+              />
+            </CollapsibleSection>
 
             {/* Subscription NB Payment */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Net Banking Payment</Text>
+            <CollapsibleSection title="Net Banking Payment" defaultExpanded={false}>
               <TextInput
                 style={styles.input}
                 placeholder="Account Holder Name"
@@ -428,11 +586,10 @@ export default class SubscriptionScreen extends Component<Props> {
                 title="Pay with Net Banking"
                 onPress={() => this._startSubsNBPayment()}
               />
-            </View>
+            </CollapsibleSection>
 
             {/* Subscription UPI Payment */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>UPI Payment</Text>
+            <CollapsibleSection title="UPI Payment" defaultExpanded={false}>
               <TextInput
                 style={styles.input}
                 placeholder="UPI App Scheme (e.g. tez, phonepe) — leave empty for app list"
@@ -445,7 +602,7 @@ export default class SubscriptionScreen extends Component<Props> {
                 title="Pay with UPI Intent"
                 onPress={() => this._makeSubsUpiIntentPayment()}
               />
-            </View>
+            </CollapsibleSection>
           </View>
         </ScrollView>
 
@@ -541,6 +698,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     lineHeight: 20,
+  },
+  cardContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 8,
+    padding: 8,
+  },
+  cardNetworkImg: {
+    margin: 5,
   },
   row: {
     flexDirection: 'row',

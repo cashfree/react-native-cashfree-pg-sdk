@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **2.3.0** (iOS native: 2.3.1, Android native: 2.3.0)
+Current version: **2.3.1** (iOS native: 2.3.7, Android native: 2.3.3)
 
 ## Commands
 
@@ -55,7 +55,8 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 
 - [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which wraps `NativeModules.CashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types. Key methods: `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `makePayment` (element routing), `makeSubsPayment` (subscription element routing).
 - [src/Card/CFCardComponent.tsx](src/Card/CFCardComponent.tsx) — `CFCard` React component for card element payments. Handles Luhn validation, card network detection (Visa, MC, Amex, RuPay, etc.), BIN-based TDR fetching, and exposes an imperative handle (`doPayment`, `doPaymentWithPaymentSessionId`) via `forwardRef`. Makes live HTTP calls to `https://api.cashfree.com/pg/sdk/js/{sessionId}/cardBin` and `.../v2/tdr` during card input (uses `sandbox.cashfree.com` for `SANDBOX` environment).
-- [src/Card/index.ts](src/Card/index.ts) — Re-exports `CFCard` from `CFCardComponent`.
+- [src/Card/CFSubsCardComponent.tsx](src/Card/CFSubsCardComponent.tsx) — `CFSubsCard` React component for NonPCI subscription card input. Handles card number formatting (4-digit groups), Luhn validation, BIN lookup via `POST /pg/sdk/js/subscription/card/bin` (authenticated with `x-sub-session-id`), and exposes an imperative handle (`doSubscriptionPayment`, `doSubscriptionPaymentWithNewSession`) via `forwardRef`. Exported as `CFSubsCard` from `src/index.ts`. Accepts `cfSubscriptionSession` (required) and `cardListener` (required callback receiving a JSON string with `card_network`, `card_bin_info`, `input_validation`, `luhn_check_info`, `last_four_digit`, `card_length`).
+- [src/Card/index.ts](src/Card/index.ts) — Re-exports `CFCard` (default) from `CFCardComponent` and `SubsCardInput` (named) from `CFSubsCardComponent`.
 
 ### Native modules
 
@@ -64,12 +65,12 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 - `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the active `CashfreeEventEmitter` and calls `sendEvent`. The `allEvents` array here must match JS listener names.
 - `CashfreeEventEmitter.swift` — `RCTEventEmitter` subclass that registers itself with `CashfreeEmitter.sharedInstance` on init.
 - `CashfreePgApi.m` — Objective-C bridge exposing both `CashfreePgApi` and `CashfreeEventEmitter` to React Native.
-- CocoaPod: `CashfreePG 2.3.1` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
+- CocoaPod: `CashfreePG 2.3.7` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
 
 **Android** ([android/](android/)):
 - [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`. Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`).
 - `CashfreePgApiPackage.java` — Registers the module with React Native.
-- Gradle dependency: `com.cashfree.pg:api:2.3.0`.
+- Gradle dependency: `com.cashfree.pg:api:2.3.3`.
 
 ### Build output (`lib/`)
 
@@ -101,7 +102,7 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 
 **Example app screens:**
 - `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card)
-- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element, net banking element, UPI intent. Key behaviours:
+- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element (PCI), card element (NonPCI via `CFSubsCard`), net banking element, UPI intent. All sections are wrapped in `CollapsibleSection` (expand/collapse UI). Key behaviours:
   - `showAlert(message)` — module-level helper that wraps `Alert.alert('Response', message)`. Used for all payment responses.
   - `onVerify` / `onError` callbacks call `showAlert()` with the result. `onVerify` also clears the `upiScheme` state so the UPI input is reset after a successful payment.
   - **Auto-create on mount:** `createSubscription()` is called in `componentDidMount`, so a subscription order is created as soon as the screen loads. The "Create Subscription" button still works to refresh/retry.
@@ -110,6 +111,7 @@ CFPaymentGatewayService.makeSubsPayment(payment)
     - If the field is empty, `getInstalledUpiApps()` is called and a `Modal` + `FlatList` bottom sheet is shown. Falls back to hardcoded `[tez://, phonepe://, paytmmp://, bhim://]` if the list is empty or the call fails.
     - On selecting from the sheet, `upiScheme` is populated with the selected `appPackage` for reference.
     - `appPackage` passed to `CFUPI(UPIMode.INTENT, appPackage)` must use the `scheme://` format (e.g. `'tez://'`).
+  - **NonPCI card section:** `createCFSubsCard()` builds a `CustomSubsCardInput` (wraps `CFSubsCard`) in the constructor with a placeholder session and stores it as `this.cfSubsCardInstance`. `handleSubsCardInput` receives the JSON callback on each keystroke and updates `subsCardNetwork` state to show the detected card network logo. `_startSubsCardPaymentNonPCI` calls `this.subsCardRef.current.doSubscriptionPayment(elementCard)` using the session already held inside the component; `doSubscriptionPaymentWithNewSession` is available when a fresh session is needed.
   - Pre-filled test data: card `4400060119105004`, expiry `09/30`, CVV `123`; NB account `123456789`, bank `UTIB`, type `SAVINGS`.
 
 ## Development conventions
