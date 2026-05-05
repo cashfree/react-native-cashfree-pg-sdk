@@ -47,7 +47,12 @@ const PROD_CLIENT_SECRET = '';
 
 
 function generateOrderId(): string {
-  return 'devstudio_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
+  return (
+    'devstudio_' +
+    Math.floor(
+      Math.random() * 9000000000000000000 + 1000000000000000000,
+    ).toString()
+  );
 }
 
 interface Props {
@@ -179,7 +184,7 @@ export default class PGScreen extends Component<Props> {
         headers: {
           'x-client-id': clientId,
           'x-client-secret': clientSecret,
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
           'x-api-version': '2025-01-01',
         },
@@ -204,7 +209,9 @@ export default class PGScreen extends Component<Props> {
           responseText: 'Order created: ' + data.order_id,
         });
       } else {
-        this.setState({responseText: 'Order creation failed: ' + JSON.stringify(data)});
+        this.setState({
+          responseText: 'Order creation failed: ' + JSON.stringify(data),
+        });
       }
     } catch (e: any) {
       this.setState({responseText: 'Error: ' + e.message});
@@ -354,7 +361,11 @@ export default class PGScreen extends Component<Props> {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Session</Text>
             <Button
-              title={this.state.isCreatingOrder ? 'Creating Order...' : 'Create Order'}
+              title={
+                this.state.isCreatingOrder
+                  ? 'Creating Order...'
+                  : 'Create Order'
+              }
               disabled={this.state.isCreatingOrder}
               onPress={() => this.createOrder()}
             />

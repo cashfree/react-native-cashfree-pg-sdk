@@ -12,7 +12,8 @@ const SANDBOX_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
 const PROD_CLIENT_ID = '';
 const PROD_CLIENT_SECRET = '';
 function generateOrderId() {
-    return 'devstudio_' + Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString();
+    return ('devstudio_' +
+        Math.floor(Math.random() * 9000000000000000000 + 1000000000000000000).toString());
 }
 export default class PGScreen extends Component {
     constructor(props) {
@@ -110,7 +111,7 @@ export default class PGScreen extends Component {
                 headers: {
                     'x-client-id': clientId,
                     'x-client-secret': clientSecret,
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'Content-Type': 'application/json',
                     'x-api-version': '2025-01-01',
                 },
@@ -136,7 +137,9 @@ export default class PGScreen extends Component {
                 });
             }
             else {
-                this.setState({ responseText: 'Order creation failed: ' + JSON.stringify(data) });
+                this.setState({
+                    responseText: 'Order creation failed: ' + JSON.stringify(data),
+                });
             }
         }
         catch (e) {
@@ -251,7 +254,9 @@ export default class PGScreen extends Component {
             React.createElement(View, { style: styles.container },
                 React.createElement(View, { style: styles.section },
                     React.createElement(Text, { style: styles.sectionTitle }, "Session"),
-                    React.createElement(Button, { title: this.state.isCreatingOrder ? 'Creating Order...' : 'Create Order', disabled: this.state.isCreatingOrder, onPress: () => this.createOrder() }),
+                    React.createElement(Button, { title: this.state.isCreatingOrder
+                            ? 'Creating Order...'
+                            : 'Create Order', disabled: this.state.isCreatingOrder, onPress: () => this.createOrder() }),
                     React.createElement(View, { style: styles.divider }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Session Id", value: this.state.sessionId, onChangeText: v => this.setState({ sessionId: v }) }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Order Id", value: this.state.orderId, onChangeText: v => this.setState({ orderId: v }) }),

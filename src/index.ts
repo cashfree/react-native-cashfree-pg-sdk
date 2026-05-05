@@ -17,6 +17,7 @@ import {
   CFSubsNBPayment,
 } from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
+import CFSubsCardComponent from './Card/CFSubsCardComponent';
 
 const LINKING_ERROR =
   `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
@@ -244,4 +245,5 @@ export class CFErrorResponse {
 }
 
 export const CFCard = CFCardComponent;
+export const CFSubsCard = CFSubsCardComponent;
 export const CFPaymentGatewayService = new CFPaymentGateway();

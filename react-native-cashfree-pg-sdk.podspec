@@ -16,5 +16,5 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
   s.dependency "React-Core"
-  s.dependency "CashfreePG", "2.3.1"
+  s.dependency "CashfreePG", "2.3.7"
 end

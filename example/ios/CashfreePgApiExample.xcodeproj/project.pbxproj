@@ -11,9 +11,9 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		482C4511BAE0B81D9D152263 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EF9884394EE2C3118AD7F1B6 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a */; };
+		7B8E80EAB5DBB4E463AD9DA7 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A740F23A6B4B7FEDC4A6FF96 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		FBB70EBD2D8440A741ADD173 /* libPods-CashfreePgApiExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA7A0B53AC5CAC73FA36A551 /* libPods-CashfreePgApiExample.a */; };
+		AB26CCD432DA5F0881CCC29B /* libPods-CashfreePgApiExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92EDE89877202230122C7C6A /* libPods-CashfreePgApiExample.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,14 +41,14 @@
 		1ACD52792E0D68C600014401 /* CashfreePGCoreSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = CashfreePGCoreSDK.xcframework; path = Pods/CashfreePGCoreSDK/CashfreePGCoreSDK.xcframework; sourceTree = "<group>"; };
 		1ACD527A2E0D68C600014401 /* CashfreePGUISDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = CashfreePGUISDK.xcframework; path = Pods/CashfreePGUISDK/CashfreePGUISDK.xcframework; sourceTree = "<group>"; };
 		1ACD527B2E0D68C600014401 /* CFNetworkSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = CFNetworkSDK.xcframework; path = Pods/CFNetworkSDK/CFNetworkSDK.xcframework; sourceTree = "<group>"; };
-		1CCA6DBA725CA48576421CEC /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
-		226CE58812ACB34E5D8ED890 /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig"; sourceTree = "<group>"; };
-		2A39348265784BCD928D08A0 /* Pods-CashfreePgApiExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample.release.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample.release.xcconfig"; sourceTree = "<group>"; };
+		47D7FC9734AAB94723AB10CA /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig"; sourceTree = "<group>"; };
+		727C4EC7ED41B51294805213 /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = CashfreePgApiExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8D57361013E30BB629F60872 /* Pods-CashfreePgApiExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample.debug.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample.debug.xcconfig"; sourceTree = "<group>"; };
-		DA7A0B53AC5CAC73FA36A551 /* libPods-CashfreePgApiExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CashfreePgApiExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8FD08C620BE7B48FC5C6BEF5 /* Pods-CashfreePgApiExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample.debug.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample.debug.xcconfig"; sourceTree = "<group>"; };
+		92EDE89877202230122C7C6A /* libPods-CashfreePgApiExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CashfreePgApiExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A740F23A6B4B7FEDC4A6FF96 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC4E5883F1C7A1DD1364C589 /* Pods-CashfreePgApiExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CashfreePgApiExample.release.xcconfig"; path = "Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EF9884394EE2C3118AD7F1B6 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,7 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				482C4511BAE0B81D9D152263 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a in Frameworks */,
+				7B8E80EAB5DBB4E463AD9DA7 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,7 +64,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FBB70EBD2D8440A741ADD173 /* libPods-CashfreePgApiExample.a in Frameworks */,
+				AB26CCD432DA5F0881CCC29B /* libPods-CashfreePgApiExample.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -110,8 +110,8 @@
 				1ACD527A2E0D68C600014401 /* CashfreePGUISDK.xcframework */,
 				1ACD527B2E0D68C600014401 /* CFNetworkSDK.xcframework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				DA7A0B53AC5CAC73FA36A551 /* libPods-CashfreePgApiExample.a */,
-				EF9884394EE2C3118AD7F1B6 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a */,
+				92EDE89877202230122C7C6A /* libPods-CashfreePgApiExample.a */,
+				A740F23A6B4B7FEDC4A6FF96 /* libPods-CashfreePgApiExample-CashfreePgApiExampleTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -150,10 +150,10 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				8D57361013E30BB629F60872 /* Pods-CashfreePgApiExample.debug.xcconfig */,
-				2A39348265784BCD928D08A0 /* Pods-CashfreePgApiExample.release.xcconfig */,
-				1CCA6DBA725CA48576421CEC /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig */,
-				226CE58812ACB34E5D8ED890 /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig */,
+				8FD08C620BE7B48FC5C6BEF5 /* Pods-CashfreePgApiExample.debug.xcconfig */,
+				AC4E5883F1C7A1DD1364C589 /* Pods-CashfreePgApiExample.release.xcconfig */,
+				727C4EC7ED41B51294805213 /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig */,
+				47D7FC9734AAB94723AB10CA /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -165,12 +165,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "CashfreePgApiExampleTests" */;
 			buildPhases = (
-				0BA4B72E9290BE696F20632E /* [CP] Check Pods Manifest.lock */,
+				7438A905017B5804EA9AD9B3 /* [CP] Check Pods Manifest.lock */,
 				00E356EA1AD99517003FC87E /* Sources */,
 				00E356EB1AD99517003FC87E /* Frameworks */,
 				00E356EC1AD99517003FC87E /* Resources */,
-				6FE642B0EA0F79311F666AA2 /* [CP] Embed Pods Frameworks */,
-				A4893072FEB5E7921AA1A254 /* [CP] Copy Pods Resources */,
+				467604187C5B103D7EA2035B /* [CP] Embed Pods Frameworks */,
+				2FF94CD7647B7EFCA7FA6ADF /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -186,13 +186,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CashfreePgApiExample" */;
 			buildPhases = (
-				4A7F8BDA7A012FFC229D4F5A /* [CP] Check Pods Manifest.lock */,
+				9327A7146351EFCB720300DD /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				FEFD9D7BA72D393858079726 /* [CP] Embed Pods Frameworks */,
-				718D1AEEB1CBBFA735DA341E /* [CP] Copy Pods Resources */,
+				40D8D5D93A7A0B3617D92CDD /* [CP] Embed Pods Frameworks */,
+				B517221BD54D452A448EC11F /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -276,7 +276,58 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		0BA4B72E9290BE696F20632E /* [CP] Check Pods Manifest.lock */ = {
+		2FF94CD7647B7EFCA7FA6ADF /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		40D8D5D93A7A0B3617D92CDD /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		467604187C5B103D7EA2035B /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7438A905017B5804EA9AD9B3 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -298,7 +349,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		4A7F8BDA7A012FFC229D4F5A /* [CP] Check Pods Manifest.lock */ = {
+		9327A7146351EFCB720300DD /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -320,24 +371,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		6FE642B0EA0F79311F666AA2 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		718D1AEEB1CBBFA735DA341E /* [CP] Copy Pods Resources */ = {
+		B517221BD54D452A448EC11F /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -352,40 +386,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A4893072FEB5E7921AA1A254 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample-CashfreePgApiExampleTests/Pods-CashfreePgApiExample-CashfreePgApiExampleTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		FEFD9D7BA72D393858079726 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CashfreePgApiExample/Pods-CashfreePgApiExample-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -421,7 +421,7 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1CCA6DBA725CA48576421CEC /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig */;
+			baseConfigurationReference = 727C4EC7ED41B51294805213 /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -448,7 +448,7 @@
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 226CE58812ACB34E5D8ED890 /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig */;
+			baseConfigurationReference = 47D7FC9734AAB94723AB10CA /* Pods-CashfreePgApiExample-CashfreePgApiExampleTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
@@ -472,7 +472,7 @@
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8D57361013E30BB629F60872 /* Pods-CashfreePgApiExample.debug.xcconfig */;
+			baseConfigurationReference = 8FD08C620BE7B48FC5C6BEF5 /* Pods-CashfreePgApiExample.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -505,7 +505,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2A39348265784BCD928D08A0 /* Pods-CashfreePgApiExample.release.xcconfig */;
+			baseConfigurationReference = AC4E5883F1C7A1DD1364C589 /* Pods-CashfreePgApiExample.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
