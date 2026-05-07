@@ -1,6 +1,6 @@
 import { NativeAppEventEmitter, NativeEventEmitter, NativeModules, Platform, } from 'react-native';
 import { version } from '../package.json';
-import { CFUPIPayment, CFCardPayment, CFSubsUPIPayment, CFSubsCardPayment, CFSubsNBPayment, } from 'cashfree-pg-api-contract';
+import { CFUPIPayment, CFCardPayment, CFNBPayment, CFSubsUPIPayment, CFSubsCardPayment, CFSubsNBPayment, } from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
 import CFSubsCardComponent from './Card/CFSubsCardComponent';
 const LINKING_ERROR = `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
@@ -81,6 +81,9 @@ class CFPaymentGateway {
         }
         else if (cfPayment instanceof CFCardPayment) {
             CashfreePgApi.doCardPayment(paymentData);
+        }
+        else if (cfPayment instanceof CFNBPayment) {
+            CashfreePgApi.doElementNBPayment(paymentData);
         }
         else {
             console.log('makePayment::==> Wrong payment object');

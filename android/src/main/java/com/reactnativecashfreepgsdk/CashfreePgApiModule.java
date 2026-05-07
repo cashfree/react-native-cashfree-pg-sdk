@@ -22,6 +22,8 @@ import com.cashfree.pg.core.api.callback.CFSubscriptionResponseCallback;
 import com.cashfree.pg.core.api.card.CFCard;
 import com.cashfree.pg.core.api.card.CFCardPayment;
 import com.cashfree.pg.core.api.exception.CFException;
+import com.cashfree.pg.core.api.netbanking.CFNetBanking;
+import com.cashfree.pg.core.api.netbanking.CFNetBankingPayment;
 import com.cashfree.pg.core.api.subscription.CFSubsPayment;
 import com.cashfree.pg.core.api.subscription.CFSubscriptionPayment;
 import com.cashfree.pg.core.api.subscription.card.CFSubsCard;
@@ -275,6 +277,46 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       Activity activity = getCurrentActivity();
       if (activity != null) {
         CFCorePaymentGatewayService.getInstance().doPayment(activity, cfupiPayment);
+      } else {
+        throw new IllegalStateException("activity is null");
+      }
+    } catch (CFException exception) {
+      exception.printStackTrace();
+    }
+  }
+
+  @ReactMethod
+  public void doElementNBPayment(String nbPaymentData) {
+    Log.d("CashfreePgApiModule", nbPaymentData);
+    CFSession cfSession = null;
+    CFNetBanking cfNetBanking = null;
+    try {
+      JSONObject jsonObject = new JSONObject(nbPaymentData);
+      JSONObject session = jsonObject.getJSONObject("session");
+      JSONObject nbObject = jsonObject.getJSONObject("nb");
+      cfSession = new CFSession.CFSessionBuilder()
+        .setEnvironment(CFSession.Environment.valueOf(session.getString("environment")))
+        .setOrderId(session.getString("orderID"))
+        .setPaymentSessionID(session.getString("payment_session_id"))
+        .build();
+      int bankCode = Integer.parseInt(nbObject.optString("bankCode", "0"));
+      cfNetBanking = new CFNetBanking.CFNetBankingBuilder()
+        .setBankCode(bankCode)
+        .build();
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception.getMessage());
+    }
+    try {
+      CFNetBankingPayment cfNetBankingPayment = new CFNetBankingPayment.CFNetBankingPaymentBuilder()
+        .setSession(cfSession)
+        .setCfNetBanking(cfNetBanking)
+        .build();
+      cfNetBankingPayment.setCfSDKFlow(CFPayment.CFSDKFlow.WITH_CASHFREE_FULLSCREEN_LOADER);
+      cfNetBankingPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
+      cfNetBankingPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
+      Activity activity = getCurrentActivity();
+      if (activity != null) {
+        CFCorePaymentGatewayService.getInstance().doPayment(activity, cfNetBankingPayment);
       } else {
         throw new IllegalStateException("activity is null");
       }

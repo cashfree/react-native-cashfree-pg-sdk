@@ -4,7 +4,7 @@ import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 import { Button, Image, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, ToastAndroid, View, } from 'react-native';
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
-import { Card, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, ElementCard, SavedCard, UPIMode, } from 'cashfree-pg-api-contract';
+import { Card, CFNB, CFNBPayment, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, ElementCard, SavedCard, UPIMode, } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 const SANDBOX_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
@@ -33,6 +33,7 @@ export default class PGScreen extends Component {
             isCreatingOrder: false,
             isSandbox: true,
             upiId: 'testfailure@gocash',
+            nbBankCode: '3003',
             cardNetwork: require('./assets/visa.png'),
         };
         this.cfCardInstance = this.createCFCard();
@@ -236,6 +237,15 @@ export default class PGScreen extends Component {
             console.log(e.message);
         }
     }
+    async _makeNBPayment() {
+        try {
+            const nb = new CFNB(this.state.nbBankCode);
+            CFPaymentGatewayService.makePayment(new CFNBPayment(this.getSession(), nb));
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     async _startSavedCardPayment() {
         try {
             const card = new SavedCard(this.state.instrumentId, this.state.cardCVV);
@@ -327,7 +337,11 @@ export default class PGScreen extends Component {
                     React.createElement(Text, { style: styles.sectionTitle }, "Saved Card"),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Instrument Id", onChangeText: v => this.setState({ instrumentId: v }) }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, onChangeText: v => this.setState({ cardCVV: v }) }),
-                    React.createElement(Button, { title: "Pay with Saved Card", onPress: () => this._startSavedCardPayment() })))));
+                    React.createElement(Button, { title: "Pay with Saved Card", onPress: () => this._startSavedCardPayment() })),
+                React.createElement(View, { style: styles.section },
+                    React.createElement(Text, { style: styles.sectionTitle }, "Net Banking (Element)"),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Bank Code", value: this.state.nbBankCode, onChangeText: v => this.setState({ nbBankCode: v }), keyboardType: "numeric" }),
+                    React.createElement(Button, { title: "Pay via Net Banking", onPress: () => this._makeNBPayment() })))));
     }
 }
 const styles = StyleSheet.create({

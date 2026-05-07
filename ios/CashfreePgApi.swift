@@ -104,6 +104,19 @@ class CashfreePgApi: NSObject {
         CashfreeEmitter.sharedInstance.dispatch(name: "cfUpiApps", body: stringify(json: appsToSend))
     }
 
+    @objc func doElementNBPayment(_ paymentObject: NSString) -> Void {
+        do {
+            if let cfNBPayment = try parseNBObject(paymentObject: "\(paymentObject)") {
+                if let vc = RCTPresentedViewController() {
+                    try CFPaymentGatewayService.getInstance().doPayment(cfNBPayment, viewController: vc)
+                }
+            }
+        }
+        catch {
+            print (error)
+        }
+    }
+
     @objc func doElementUPIPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfUPIPayment = try parseUpiObject(paymentObject: "\(paymentObject)") {
@@ -181,12 +194,34 @@ class CashfreePgApi: NSObject {
                         .build()
                     
                     let systemVersion = UIDevice.current.systemVersion
-
+                    cardPayment.setCancelButtonVisibility(true)
                     cardPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
                     
                     return cardPayment
                 }
                 return nil
+            } catch let e {
+                let error = e as! CashfreeError
+                print(error.localizedDescription)
+            }
+        }
+        return nil
+    }
+
+    private func parseNBObject(paymentObject: String) throws -> CFNetbankingPayment? {
+        let data = paymentObject.data(using: .utf8)!
+        if let output = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Dictionary<String, Any> {
+            do {
+                let finalSession = getSession(paymentObject: output)
+                let cfnetbanking = getNetBanking(paymentObject: output)
+                let netbankingPayment = try CFNetbankingPayment.CFNetbankingPaymentBuilder()
+                    .setSession(finalSession!)
+                    .setNetbanking(cfnetbanking!)
+                    .build()
+                let systemVersion = UIDevice.current.systemVersion
+                netbankingPayment.setPlatform("irnx-e-\(versionNumber)-x-m-s-x-i-\(systemVersion.prefix(4))")
+                netbankingPayment.setCancelButtonVisibility(true)
+                return netbankingPayment
             } catch let e {
                 let error = e as! CashfreeError
                 print(error.localizedDescription)
@@ -377,6 +412,21 @@ class CashfreePgApi: NSObject {
     private func isForSavePayment(paymentObject: Dictionary<String,Any>) -> Bool {
         let card = paymentObject["card"] as? NSDictionary ?? [:]
         return card["saveCard"] as? Bool ?? false
+    }
+
+    private func getNetBanking(paymentObject: Dictionary<String,Any>) -> CFNetbanking?{
+        if let netbanking = paymentObject["nb"] as? Dictionary<String, String> {
+            do {
+                let cfNetbanking = try CFNetbanking.CFNetbankingBuilder()
+                .setBankCode(Int(netbanking["bankCode"] as? String ?? "0")!)
+                .build()
+                return cfNetbanking
+            } catch let e {
+                let err = e as! CashfreeError
+                print(err.localizedDescription)
+            }
+        }
+        return nil
     }
 
     private func getUpi(paymentObject: Dictionary<String,Any>) -> CFUPI?{

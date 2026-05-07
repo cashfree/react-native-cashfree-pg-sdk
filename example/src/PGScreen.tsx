@@ -22,6 +22,8 @@ import {
 } from 'react-native-cashfree-pg-sdk';
 import {
   Card,
+  CFNB,
+  CFNBPayment,
   CFCardPayment,
   CFDropCheckoutPayment,
   CFEnvironment,
@@ -77,6 +79,7 @@ export default class PGScreen extends Component<Props> {
       isCreatingOrder: false,
       isSandbox: true,
       upiId: 'testfailure@gocash',
+      nbBankCode: '3003',
       cardNetwork: require('./assets/visa.png'),
     };
     this.cfCardInstance = this.createCFCard();
@@ -334,6 +337,17 @@ export default class PGScreen extends Component<Props> {
     }
   }
 
+  async _makeNBPayment() {
+    try {
+      const nb = new CFNB(this.state.nbBankCode);
+      CFPaymentGatewayService.makePayment(
+        new CFNBPayment(this.getSession(), nb),
+      );
+    } catch (e: any) {
+      console.log(e.message);
+    }
+  }
+
   async _startSavedCardPayment() {
     try {
       const card = new SavedCard(this.state.instrumentId, this.state.cardCVV);
@@ -581,6 +595,22 @@ export default class PGScreen extends Component<Props> {
             <Button
               title="Pay with Saved Card"
               onPress={() => this._startSavedCardPayment()}
+            />
+          </View>
+
+          {/* Net Banking Element */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Net Banking (Element)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Bank Code"
+              value={this.state.nbBankCode}
+              onChangeText={v => this.setState({nbBankCode: v})}
+              keyboardType="numeric"
+            />
+            <Button
+              title="Pay via Net Banking"
+              onPress={() => this._makeNBPayment()}
             />
           </View>
         </View>

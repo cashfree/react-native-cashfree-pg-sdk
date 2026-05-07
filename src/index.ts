@@ -12,6 +12,7 @@ import {
   type CFSubscriptionSession,
   CFUPIPayment,
   CFCardPayment,
+  CFNBPayment,
   CFSubsUPIPayment,
   CFSubsCardPayment,
   CFSubsNBPayment,
@@ -110,6 +111,8 @@ class CFPaymentGateway {
       CashfreePgApi.doElementUPIPayment(paymentData);
     } else if (cfPayment instanceof CFCardPayment) {
       CashfreePgApi.doCardPayment(paymentData);
+    } else if (cfPayment instanceof CFNBPayment) {
+      CashfreePgApi.doElementNBPayment(paymentData);
     } else {
       console.log('makePayment::==> Wrong payment object');
     }
