@@ -6,7 +6,7 @@ import CashfreePG
 class CashfreePgApi: NSObject {
 
     var analyticsCallbackEnabled: Bool = false
-    private let versionNumber = "2.3.7"
+    private let versionNumber = "2.4.0"
 
     override init() {
         super.init()
@@ -66,6 +66,7 @@ class CashfreePgApi: NSObject {
                 let cfPaymentObject = try! CFWebCheckoutPayment.CFWebCheckoutPaymentBuilder()
                     .setSession(sessionObj)
                     .build()
+                cfPaymentObject.setCancelButtonVisibility(true)    
                 if let vc = RCTPresentedViewController() {
                     try CFPaymentGatewayService.getInstance().doPayment(cfPaymentObject, viewController: vc)
                 }
