@@ -3,6 +3,8 @@
 
 @interface RCT_EXTERN_MODULE(CashfreePgApi, NSObject)
 
+RCT_EXTERN_METHOD(setBaseUrl:(NSString)baseUrl)
+
 RCT_EXTERN_METHOD(doPayment:(NSString)paymentObject)
 
 RCT_EXTERN_METHOD(doUPIPayment:(NSString)paymentObject)

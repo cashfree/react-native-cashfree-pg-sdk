@@ -2,7 +2,6 @@ import { TextInput, TextInputProps } from 'react-native';
 import React, { forwardRef } from 'react';
 import {
   CFCardPayment,
-  CFEnvironment,
   type CFSession,
   ElementCard,
 } from 'cashfree-pg-api-contract';
@@ -63,7 +62,7 @@ function getInputValidationDetails(cardBinResponse: any) {
 async function getTDR(session: CFSession, bin: string) {
   const route: string = `/pg/sdk/js/${session.payment_session_id}/v2/tdr`;
   const body: string = JSON.stringify({ code: bin, code_type: 'bin' });
-  return await getInfo(session.environment, route, body);
+  return await getInfo(CFPaymentGatewayService.getBaseUrl(), route, body);
 }
 
 /**
@@ -74,14 +73,10 @@ async function getTDR(session: CFSession, bin: string) {
 async function getCardBin(session: CFSession, bin: string) {
   const route: string = `/pg/sdk/js/${session.payment_session_id}/cardBin`;
   const body: string = JSON.stringify({ card_number: bin });
-  return await getInfo(session.environment, route, body);
+  return await getInfo(CFPaymentGatewayService.getBaseUrl(), route, body);
 }
 
-async function getInfo(env: string, route: string, bodyData: string) {
-  let baseUrl = 'https://api.cashfree.com';
-  if (env === CFEnvironment.SANDBOX) {
-    baseUrl = 'https://sandbox.cashfree.com';
-  }
+async function getInfo(baseUrl: string, route: string, bodyData: string) {
   const url = baseUrl + route;
   try {
     const response = await fetch(url, {
