@@ -1,6 +1,6 @@
 .git/
 node_modules/
-example/
+sampleApps/
 .DS_Store
 .idea/
 src/
@@ -9,3 +9,5 @@ src/
 .gitattributes
 .circleci/
 .husky/
+.yarn/
+.claude/

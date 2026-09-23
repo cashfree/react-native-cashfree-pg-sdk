@@ -14,7 +14,7 @@
     "ios",
     "cpp",
     "react-native-cashfree-pg-sdk.podspec",
-    "!lib/typescript/example",
+    "!lib/typescript/sampleApps",
     "!android/build",
     "!android/.gradle",
     "!android/.idea",
@@ -34,9 +34,13 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "prepare": "bob build",
     "release": "release-it",
-    "example": "yarn --cwd example",
-    "pods": "cd example && pod-install --quiet",
-    "bootstrap": "yarn example && yarn && yarn pods"
+    "oldarch": "npm --prefix sampleApps/OldArchSample",
+    "newarch": "npm --prefix sampleApps/NewArchSample",
+    "expo": "npm --prefix sampleApps/ExpoSample",
+    "pods:oldarch": "cd sampleApps/OldArchSample && pod-install --quiet",
+    "pods:newarch": "cd sampleApps/NewArchSample && pod-install --quiet",
+    "pods:expo": "cd sampleApps/ExpoSample && pod-install --quiet",
+    "bootstrap": "yarn && npm --prefix sampleApps/OldArchSample install && npm --prefix sampleApps/NewArchSample install && npm --prefix sampleApps/ExpoSample install"
   },
   "keywords": [
     "react-native",
@@ -89,7 +93,9 @@
   "jest": {
     "preset": "react-native",
     "modulePathIgnorePatterns": [
-      "<rootDir>/example/node_modules",
+      "<rootDir>/sampleApps/OldArchSample/node_modules",
+      "<rootDir>/sampleApps/NewArchSample/node_modules",
+      "<rootDir>/sampleApps/ExpoSample/node_modules",
       "<rootDir>/lib/"
     ]
   },
