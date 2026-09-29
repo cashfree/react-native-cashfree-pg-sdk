@@ -10,6 +10,10 @@ Click [here](https://docs.cashfree.com/docs/react-native-integration) for more D
 
 ## Installation
 
+**Requires React Native 0.73.0 or newer.** (Use 0.73.2+ if you're on the 0.73 line — see
+[MIGRATION-3.0.md](docs/MIGRATION-3.0.md) for why.) If you're on an older React Native
+version, stay on the `2.4.x` line of this SDK.
+
 ```sh
 npm install react-native-cashfree-pg-sdk
 ```
