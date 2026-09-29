@@ -13,6 +13,7 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 // once (duplicate copies break `instanceof` inside makePayment and look
 // identical to the bug under investigation).
 const sdkRoot = path.resolve(__dirname, '..', '..');
+const sharedRoot = path.resolve(__dirname, '..', 'shared');
 const appModules = path.resolve(__dirname, 'node_modules');
 const singletons = ['react', 'react-native', 'cashfree-pg-api-contract'];
 
@@ -23,7 +24,7 @@ const {
 } = defaultConfig;
 
 const config = {
-  watchFolders: [sdkRoot],
+  watchFolders: [sdkRoot, sharedRoot],
   transformer: {
     getTransformOptions: async () => ({
       transform: {
@@ -41,7 +42,7 @@ const config = {
         acc[name] = path.join(appModules, name);
         return acc;
       },
-      {'react-native-cashfree-pg-sdk': sdkRoot},
+      {'react-native-cashfree-pg-sdk': sdkRoot, shared: sharedRoot},
     ),
     blockList: [
       new RegExp(

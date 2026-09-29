@@ -9,6 +9,8 @@ import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags
+import com.facebook.react.internal.featureflags.ReactNativeNewArchitectureFeatureFlagsDefaults
 
 class MainApplication : Application(), ReactApplication {
 
@@ -34,5 +36,19 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     loadReactNative(this)
+    if (BuildConfig.DISABLE_LEGACY_INTEROP) {
+      // loadReactNative() -> DefaultNewArchitectureEntryPoint.load() already calls
+      // ReactNativeFeatureFlags.override(...) once to turn on Fabric/TurboModules/Bridgeless.
+      // A plain override() a second time hard-crashes ("cannot be overridden more than
+      // once"), and calling our override BEFORE loadReactNative() hits the same crash from
+      // the other direction, because load() unconditionally calls override() too. So this
+      // has to be a dangerouslyForceOverride, applied after loadReactNative() has finished
+      // installing its own defaults, layering useTurboModuleInterop=false on top before any
+      // native module / bridge is actually created (that happens later, in the Activity).
+      ReactNativeFeatureFlags.dangerouslyForceOverride(
+          object : ReactNativeNewArchitectureFeatureFlagsDefaults() {
+            override fun useTurboModuleInterop(): Boolean = false
+          })
+    }
   }
 }

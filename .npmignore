@@ -3,7 +3,6 @@ node_modules/
 sampleApps/
 .DS_Store
 .idea/
-src/
 *.log
 .gitignore
 .gitattributes

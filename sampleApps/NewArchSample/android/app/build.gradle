@@ -84,6 +84,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        buildConfigField "boolean", "DISABLE_LEGACY_INTEROP",
+            (project.hasProperty("disableLegacyInterop") ? "true" : "false")
     }
     signingConfigs {
         debug {

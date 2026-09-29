@@ -1,6 +1,6 @@
 {
   "name": "react-native-cashfree-pg-sdk",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "Cashfree PG Plugin for React Native",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -64,12 +64,21 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
+  "codegenConfig": {
+    "name": "RNCashfreePgApiSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.reactnativecashfreepgsdk"
+    }
+  },
   "devDependencies": {
     "@commitlint/config-conventional": "^11.0.0",
     "@react-native-community/eslint-config": "^2.0.0",
     "@react-native/babel-preset": "^0.73.18",
     "@release-it/conventional-changelog": "^2.0.0",
     "@types/jest": "^26.0.0",
+    "@types/node": "^18.0.0",
     "@types/react": "^18.2.0",
     "@types/react-native": "^0.73.0",
     "commitlint": "^11.0.0",
@@ -88,10 +97,15 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": ">=0.73.0"
   },
   "jest": {
     "preset": "react-native",
+    "testPathIgnorePatterns": [
+      "<rootDir>/sampleApps/",
+      "<rootDir>/lib/",
+      "<rootDir>/node_modules/"
+    ],
     "modulePathIgnorePatterns": [
       "<rootDir>/sampleApps/OldArchSample/node_modules",
       "<rootDir>/sampleApps/NewArchSample/node_modules",

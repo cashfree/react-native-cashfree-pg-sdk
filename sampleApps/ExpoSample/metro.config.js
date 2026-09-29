@@ -6,18 +6,19 @@ const {getDefaultConfig} = require('expo/metro-config');
 // `instanceof CFUPIPayment` inside makePayment returns false and the payment is
 // silently dropped with no native call (symptom-identical to the bug we chased).
 const sdkRoot = path.resolve(__dirname, '..', '..');
+const sharedRoot = path.resolve(__dirname, '..', 'shared');
 const appModules = path.resolve(__dirname, 'node_modules');
 const singletons = ['react', 'react-native', 'cashfree-pg-api-contract'];
 
 const config = getDefaultConfig(__dirname);
-config.watchFolders = [sdkRoot];
+config.watchFolders = [sdkRoot, sharedRoot];
 config.resolver.nodeModulesPaths = [appModules];
 config.resolver.extraNodeModules = singletons.reduce(
   (acc, name) => {
     acc[name] = path.join(appModules, name);
     return acc;
   },
-  {'react-native-cashfree-pg-sdk': sdkRoot},
+  {'react-native-cashfree-pg-sdk': sdkRoot, shared: sharedRoot},
 );
 config.resolver.blockList = [
   new RegExp(`^${sdkRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/node_modules/.*$`),

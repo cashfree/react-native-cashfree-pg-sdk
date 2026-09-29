@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import {Component} from 'react';
-import CheckBox from '@react-native-community/checkbox';
+import Toggle from './Toggle';
 import {
   Button,
   Image,
@@ -198,10 +198,7 @@ export default class PGScreen extends Component<Props> {
           customer_details: {
             customer_id: 'devstudio_user',
             customer_phone: '9876543210',
-          },
-          order_meta: {
-            return_url: `https://www.cashfree.com/devstudio/preview/pg/seamless?order_id={order_id}`,
-          },
+          }
         }),
       });
       const data = await response.json();
@@ -562,7 +559,7 @@ export default class PGScreen extends Component<Props> {
               />
             </View>
             <View style={styles.checkboxRow}>
-              <CheckBox
+              <Toggle
                 value={this.state.toggleCheckBox}
                 onValueChange={v => this.setState({toggleCheckBox: v})}
               />

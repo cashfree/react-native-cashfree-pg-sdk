@@ -5,6 +5,7 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 // package.json's "react-native" field points at src/index, so instrumenting
 // src/ shows up in this app without a rebuild.
 const sdkRoot = path.resolve(__dirname, '..', '..');
+const sharedRoot = path.resolve(__dirname, '..', 'shared');
 
 // Every module below MUST resolve to exactly one copy.
 //
@@ -25,8 +26,9 @@ const appModules = path.resolve(__dirname, 'node_modules');
 const defaultConfig = getDefaultConfig(__dirname);
 
 const config = {
-  // Watch the SDK source so edits to src/ and android/ hot-reload here.
-  watchFolders: [sdkRoot],
+  // Watch the SDK source so edits to src/ and android/ hot-reload here, and
+  // the shared sample-app screens so edits there hot-reload too.
+  watchFolders: [sdkRoot, sharedRoot],
 
   resolver: {
     // Resolve app-local first; never walk up into the repo root's modules.
@@ -42,6 +44,7 @@ const config = {
         // The SDK itself resolves to the repo root (src/index via the
         // "react-native" field), not to a published copy from npm.
         'react-native-cashfree-pg-sdk': sdkRoot,
+        shared: sharedRoot,
       },
     ),
 

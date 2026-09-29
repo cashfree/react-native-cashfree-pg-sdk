@@ -29,6 +29,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: launchOptions
     )
 
+    // Strict-mode acceptance gate (Task 7): RCTRootViewFactory's
+    // -initializeReactHostWithLaunchOptions: unconditionally forces
+    // RCTEnableTurboModuleInterop(YES) in bridgeless mode, and that call
+    // happens synchronously inside startReactNative(...) above. So the
+    // override below MUST run AFTER startReactNative returns — applying it
+    // beforehand gets silently clobbered back to YES. This mirrors the
+    // Android fix (Task 7 brief): the flag has to be forced post-init, not
+    // pre-init.
+    if ProcessInfo.processInfo.arguments.contains("-DisableLegacyInterop") {
+      RCTEnableTurboModuleInterop(false)
+      NSLog("[StrictModeGate] RCTEnableTurboModuleInterop(false) applied post-init; RCTTurboModuleInteropEnabled=%@",
+            RCTTurboModuleInteropEnabled() ? "YES" : "NO")
+    }
+
     return true
   }
 }

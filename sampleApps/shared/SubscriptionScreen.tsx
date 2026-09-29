@@ -319,11 +319,18 @@ export default class SubscriptionScreen extends Component<Props> {
         this.state.cardCVV,
         false,
       );
-      // this.subsCardRef.current.doSubscriptionPaymentWithNewSession(
-      //   elementCard,
-      //   this.getSubscriptionSession(),
-      // );
-      this.subsCardRef.current.doSubscriptionPayment(elementCard);
+      // Pass the CURRENT session. The component captures whatever session it was
+      // constructed with into a ref, and this screen constructs it with a
+      // placeholder at mount time — so doSubscriptionPayment() alone would pay
+      // against a stale session that can never succeed.
+      try {
+        this.subsCardRef.current.doSubscriptionPaymentWithNewSession(
+          elementCard,
+          this.getSubscriptionSession(),
+        );
+      } catch (e: any) {
+        showAlert(`Card (NonPCI) failed: ${e?.message ?? e}`);
+      }
     }
   };
 

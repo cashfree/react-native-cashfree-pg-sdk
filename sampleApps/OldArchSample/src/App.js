@@ -1,8 +1,8 @@
 // @ts-nocheck
 import * as React from 'react';
 import { NativeModules, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import PGScreen from './PGScreen';
-import SubscriptionScreen from './SubscriptionScreen';
+import PGScreen from 'shared/PGScreen';
+import SubscriptionScreen from 'shared/SubscriptionScreen';
 // [NEWARCH-PROBE B0/B2] Mirrors sampleApps/NewArchSample/App.tsx so this app is
 // a like-for-like old-architecture control. Duplicated into App.js as well as
 // App.tsx because Metro resolves `./src/App` to the .js twin (sourceExts puts
