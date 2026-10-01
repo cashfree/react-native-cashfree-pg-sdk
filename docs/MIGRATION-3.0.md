@@ -21,43 +21,33 @@ There are no JavaScript API changes. `CFPaymentGatewayService.makePayment()`,
 `setCallback()`, `makeSubsPayment()`, `getInstalledUpiApps()` and the event
 names are all unchanged.
 
-## One behaviour change
+## Register `setCallback` exactly once
 
-`getInstalledUpiApps()` used to **reject** with `'No UPI apps found'` when no UPI app was
-installed. It now **resolves** with an empty JSON array, `"[]"`.
+This is not new in 3.0.0, but it is worth checking during an upgrade. `setCallback()` is
+designed to be registered once per app. Each registration receives every result, so registering
+in two places — for example at the app root *and* in a payment screen — delivers every
+`onVerify` / `onError` once per registration.
 
-Before:
-
-```js
-try {
-  const apps = await CFPaymentGatewayService.getInstalledUpiApps();
-} catch (e) {
-  // e === 'No UPI apps found'
-}
-```
-
-After:
+Register once, in one place. If the component that registers can mount more than once, call
+`removeCallback()` when it unmounts:
 
 ```js
-const apps = JSON.parse(await CFPaymentGatewayService.getInstalledUpiApps());
-if (apps.length === 0) {
-  // no UPI app installed
-}
+useEffect(() => {
+  CFPaymentGatewayService.setCallback({ onVerify, onError });
+  return () => CFPaymentGatewayService.removeCallback();
+}, []);
 ```
 
-If you have a `catch` branch handling the empty case, move it to a length check. The rejection
-no longer fires, so that branch will silently stop running.
-
-Why it changed: Android answered through a callback and iOS through an event, with different
-empty-payload semantics. Codegen requires one signature for both platforms, and resolving with
-an empty array is the behaviour the two could share.
+There is no need to move registration to the app root. The SDK keeps its native callback
+registered across payments, including when Android recreates the Activity after a UPI app
+returns.
 
 ## Card element errors now surface
 
 `CFCard` and `CFSubsCard`'s imperative methods — `doPayment`,
 `doPaymentWithPaymentSessionId`, `doSubscriptionPayment`,
 `doSubscriptionPaymentWithNewSession` — used to catch every error internally and
-write it to `console.log`. A failed call looked like nothing had happened.
+write it to `console.log`.
 
 They now log the error and rethrow it. If you call these methods directly, wrap
 them:
@@ -70,9 +60,8 @@ try {
 }
 ```
 
-Without a `catch`, an error that was previously invisible will now propagate.
-That is the intent: a payment call that fails silently is worse than one that
-throws.
+Without a `catch`, these errors now propagate to your code, so you can show
+the customer what went wrong.
 
 ## If you were relying on undocumented behaviour
 
@@ -87,13 +76,30 @@ throws.
   import time with React Native's own generic message instead. An app with a
   broken native link fails earlier now, but with a less specific error than
   before.
+- The same import-time lookup runs under Jest, where no native module exists.
+  A test file that imports anything which imports `react-native-cashfree-pg-sdk`
+  now fails on import with `TurboModuleRegistry.getEnforcing(...): 'CashfreePgApi'
+  could not be found`, even if the test never touches payments. Mock the SDK in
+  your Jest setup file, adding whichever methods your code calls:
+
+  ```js
+  jest.mock('react-native-cashfree-pg-sdk', () => ({
+    CFPaymentGatewayService: {
+      setCallback: jest.fn(),
+      removeCallback: jest.fn(),
+      doWebPayment: jest.fn(),
+      makePayment: jest.fn(),
+      getInstalledUpiApps: jest.fn(() => Promise.resolve('[]')),
+    },
+  }));
+  ```
 
 ## Staying on 2.4.x
 
 2.4.x remains available for apps below React Native 0.73.
 
-## Unrelated but important
+## Confirm payments server-side
 
-`onVerify` firing is not proof that a payment succeeded. Confirm every payment
+Treat `onVerify` as the signal to check the order, not as the final word. Confirm every payment
 server-side with `GET /pg/orders/{order_id}` and fulfil only on
 `order_status: PAID`. This is true in every version, including 2.4.x.

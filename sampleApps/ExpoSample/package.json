@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "expo": "~57.0.24",
-    "expo-status-bar": "~57.0.1",
+    "cashfree-pg-api-contract": "2.1.1",
+    "expo": "~56.0.23",
+    "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
-    "react-native": "0.86.3",
-    "cashfree-pg-api-contract": "2.1.1"
+    "react-native": "0.85.3"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

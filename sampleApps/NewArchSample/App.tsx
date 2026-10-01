@@ -6,16 +6,15 @@
  * so all 14 native payment methods run against the migrated TurboModule on
  * the New Architecture, not just UPI Intent.
  *
- * The boundary probes below (B0/B1a/B2/B6/B7) predate this wiring — they were
+ * The boundary probes below (B0/B1a/B2) predate this wiring — they were
  * built to find which layer dropped the UPI Intent call for MID 1305659.
- * Kept at the app root intentionally:
- *   - B0/B1a/B2 report architecture + module-registration state once on mount.
- *   - B6/B7's setCallback/setEventSubscriber registration MUST stay at the
- *     root, not inside a screen. The host Activity is recreated when an
- *     external UPI app returns to this app; a callback registered inside a
- *     screen component is lost across that remount. Root registration is why
- *     this app catches callbacks when OldArchSample historically did not.
- *     (Boundaries 3/4/5 live in native code.)
+ * They report architecture, contract-package identity and module
+ * registration once on mount. B6/B7 (events and callbacks) are logged from
+ * the shared screens' own setCallback/setEventSubscriber registrations.
+ *
+ * setCallback is registered once, in the screen that shows the result, and
+ * deliberately not here as well: each registration receives every result,
+ * so registering in two places delivers each one twice.
  */
 
 import React, {useCallback, useEffect, useState} from 'react';
@@ -28,7 +27,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import {CFErrorResponse, CFPaymentGatewayService} from 'react-native-cashfree-pg-sdk';
 import {CFEnvironment, CFSession, CFUPI, CFUPIPayment, UPIMode} from 'cashfree-pg-api-contract';
 import PGScreen from 'shared/PGScreen';
 import SubscriptionScreen from 'shared/SubscriptionScreen';
@@ -74,9 +72,9 @@ export default function App() {
         `rn=${Platform.constants?.reactNativeVersion?.minor ?? '?'}`,
     );
 
-    // Boundary 2: is the native module actually registered, or are we holding
-    // the LINKING_ERROR Proxy from src/index.ts:29? The Proxy throws on any
-    // property access, so probe it defensively.
+    // Boundary 2: is the native module actually registered and reachable
+    // through NativeModules? (The SDK itself resolves it via
+    // TurboModuleRegistry.getEnforcing, which throws at import if it is not.)
     let moduleState: string;
     try {
       const mod = NativeModules.CashfreePgApi;
@@ -89,14 +87,14 @@ export default function App() {
           : `PRESENT but doElementUPIPayment missing (keys: ${Object.keys(mod).join(',')})`;
       }
     } catch (e: any) {
-      moduleState = `THREW on access — LINKING_ERROR proxy: ${e.message}`;
+      moduleState = `THREW on access: ${e.message}`;
     }
     line('B2', `NativeModules.CashfreePgApi → ${moduleState}`);
 
     // Boundary 1a: prove there is exactly one copy of the contract package.
     // Two copies make `instanceof CFUPIPayment` false inside makePayment,
-    // which drops the payment with no native call — symptom-identical to a
-    // real native bug. metro.config.js pins this; verify it held.
+    // which drops the payment with no native call — easy to mistake for a
+    // native failure. metro.config.js pins this; verify it held.
     const probe = new CFUPIPayment(
       new CFSession('probe', 'probe', CFEnvironment.SANDBOX),
       new CFUPI(UPIMode.INTENT, 'tez://'),
@@ -106,35 +104,6 @@ export default function App() {
       `contract identity: ctor=${probe.constructor.name} ` +
         `instanceof CFUPIPayment=${probe instanceof CFUPIPayment}`,
     );
-  }, [line]);
-
-  // ---- Boundary 6/7: root-level callback + event registration -------------
-  // Deliberately at the root (see file header) — not inside PGScreen /
-  // SubscriptionScreen — so a callback survives the Activity being recreated
-  // when an external UPI/net-banking app returns control to this app.
-  useEffect(() => {
-    CFPaymentGatewayService.setCallback({
-      onVerify(orderId: string) {
-        line('B7', `onVerify FIRED → orderID=${orderId}`);
-      },
-      onError(error: CFErrorResponse, orderId: string) {
-        line('B7', `onError FIRED → orderID=${orderId} error=${JSON.stringify(error)}`);
-      },
-    });
-
-    // Boundary 6: the native SDK's own analytics events. If these arrive but
-    // B7 never does, native ran and the failure is in the response path, not
-    // in dispatch.
-    CFPaymentGatewayService.setEventSubscriber({
-      onReceivedEvent(eventName: string, meta: unknown) {
-        line('B6', `event=${eventName} meta=${JSON.stringify(meta)}`);
-      },
-    });
-
-    return () => {
-      CFPaymentGatewayService.removeCallback();
-      CFPaymentGatewayService.removeEventSubscriber();
-    };
   }, [line]);
 
   if (screen === 'pg') {

@@ -79,6 +79,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cfDropCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfDropCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.DROP);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cfDropCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -98,6 +99,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cfupiIntentCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfupiIntentCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.INTENT);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cfupiIntentCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -130,6 +132,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cfWebCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfWebCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.WEB_CHECKOUT);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cfWebCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -161,7 +164,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cfSubscriptionPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfSubscriptionPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.SUBSCRIPTION);
       if (activity != null) {
-        CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+        registerSubscriptionCallback();
         CFPaymentGatewayService.getInstance().doSubscriptionPayment(activity, cfSubscriptionPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -216,6 +219,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cardPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cardPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cardPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -284,6 +288,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cfupiPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
       Activity activity = getReactApplicationContext().getCurrentActivity();
       if (activity != null) {
+        registerCheckoutCallback();
         CFCorePaymentGatewayService.getInstance().doPayment(activity, cfupiPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -325,6 +330,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       cfNetBankingPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
       Activity activity = getReactApplicationContext().getCurrentActivity();
       if (activity != null) {
+        registerCheckoutCallback();
         CFCorePaymentGatewayService.getInstance().doPayment(activity, cfNetBankingPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -442,7 +448,7 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
       subsPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       subsPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.SUBSCRIPTION);
       if (activity != null) {
-        CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+        registerSubscriptionCallback();
         CFPaymentGatewayService.getInstance().doSubscriptionPayment(activity, subsPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -452,11 +458,25 @@ public class CashfreePgApiModule extends NativeCashfreePgApiSpec
     }
   }
 
+
+  // Registered before every payment, not just once, so the current module
+  // instance is always the one that receives the result — including after
+  // Android recreates the host Activity when a UPI app returns. This sets a
+  // single callback rather than appending, so repeat calls never duplicate.
+  // Keep it per payment; do not reduce it to the one call in setCallback().
+  private void registerCheckoutCallback() throws CFException {
+    CFPaymentGatewayService.getInstance().setCheckoutCallback(this);
+  }
+
+  private void registerSubscriptionCallback() throws CFException {
+    CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+  }
+
   @Override
   @ReactMethod
   public void setCallback() {
     try {
-      CFPaymentGatewayService.getInstance().setCheckoutCallback(this);
+      registerCheckoutCallback();
     } catch (CFException cfException) {
     }
   }

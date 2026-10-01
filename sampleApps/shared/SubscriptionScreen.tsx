@@ -190,13 +190,15 @@ export default class SubscriptionScreen extends Component<Props> {
     const context = this;
     CFPaymentGatewayService.setCallback({
       onVerify(orderID: string): void {
-        console.log('onVerify Called', orderID);
+        console.log(`[B7] onVerify FIRED \u2192 orderID=${orderID}`);
         context.updateStatus('Verified: ' + orderID);
         context.setState({upiScheme: ''});
         showAlert(`Subs ID: ${orderID}`);
       },
       onError(error: CFErrorResponse, orderID: string): void {
-        console.log('onError Called', error.getMessage());
+        console.log(
+          `[B7] onError FIRED \u2192 orderID=${orderID} message=${error.getMessage()}`,
+        );
         context.updateStatus(JSON.stringify(error));
         showAlert(
           `Order ID: ${orderID}\nCode: ${error.getCode()}\nMessage: ${error.getMessage()}`,

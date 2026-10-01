@@ -75,3 +75,6 @@ lib/
 .history/
 .yarn/
 .claude/
+
+# Internal design specs and plans (kept locally, not published)
+docs/superpowers/

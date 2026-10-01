@@ -21,7 +21,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import {CFErrorResponse, CFPaymentGatewayService} from 'react-native-cashfree-pg-sdk';
 import {CFEnvironment, CFSession, CFUPI, CFUPIPayment, UPIMode} from 'cashfree-pg-api-contract';
 import PGScreen from 'shared/PGScreen';
 import SubscriptionScreen from 'shared/SubscriptionScreen';
@@ -88,32 +87,6 @@ export default function App() {
       `contract identity: ctor=${probe.constructor.name} ` +
         `instanceof CFUPIPayment=${probe instanceof CFUPIPayment}`,
     );
-  }, [line]);
-
-  // ---- Boundary 6/7: root-level callback + event registration -------------
-  // Kept at the root, not inside PGScreen / SubscriptionScreen, for the same
-  // reason as NewArchSample: a callback registered inside a screen is lost if
-  // the host is recreated while an external UPI/net-banking app is active.
-  useEffect(() => {
-    CFPaymentGatewayService.setCallback({
-      onVerify(orderId: string) {
-        line('B7', `onVerify FIRED → orderID=${orderId}`);
-      },
-      onError(error: CFErrorResponse, orderId: string) {
-        line('B7', `onError FIRED → orderID=${orderId} error=${JSON.stringify(error)}`);
-      },
-    });
-
-    CFPaymentGatewayService.setEventSubscriber({
-      onReceivedEvent(eventName: string, meta: unknown) {
-        line('B6', `event=${eventName} meta=${JSON.stringify(meta)}`);
-      },
-    });
-
-    return () => {
-      CFPaymentGatewayService.removeCallback();
-      CFPaymentGatewayService.removeEventSubscriber();
-    };
   }, [line]);
 
   if (screen === 'pg') {

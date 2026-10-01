@@ -16,9 +16,9 @@ const sharedRoot = path.resolve(__dirname, '..', 'shared');
 // cashfree-pg-api-contract: two copies make `cfPayment instanceof CFUPIPayment`
 // in src/index.ts#makePayment return false. makePayment then falls through to
 // its else branch, logs 'Wrong payment object', and returns without calling
-// native at all — no UPI app, no callback, Pay button resets. That is
-// indistinguishable from the New Architecture bug we are chasing, so pin it
-// here and keep boundary log #1 in App.tsx to prove which one we hit.
+// native at all — no UPI app, no callback, Pay button resets. That is easy to
+// mistake for a native failure, so pin it here and keep boundary log #1 in
+// App.tsx to prove the contract resolved once.
 const singletons = ['react', 'react-native', 'cashfree-pg-api-contract'];
 
 const appModules = path.resolve(__dirname, 'node_modules');
@@ -50,7 +50,7 @@ const config = {
 
     // Hard block the root's node_modules. Without this, a stray `yarn` at the
     // repo root reintroduces react-native 0.73.6 and the duplicate contract
-    // package, and the failure looks like a native bug.
+    // package, and the failure looks like a native one.
     blockList: [
       new RegExp(
         `^${sdkRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/node_modules/.*$`,

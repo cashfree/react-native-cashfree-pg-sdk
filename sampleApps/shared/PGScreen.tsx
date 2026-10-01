@@ -4,6 +4,7 @@ import * as React from 'react';
 import {Component} from 'react';
 import Toggle from './Toggle';
 import {
+  Alert,
   Button,
   Image,
   Platform,
@@ -102,6 +103,17 @@ export default class PGScreen extends Component<Props> {
     }
   };
 
+  // updateStatus only surfaces a toast on Android; this shows on both so the
+  // message is not silently invisible on iOS.
+  notify = (message: string) => {
+    this.setState({responseText: message});
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('', message);
+    }
+  };
+
   handleCFCardInput = (data: string) => {
     const cardNetwork = JSON.parse(data)['card_network'];
     const networkMap: Record<string, any> = {
@@ -126,16 +138,24 @@ export default class PGScreen extends Component<Props> {
 
   componentDidMount() {
     const context = this;
+    // The single registration point for this app. Registering again elsewhere
+    // (e.g. at the app root) does not replace this one — setCallback leaves the
+    // previous listener attached — so every callback would fire once per
+    // registration instead of once per payment.
     CFPaymentGatewayService.setEventSubscriber({
       onReceivedEvent(eventName: string, map: Map<string, string>): void {
-        console.log('Event: ' + eventName + ' map: ' + JSON.stringify(map));
+        console.log(`[B6] event=${eventName} meta=${JSON.stringify(map)}`);
       },
     });
     CFPaymentGatewayService.setCallback({
       onVerify(orderID: string): void {
+        console.log(`[B7] onVerify FIRED \u2192 orderID=${orderID}`);
         context.updateStatus('Verified: ' + orderID);
       },
       onError(error: CFErrorResponse, orderID: string): void {
+        console.log(
+          `[B7] onError FIRED \u2192 orderID=${orderID} error=${JSON.stringify(error)}`,
+        );
         context.updateStatus(JSON.stringify(error));
       },
     });
@@ -221,7 +241,21 @@ export default class PGScreen extends Component<Props> {
   }
 
   /** @deprecated Use WebCheckout or UPIIntent instead */
+  // Every payment path needs a session. createOrder is a manual button here,
+  // and a fresh install starts with no order at all, so check before calling
+  // into the SDK.
+  private hasSession(): boolean {
+    if (!this.state.sessionId || !this.state.orderId) {
+      this.notify('Create an order first.');
+      return false;
+    }
+    return true;
+  }
+
   async _startCheckout() {
+    if (!this.hasSession()) {
+      return;
+    }
     try {
       const paymentModes = new CFPaymentComponentBuilder()
         .add(CFPaymentModes.CARD)
@@ -247,6 +281,9 @@ export default class PGScreen extends Component<Props> {
   }
 
   async _startWebCheckout() {
+    if (!this.hasSession()) {
+      return;
+    }
     try {
       CFPaymentGatewayService.doWebPayment(this.getSession());
     } catch (e: any) {
@@ -255,6 +292,9 @@ export default class PGScreen extends Component<Props> {
   }
 
   async _startUPICheckout() {
+    if (!this.hasSession()) {
+      return;
+    }
     try {
       const theme = new CFThemeBuilder()
         .setNavigationBarBackgroundColor('#E64A19')
@@ -273,13 +313,48 @@ export default class PGScreen extends Component<Props> {
   }
 
   async _makeUpiIntentPayment() {
-    const apps = await CFPaymentGatewayService.getInstalledUpiApps();
-    let id = '';
-    JSON.parse(apps).forEach((item: any) => {
-      id = item.appPackage;
-    });
+    if (!this.hasSession()) {
+      return;
+    }
+    let installed: string[] = [];
     try {
-      const upi = new CFUPI(UPIMode.INTENT, this.state.upiId || id);
+      const apps = await CFPaymentGatewayService.getInstalledUpiApps();
+      const parsed = JSON.parse(apps || '[]');
+      if (Array.isArray(parsed)) {
+        installed = parsed
+          .map((item: any) => String(item?.appPackage ?? ''))
+          .filter(Boolean);
+      }
+    } catch (e: any) {
+      console.log('[PGScreen] getInstalledUpiApps failed:', e?.message ?? e);
+    }
+    console.log('[PGScreen] installed UPI apps:', JSON.stringify(installed));
+
+    // INTENT launches an installed UPI app. With none installed there is
+    // nothing to hand off to — simulators are the usual way to hit this — so
+    // point the tester at Collect instead.
+    if (installed.length === 0) {
+      this.notify(
+        'No UPI apps installed on this device — Intent cannot run here. Use Collect instead.',
+      );
+      return;
+    }
+
+    const typed = this.state.upiId.trim();
+    if (
+      typed &&
+      !installed.some(a => a.toLowerCase() === typed.toLowerCase())
+    ) {
+      this.notify(
+        `"${typed}" is not an installed UPI app. Available: ${installed.join(', ')}`,
+      );
+      return;
+    }
+    const id = typed || installed[installed.length - 1];
+
+    try {
+      console.log('[PGScreen] UPI INTENT → id:', id);
+      const upi = new CFUPI(UPIMode.INTENT, id);
       CFPaymentGatewayService.makePayment(
         new CFUPIPayment(this.getSession(), upi),
       );
@@ -290,8 +365,26 @@ export default class PGScreen extends Component<Props> {
 
   /** @deprecated Use UPI Intent instead */
   async _makeUpiCollectPayment() {
+    if (!this.hasSession()) {
+      return;
+    }
+    // COLLECT needs a VPA to send the request to, so require one before
+    // calling into the SDK.
+    const upiId = this.state.upiId.trim();
+    if (!upiId) {
+      this.notify('Enter a UPI ID first (e.g. success@upi).');
+      return;
+    }
+    // COLLECT sends a request to a VPA, so it needs name@bank — not a scheme.
+    if (!upiId.includes('@')) {
+      this.notify(
+        `"${upiId}" is not a UPI ID. Collect needs e.g. success@upi — use Intent for an app scheme.`,
+      );
+      return;
+    }
     try {
-      const upi = new CFUPI(UPIMode.COLLECT, this.state.upiId);
+      console.log('[PGScreen] UPI COLLECT → id:', upiId);
+      const upi = new CFUPI(UPIMode.COLLECT, upiId);
       CFPaymentGatewayService.makePayment(
         new CFUPIPayment(this.getSession(), upi),
       );
@@ -301,6 +394,9 @@ export default class PGScreen extends Component<Props> {
   }
 
   private handleSubmit = () => {
+    if (!this.hasSession()) {
+      return;
+    }
     if (this.creditCardRef.current) {
       const nonPciCard = new ElementCard(
         this.state.cardHolderName,
@@ -317,6 +413,9 @@ export default class PGScreen extends Component<Props> {
   };
 
   async _startCardPayment() {
+    if (!this.hasSession()) {
+      return;
+    }
     try {
       const card = new Card(
         this.state.cardNumber,
@@ -335,6 +434,9 @@ export default class PGScreen extends Component<Props> {
   }
 
   async _makeNBPayment() {
+    if (!this.hasSession()) {
+      return;
+    }
     try {
       const nb = new CFNB(this.state.nbBankCode);
       CFPaymentGatewayService.makePayment(
@@ -346,6 +448,9 @@ export default class PGScreen extends Component<Props> {
   }
 
   async _startSavedCardPayment() {
+    if (!this.hasSession()) {
+      return;
+    }
     try {
       const card = new SavedCard(this.state.instrumentId, this.state.cardCVV);
       CFPaymentGatewayService.makePayment(

@@ -10,8 +10,8 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
 // Same singleton pinning as the other two sample apps — see
 // sampleApps/README.md for why cashfree-pg-api-contract must resolve exactly
-// once (duplicate copies break `instanceof` inside makePayment and look
-// identical to the bug under investigation).
+// once (duplicate copies break `instanceof` inside makePayment, which is easy
+// to mistake for a native failure).
 const sdkRoot = path.resolve(__dirname, '..', '..');
 const sharedRoot = path.resolve(__dirname, '..', 'shared');
 const appModules = path.resolve(__dirname, 'node_modules');
