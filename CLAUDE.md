@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **2.3.1** (iOS native: 2.3.7, Android native: 2.3.3)
+Current version: **2.5.0** (iOS native: 2.5.2, Android native: 2.6.0)
 
 ## Commands
 
@@ -53,10 +53,12 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 
 ### Source (`src/`)
 
-- [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which wraps `NativeModules.CashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types. Key methods: `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `makePayment` (element routing), `makeSubsPayment` (subscription element routing).
+- [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which wraps `NativeModules.CashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types. Key methods: `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `makePayment` (element routing), `makeSubsPayment` (subscription element routing), `doPPIWalletPayment` (PPI wallet, pure JS, returns a Promise).
 - [src/Card/CFCardComponent.tsx](src/Card/CFCardComponent.tsx) — `CFCard` React component for card element payments. Handles Luhn validation, card network detection (Visa, MC, Amex, RuPay, etc.), BIN-based TDR fetching, and exposes an imperative handle (`doPayment`, `doPaymentWithPaymentSessionId`) via `forwardRef`. Makes live HTTP calls to `https://api.cashfree.com/pg/sdk/js/{sessionId}/cardBin` and `.../v2/tdr` during card input (uses `sandbox.cashfree.com` for `SANDBOX` environment).
 - [src/Card/CFSubsCardComponent.tsx](src/Card/CFSubsCardComponent.tsx) — `CFSubsCard` React component for NonPCI subscription card input. Handles card number formatting (4-digit groups), Luhn validation, BIN lookup via `POST /pg/sdk/js/subscription/card/bin` (authenticated with `x-sub-session-id`), and exposes an imperative handle (`doSubscriptionPayment`, `doSubscriptionPaymentWithNewSession`) via `forwardRef`. Exported as `CFSubsCard` from `src/index.ts`. Accepts `cfSubscriptionSession` (required) and `cardListener` (required callback receiving a JSON string with `card_network`, `card_bin_info`, `input_validation`, `luhn_check_info`, `last_four_digit`, `card_length`).
 - [src/Card/index.ts](src/Card/index.ts) — Re-exports `CFCard` (default) from `CFCardComponent` and `SubsCardInput` (named) from `CFSubsCardComponent`.
+- [src/CFErrorResponse.ts](src/CFErrorResponse.ts) — `CFErrorResponse`, the single error type for all flows (native `cfFailure` via `fromJSON`, and PPI wallet rejections via its optional `{ message, code, type }` constructor). Re-exported from `src/index.ts`.
+- [src/PPIWallet/PPIWalletPayment.ts](src/PPIWallet/PPIWalletPayment.ts) — `doPPIWalletPayment(payment: CFPPIWalletPayment): Promise<unknown>`, exposed as `CFPaymentGatewayService.doPPIWalletPayment`. Pure JS (no native code): POSTs `{ payment_session_id, payment_method: { app } }` (camelCase `CFPPIWallet` fields mapped explicitly to the API's `wallet_id` / `user_id` / `cf_sub_wallet_id`) to `/pg/orders/sessions` on `sandbox.cashfree.com` / `api.cashfree.com` by `session.environment` (any other value is rejected, never defaulted to prod). Resolves with the API JSON as-is; rejects with the SDK's shared `CFErrorResponse` (`getType()` = `validation_error` (nothing sent) | `network_error` (no response) | the API's own error type, or `api_error` + `request_failed` + a generic message when the body is missing/not JSON — including a non-JSON 2xx). Re-runs `new CFPPIWallet(...)` so mutated or hand-built objects are re-validated and stray keys dropped. Request carries PII (phone, user_id) — never log it.
 
 ### Native modules
 
@@ -65,12 +67,12 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 - `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the active `CashfreeEventEmitter` and calls `sendEvent`. The `allEvents` array here must match JS listener names.
 - `CashfreeEventEmitter.swift` — `RCTEventEmitter` subclass that registers itself with `CashfreeEmitter.sharedInstance` on init.
 - `CashfreePgApi.m` — Objective-C bridge exposing both `CashfreePgApi` and `CashfreeEventEmitter` to React Native.
-- CocoaPod: `CashfreePG 2.3.7` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
+- CocoaPod: `CashfreePG 2.5.2` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
 
 **Android** ([android/](android/)):
 - [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`. Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`).
 - `CashfreePgApiPackage.java` — Registers the module with React Native.
-- Gradle dependency: `com.cashfree.pg:api:2.3.3`.
+- Gradle dependency: `com.cashfree.pg:api:2.6.0`.
 
 ### Build output (`lib/`)
 
@@ -83,7 +85,9 @@ The `react-native` field in package.json points to `src/index` so Metro uses the
 
 ### Key API contract dependency
 
-`cashfree-pg-api-contract` (v2.1.0) provides the TypeScript types and payment session contract shared between the JS layer and native modules. Payment objects (e.g., `CFDropCheckoutPayment`, `CFWebCheckoutPayment`, `CFCardPayment`) come from this package.
+`cashfree-pg-api-contract` (pinned exactly to v2.2.0) provides the TypeScript types and payment session contract shared between the JS layer and native modules. Payment objects (e.g., `CFDropCheckoutPayment`, `CFWebCheckoutPayment`, `CFCardPayment`) come from this package.
+
+**PPI wallet types** (added in v2.2.0): `CFPPIWallet` (camelCase `phone`, `walletId`, `userId`, `cfSubWalletId`, optional `provider`/`channel`) and `CFPPIWalletPayment(session, wallet)`, consumed by `doPPIWalletPayment`. Bumping the contract pin means merchants who list the contract themselves must bump in step, or `makePayment`'s `instanceof` routing sees two copies.
 
 **Subscription types** (added in v2.1.0):
 - `CFSubscriptionSession` — session object with `subscription_session_id`, `subscription_id`, and `CFEnvironment`
@@ -119,8 +123,8 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 - **TypeScript strict mode** enabled; avoid `any`.
 - **Prettier + ESLint** (`@react-native-community` config) enforced via pre-commit hooks (Husky + lint-staged).
 - **Commit messages** must follow Conventional Commits (enforced by commitlint).
-- **Versioning:** Update native SDK version constants in `CashfreePgApi.swift` (`sdkVersion`) and `CashfreePgApiModule.java` whenever the native SDKs are bumped.
-- Build artifacts in `lib/` are committed (required for NPM publish); do not gitignore them.
+- **Versioning:** `package.json` `version` is the RN SDK version (the podspec and JS `version` field read it). `versionNumber` in `CashfreePgApi.swift` tracks the **native iOS SDK** version (used in the `setPlatform` tag), not the RN version — bump it only with a native SDK bump, together with the `CashfreePG` pod and `com.cashfree.pg:api` Gradle versions.
+- **`src/**/*.js` are committed and are what merchants run**: the `react-native` field points at `src/index` and Metro resolves `.js` before `.ts`; Jest does the same, so tests exercise the `.js`. They are byte-identical `tsc` output — after editing any `.ts`, regenerate with `npx tsc -p tsconfig.json --noEmit false --outDir <tmp> --declaration false` and copy the matching `.js` files back. `lib/` is build output and is not tracked.
 
 ## Platform-specific notes
 
