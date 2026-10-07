@@ -105,8 +105,10 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 ```
 
 **Example app screens:**
-- `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card)
-- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element (PCI), card element (NonPCI via `CFSubsCard`), net banking element, UPI intent. All sections are wrapped in `CollapsibleSection` (expand/collapse UI). Key behaviours:
+- `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card, net banking) and the PPI wallet flow. Every section is a `CollapsibleSection` (Session, Checkout, Response open by default; payment-method cards collapsed).
+  - **PPI Wallet section:** "Create PPI Order" creates the order with `PPI_SANDBOX_CLIENT_ID` / `PPI_SANDBOX_CLIENT_SECRET` (a sandbox merchant with PPI enabled; the default example merchant is not), sending `customer_phone` from the PPI phone field plus `wallet_details`; "PPI Wallet Payment" calls `doPPIWalletPayment` with the screen's session. Both log `[PPI]` request/response lines. The credentials and phone are committed **empty** (public repo) — fill them locally in both `PGScreen.tsx` and `PGScreen.js`, never commit them. Sandbox success returns `action: "link"` with `data.url`.
+- `example/src/CollapsibleSection.tsx` — shared expand/collapse card used by `PGScreen` and `SubscriptionScreen`.
+- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element (PCI), card element (NonPCI via `CFSubsCard`), net banking element, UPI intent. All sections are wrapped in the shared `CollapsibleSection` (expand/collapse UI). Key behaviours:
   - `showAlert(message)` — module-level helper that wraps `Alert.alert('Response', message)`. Used for all payment responses.
   - `onVerify` / `onError` callbacks call `showAlert()` with the result. `onVerify` also clears the `upiScheme` state so the UPI input is reset after a successful payment.
   - **Auto-create on mount:** `createSubscription()` is called in `componentDidMount`, so a subscription order is created as soon as the screen loads. The "Create Subscription" button still works to refresh/retry.
@@ -132,6 +134,9 @@ CFPaymentGatewayService.makeSubsPayment(payment)
 - **Android minSdkVersion:** 21, compileSdkVersion: 35
 - When changing the podspec or `build.gradle`, verify the example app still builds (`yarn pods` + `cd example && npm run ios/android`).
 - The native event names (`cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps`) must stay in sync between the native emitters and the JS listeners in `src/index.ts`. On iOS, `CashfreeEmitter.swift`'s `allEvents` array is the authoritative list.
+- **Example `.js` files:** `example/src/*.js` are committed `tsc` output of the `.tsx` (Metro loads `.js` first). Regenerate with `../node_modules/.bin/tsc src/<File>.tsx --outDir <tmp> --target esnext --module esnext --jsx react --moduleResolution node --skipLibCheck --allowSyntheticDefaultImports` from `example/`, then copy back.
+- **Testing local SDK changes in the example:** `npm pack` the SDK root and point `example/package.json` at the tarball (`file:`) — never commit that; a `file:..` link pulls a second `react-native` into Metro.
+- **iOS example on RN 0.73:** the `boost` pod's jfrog URL is dead (checksum mismatch); for a local build, point `example/node_modules/react-native/third-party-podspecs/boost.podspec` at `https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2` (same sha256). `npx react-native run-ios` re-runs `pod install` with the system `pod`; if that is broken, build with `xcodebuild -workspace ios/CashfreePgApiExample.xcworkspace -scheme CashfreePgApiExample -sdk iphonesimulator` and install with `xcrun simctl install`.
 - **iOS build cache:** If you get `'CFCardSubsPayment' is unavailable: cannot find Swift declaration for this class` errors, the `XCFrameworkIntermediates` build cache is stale. Fix: `rm -rf example/ios/build/Debug-iphonesimulator/XCFrameworkIntermediates` then rebuild.
 - **iOS simulator UPI testing:** To test UPI app selection on simulator, install dummy apps with UPI URL schemes. See script below — uses `xcrun simctl install` with minimal `.app` bundles (binary compiled via `xcrun -sdk iphonesimulator clang`). Use `cat` instead of `cp` to copy binaries (hooks may intercept `cp`).
   ```sh
