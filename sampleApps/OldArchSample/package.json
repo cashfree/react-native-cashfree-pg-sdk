@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "cashfree-pg-api-contract": "2.1.1",
+    "cashfree-pg-api-contract": "2.2.0",
     "react": "18.2.0",
     "react-native": "0.73.11"
   },

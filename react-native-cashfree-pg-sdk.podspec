@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 
   s.frameworks = "WebKit"
 
-  s.dependency "CashfreePG", "2.4.0"
+  s.dependency "CashfreePG", "2.5.2"
 
   install_modules_dependencies(s)
 end

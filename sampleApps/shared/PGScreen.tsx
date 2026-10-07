@@ -26,6 +26,8 @@ import {
   CFNB,
   CFNBPayment,
   CFCardPayment,
+  CFPPIWallet,
+  CFPPIWalletPayment,
   CFDropCheckoutPayment,
   CFEnvironment,
   CFPaymentComponentBuilder,
@@ -40,14 +42,18 @@ import {
   UPIMode,
 } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
+import CollapsibleSection from './CollapsibleSection';
 
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 
 const SANDBOX_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
 const SANDBOX_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+// Sandbox merchant with the PPI wallet enabled; used only by Create PPI Order.
+// Fill in locally. Never commit real values (public repo).
+const PPI_SANDBOX_CLIENT_ID = '';
+const PPI_SANDBOX_CLIENT_SECRET = '';
 const PROD_CLIENT_ID = '';
 const PROD_CLIENT_SECRET = '';
-
 
 function generateOrderId(): string {
   return (
@@ -81,6 +87,11 @@ export default class PGScreen extends Component<Props> {
       isSandbox: true,
       upiId: 'testfailure@gocash',
       nbBankCode: '3003',
+      ppiPhone: '',
+      ppiWalletId: 'WALLET_PG_07',
+      ppiUserId: 'PG_TEST_USER_Ajeet',
+      ppiSubWalletId: '1445673253583338496',
+      isPPILoading: false,
       cardNetwork: require('./assets/visa.png'),
     };
     this.cfCardInstance = this.createCFCard();
@@ -186,15 +197,47 @@ export default class PGScreen extends Component<Props> {
     );
   }
 
-  async createOrder() {
+  createPPIOrder() {
+    return this.createOrder(
+      {
+        customer_details: {
+          customer_id: 'devstudio_user',
+          customer_phone: this.state.ppiPhone,
+        },
+        wallet_details: {
+          issuer: 'CASHFREE',
+          operation: 'REDEEM',
+          issuer_operation_details: {
+            wallet_id: this.state.ppiWalletId,
+            user_id: this.state.ppiUserId,
+          },
+        },
+      },
+      '[PPI]',
+      {
+        clientId: PPI_SANDBOX_CLIENT_ID,
+        clientSecret: PPI_SANDBOX_CLIENT_SECRET,
+      },
+    );
+  }
+
+  async createOrder(
+    extraBody: Record<string, unknown> = {},
+    logTag?: string,
+    sandboxCredentials?: {clientId: string; clientSecret: string},
+  ) {
     this.setState({isCreatingOrder: true, responseText: 'Creating order...'});
     const orderId = generateOrderId();
     const {isSandbox} = this.state;
     const apiUrl = isSandbox
       ? 'https://sandbox.cashfree.com/pg/orders'
       : 'https://api.cashfree.com/pg/orders';
-    const clientId = isSandbox ? SANDBOX_CLIENT_ID : PROD_CLIENT_ID;
-    const clientSecret = isSandbox ? SANDBOX_CLIENT_SECRET : PROD_CLIENT_SECRET;
+    const sandbox = sandboxCredentials ?? {
+      clientId: SANDBOX_CLIENT_ID,
+      clientSecret: SANDBOX_CLIENT_SECRET,
+    };
+    const clientId = isSandbox ? sandbox.clientId : PROD_CLIENT_ID;
+    const clientSecret = isSandbox ? sandbox.clientSecret : PROD_CLIENT_SECRET;
     console.log(
       '[PGScreen] createOrder → API:',
       apiUrl,
@@ -202,6 +245,25 @@ export default class PGScreen extends Component<Props> {
       isSandbox ? 'SANDBOX' : 'PRODUCTION',
     );
     try {
+      const orderBody = {
+        order_amount: 1.0,
+        order_currency: 'INR',
+        order_id: orderId,
+        customer_details: {
+          customer_id: 'devstudio_user',
+          customer_phone: '9876543210',
+        },
+        order_meta: {
+          return_url: `https://www.cashfree.com/devstudio/preview/pg/seamless?order_id={order_id}`,
+        },
+        ...extraBody,
+      };
+      if (logTag) {
+        console.log(
+          `${logTag} create order request`,
+          JSON.stringify(orderBody, null, 2),
+        );
+      }
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -211,17 +273,15 @@ export default class PGScreen extends Component<Props> {
           'Content-Type': 'application/json',
           'x-api-version': '2025-01-01',
         },
-        body: JSON.stringify({
-          order_amount: 1.0,
-          order_currency: 'INR',
-          order_id: orderId,
-          customer_details: {
-            customer_id: 'devstudio_user',
-            customer_phone: '9876543210',
-          }
-        }),
+        body: JSON.stringify(orderBody),
       });
       const data = await response.json();
+      if (logTag) {
+        console.log(
+          `${logTag} create order response HTTP ${response.status}`,
+          JSON.stringify(data, null, 2),
+        );
+      }
       if (data.payment_session_id) {
         this.setState({
           orderId: data.order_id,
@@ -363,6 +423,43 @@ export default class PGScreen extends Component<Props> {
     }
   }
 
+  async _startPPIWalletPayment() {
+    this.setState({isPPILoading: true});
+    try {
+      const wallet = new CFPPIWallet({
+        phone: this.state.ppiPhone,
+        walletId: this.state.ppiWalletId,
+        userId: this.state.ppiUserId,
+        cfSubWalletId: this.state.ppiSubWalletId,
+      });
+      const payment = new CFPPIWalletPayment(this.getSession(), wallet);
+      console.log(
+        '[PPI] pay request',
+        JSON.stringify(
+          {session: payment.getSession(), wallet: payment.getWallet()},
+          null,
+          2,
+        ),
+      );
+      const response = await CFPaymentGatewayService.doPPIWalletPayment(
+        payment,
+      );
+      console.log('[PPI] pay response', JSON.stringify(response, null, 2));
+      this.updateStatus('PPI success: ' + JSON.stringify(response, null, 2));
+    } catch (e: any) {
+      console.log('[PPI] pay error', JSON.stringify(e));
+      if (e instanceof CFErrorResponse) {
+        this.updateStatus(
+          `PPI error: type=${e.getType()} code=${e.getCode()} message=${e.getMessage()}`,
+        );
+      } else {
+        this.updateStatus('PPI error: ' + e.message);
+      }
+    } finally {
+      this.setState({isPPILoading: false});
+    }
+  }
+
   /** @deprecated Use UPI Intent instead */
   async _makeUpiCollectPayment() {
     if (!this.hasSession()) {
@@ -474,8 +571,7 @@ export default class PGScreen extends Component<Props> {
 
         <View style={styles.container}>
           {/* Session Inputs */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Session</Text>
+          <CollapsibleSection title="Session">
             <Button
               title={
                 this.state.isCreatingOrder
@@ -537,11 +633,10 @@ export default class PGScreen extends Component<Props> {
               value={this.state.upiId}
               onChangeText={v => this.setState({upiId: v})}
             />
-          </View>
+          </CollapsibleSection>
 
           {/* Checkout Buttons */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Checkout</Text>
+          <CollapsibleSection title="Checkout">
             <View style={styles.buttonGrid}>
               {[
                 {title: 'Drop Payment', action: () => this._startCheckout()},
@@ -564,17 +659,63 @@ export default class PGScreen extends Component<Props> {
                 </View>
               ))}
             </View>
-          </View>
+          </CollapsibleSection>
+
+          {/* PPI Wallet */}
+          <CollapsibleSection title="PPI Wallet" defaultExpanded={false}>
+            <TextInput
+              style={styles.input}
+              placeholder="Phone"
+              keyboardType="phone-pad"
+              value={this.state.ppiPhone}
+              onChangeText={v => this.setState({ppiPhone: v})}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Wallet Id"
+              value={this.state.ppiWalletId}
+              onChangeText={v => this.setState({ppiWalletId: v})}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="User Id"
+              value={this.state.ppiUserId}
+              onChangeText={v => this.setState({ppiUserId: v})}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="CF Sub Wallet Id"
+              value={this.state.ppiSubWalletId}
+              onChangeText={v => this.setState({ppiSubWalletId: v})}
+            />
+            <Button
+              title={
+                this.state.isCreatingOrder
+                  ? 'Creating Order...'
+                  : 'Create PPI Order'
+              }
+              disabled={this.state.isCreatingOrder}
+              onPress={() => this.createPPIOrder()}
+            />
+            <View style={styles.divider} />
+            <Button
+              title={
+                this.state.isPPILoading ? 'Calling...' : 'PPI Wallet Payment'
+              }
+              disabled={this.state.isPPILoading}
+              onPress={() => this._startPPIWalletPayment()}
+            />
+          </CollapsibleSection>
 
           {/* Response */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Response</Text>
+          <CollapsibleSection title="Response">
             <Text style={styles.responseText}>{this.state.responseText}</Text>
-          </View>
+          </CollapsibleSection>
 
           {/* Card Payment */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Card Payment (NonPCI)</Text>
+          <CollapsibleSection
+            title="Card Payment (NonPCI)"
+            defaultExpanded={false}>
             <View style={styles.cardContainer}>
               {this.cfCardInstance}
               <Image
@@ -618,11 +759,12 @@ export default class PGScreen extends Component<Props> {
               title="Pay with Card (NonPCI)"
               onPress={this.handleSubmit}
             />
-          </View>
+          </CollapsibleSection>
 
           {/* PCI Card Payment */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Card Payment (PCI)</Text>
+          <CollapsibleSection
+            title="Card Payment (PCI)"
+            defaultExpanded={false}>
             <TextInput
               style={styles.input}
               placeholder="Card Number"
@@ -676,11 +818,10 @@ export default class PGScreen extends Component<Props> {
               title="Pay with Card (PCI)"
               onPress={() => this._startCardPayment()}
             />
-          </View>
+          </CollapsibleSection>
 
           {/* Saved Card */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Saved Card</Text>
+          <CollapsibleSection title="Saved Card" defaultExpanded={false}>
             <TextInput
               style={styles.input}
               placeholder="Instrument Id"
@@ -698,11 +839,12 @@ export default class PGScreen extends Component<Props> {
               title="Pay with Saved Card"
               onPress={() => this._startSavedCardPayment()}
             />
-          </View>
+          </CollapsibleSection>
 
           {/* Net Banking Element */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Net Banking (Element)</Text>
+          <CollapsibleSection
+            title="Net Banking (Element)"
+            defaultExpanded={false}>
             <TextInput
               style={styles.input}
               placeholder="Bank Code"
@@ -714,7 +856,7 @@ export default class PGScreen extends Component<Props> {
               title="Pay via Net Banking"
               onPress={() => this._makeNBPayment()}
             />
-          </View>
+          </CollapsibleSection>
         </View>
       </ScrollView>
     );

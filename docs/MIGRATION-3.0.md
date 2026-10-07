@@ -14,7 +14,7 @@ Use 0.73.2 or newer if you are on the 0.73 line: React Native 0.73.0 and 0.73.1 
 `boost.podspec` pointing at a host that no longer serves the tarball, so `pod install` fails
 there for reasons unrelated to this SDK.
 
-(0.71 and 0.72 are excluded because `CashfreePG` 2.4.0 requires an iOS deployment
+(0.71 and 0.72 are excluded because `CashfreePG` 2.5.2 requires an iOS deployment
 target of 13.0, and those releases default to 12.4.)
 
 There are no JavaScript API changes. `CFPaymentGatewayService.makePayment()`,
@@ -94,12 +94,12 @@ the customer what went wrong.
   }));
   ```
 
-## Staying on 2.4.x
+## Staying on 2.5.x
 
-2.4.x remains available for apps below React Native 0.73.
+2.5.x remains available for apps below React Native 0.73.
 
 ## Confirm payments server-side
 
 Treat `onVerify` as the signal to check the order, not as the final word. Confirm every payment
 server-side with `GET /pg/orders/{order_id}` and fulfil only on
-`order_status: PAID`. This is true in every version, including 2.4.x.
+`order_status: PAID`. This is true in every version, including 2.5.x.
