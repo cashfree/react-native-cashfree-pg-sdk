@@ -215,7 +215,8 @@ const SubsCardInput: any = forwardRef<
         const cardPayment = new CFSubsCardPayment(sessionRef.current, cardInfo);
         CFPaymentGatewayService.makeSubsPayment(cardPayment);
       } catch (e: any) {
-        console.log(e.message);
+        console.error('[CFSubsCard] payment call failed:', e?.message ?? e);
+        throw e;
       }
     };
 
@@ -227,7 +228,8 @@ const SubsCardInput: any = forwardRef<
         sessionRef.current = session;
         doSubscriptionPayment(cardInfo);
       } catch (e: any) {
-        console.log(e.message);
+        console.error('[CFSubsCard] payment call failed:', e?.message ?? e);
+        throw e;
       }
     };
 

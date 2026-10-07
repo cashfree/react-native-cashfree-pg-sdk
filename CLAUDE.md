@@ -6,7 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **2.5.0** (iOS native: 2.5.2, Android native: 2.6.0)
+Current version: **3.0.0** (iOS native: 2.5.2, Android native: 2.6.0)
+
+**Requires React Native 0.73.0 or newer.** As of 3.0.0 the SDK is a codegen TurboModule on
+both platforms and no longer depends on React Native's legacy-module interop layer; it still
+works unmodified on the legacy architecture. See [docs/MIGRATION-3.0.md](docs/MIGRATION-3.0.md)
+for the merchant-facing migration notes (the only breaking change is the RN floor).
 
 ## Commands
 
@@ -14,7 +19,7 @@ Current version: **2.5.0** (iOS native: 2.5.2, Android native: 2.6.0)
 
 ```sh
 yarn                  # Install dependencies
-yarn bootstrap        # Full setup: install deps + example deps + iOS pods
+yarn bootstrap        # Full setup: install deps + all three sample app deps
 yarn prepare          # Compile with react-native-builder-bob (outputs to lib/); also runs before publish
 yarn lint             # ESLint on all JS/TS/TSX files
 yarn typescript       # Type-check without emitting (tsc --noEmit)
@@ -22,15 +27,16 @@ yarn test             # Run Jest tests
 yarn release          # Cut a release with release-it
 ```
 
-### Example App
+### Sample Apps
 
-> **Important:** The example app uses **npm** (has `package-lock.json`). Always use `npm`, never `yarn`, for example app commands — Yarn Berry treats it as a separate project and fails.
+> **Important:** The sample apps use **npm** (each has `package-lock.json`). Always use `npm`, never `yarn`, for sample app commands — Yarn Berry treats them as separate projects and fails.
 
 ```sh
-yarn pods                      # Install iOS CocoaPods for example app (run from repo root)
-cd example && npm run android  # Run example on Android
-cd example && npm run ios      # Run example on iOS (add -- --simulator "iPhone 16 Pro" to target simulator)
-cd example && npm start        # Start Metro bundler
+yarn pods:oldarch              # Install iOS CocoaPods for a sample app (also pods:newarch, pods:expo)
+npm --prefix sampleApps/OldArchSample run android   # old-arch control (RN 0.73)
+npm --prefix sampleApps/NewArchSample run android   # new-arch repro (RN 0.81, bridgeless)
+npm --prefix sampleApps/ExpoSample run prebuild   # Expo needs prebuild first
+npm --prefix sampleApps/ExpoSample run android    # merchant's exact stack
 ```
 
 ### Single test file
@@ -45,15 +51,29 @@ yarn test -- path/to/test.spec.ts
 
 ```
 JS/TS Layer (src/)
-    ↓  NativeModules / NativeEventEmitter
-Native Bridge (ios/ & android/)
+    ↓  codegen Spec (src/NativeCashfreePgApi.ts) via TurboModuleRegistry
+Generated glue (RNCashfreePgApiSpec, codegen'd from the Spec at build time)
     ↓
+iOS: CashfreePgApiAdapter.{h,mm}   Android: NativeCashfreePgApiSpec (generated base class)
+    ↓  owns ObjC class `CashfreePgApi`      ↓  extended by CashfreePgApiModule
 Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 ```
 
+The SDK is a TurboModule on both platforms, described by a single codegen spec. `codegenConfig`
+in `package.json` (name `RNCashfreePgApiSpec`) drives React Native's codegen to generate the
+native-side interfaces (`NativeCashfreePgApiSpec.h` on iOS, `NativeCashfreePgApiSpec` base class
+on Android) from that one spec — one signature per method, shared by both platforms. This is why
+`getInstalledUpiApps()` became a single `Promise<string>` natively: codegen can't express "Android
+answers via callback, iOS via event" as two different contracts. The JS-visible result is unchanged
+(both platforms already answered `"[]"` for an empty list).
+
+The module still works with the interop layer off and, unmodified, on the legacy architecture —
+`NativeModules.CashfreePgApi` resolves to the same TurboModule either way.
+
 ### Source (`src/`)
 
-- [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which wraps `NativeModules.CashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types. Key methods: `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `makePayment` (element routing), `makeSubsPayment` (subscription element routing), `doPPIWalletPayment` (PPI wallet, pure JS, returns a Promise).
+- [src/NativeCashfreePgApi.ts](src/NativeCashfreePgApi.ts) — The codegen spec (`Spec extends TurboModule`). Every native method surfaced by the SDK is declared here; this is the single source of truth codegen reads to generate both platforms' native interfaces. Not shipping this file in the npm tarball would mean codegen produces nothing for consumers — verify its presence with `npm pack`.
+- [src/index.ts](src/index.ts) — Main entry. Contains `CFPaymentGateway` class which resolves the `CashfreePgApi` TurboModule via `TurboModuleRegistry`/`NativeCashfreePgApi` and wires up a `NativeEventEmitter` for success/failure/event callbacks. Exports `CFPaymentGatewayService` singleton and all public types. Key methods: `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `makePayment` (element routing), `makeSubsPayment` (subscription element routing), `doPPIWalletPayment` (PPI wallet, pure JS, returns a Promise — not in the codegen spec).
 - [src/Card/CFCardComponent.tsx](src/Card/CFCardComponent.tsx) — `CFCard` React component for card element payments. Handles Luhn validation, card network detection (Visa, MC, Amex, RuPay, etc.), BIN-based TDR fetching, and exposes an imperative handle (`doPayment`, `doPaymentWithPaymentSessionId`) via `forwardRef`. Makes live HTTP calls to `https://api.cashfree.com/pg/sdk/js/{sessionId}/cardBin` and `.../v2/tdr` during card input (uses `sandbox.cashfree.com` for `SANDBOX` environment).
 - [src/Card/CFSubsCardComponent.tsx](src/Card/CFSubsCardComponent.tsx) — `CFSubsCard` React component for NonPCI subscription card input. Handles card number formatting (4-digit groups), Luhn validation, BIN lookup via `POST /pg/sdk/js/subscription/card/bin` (authenticated with `x-sub-session-id`), and exposes an imperative handle (`doSubscriptionPayment`, `doSubscriptionPaymentWithNewSession`) via `forwardRef`. Exported as `CFSubsCard` from `src/index.ts`. Accepts `cfSubscriptionSession` (required) and `cardListener` (required callback receiving a JSON string with `card_network`, `card_bin_info`, `input_validation`, `luhn_check_info`, `last_four_digit`, `card_length`).
 - [src/Card/index.ts](src/Card/index.ts) — Re-exports `CFCard` (default) from `CFCardComponent` and `SubsCardInput` (named) from `CFSubsCardComponent`.
@@ -63,15 +83,16 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 ### Native modules
 
 **iOS** ([ios/](ios/)):
-- [CashfreePgApi.swift](ios/CashfreePgApi.swift) — Primary Swift native module. Implements `doPayment`, `doWebPayment`, `doUPIPayment`, `doCardPayment`, `doSubscriptionPayment`, `getInstalledUpiApps`, `doElementUPIPayment`, and subscription element methods `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment`. All payment methods (including subscription element) use `CFPaymentGatewayService`. Callback is registered via `setCallback()` which calls `CFPaymentGatewayService.getInstance().setCallback(self)`. Implements `CFResponseDelegate` with `verifyPayment(order_id:)` (emits `cfSuccess`), `onError(_:order_id:)` (emits `cfFailure`), and `receivedEvent(event_name:meta_data:)` (emits `cfEvent`). Emits `cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps` (iOS-only) events back to JS via `CashfreeEmitter`.
-- `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the active `CashfreeEventEmitter` and calls `sendEvent`. The `allEvents` array here must match JS listener names.
-- `CashfreeEventEmitter.swift` — `RCTEventEmitter` subclass that registers itself with `CashfreeEmitter.sharedInstance` on init.
-- `CashfreePgApi.m` — Objective-C bridge exposing both `CashfreePgApi` and `CashfreeEventEmitter` to React Native.
+- [CashfreePgApiAdapter.h](ios/CashfreePgApiAdapter.h) / [CashfreePgApiAdapter.mm](ios/CashfreePgApiAdapter.mm) — The ObjC TurboModule adapter. It declares and implements the ObjC class **`CashfreePgApi`** (deliberately not renamed to match the file — React Native's TurboModule lookup resolves `NSClassFromString("CashfreePgApi")` directly, before consulting `RCTGetModuleClasses()`, so the class name is load-bearing and must stay `CashfreePgApi` regardless of the file's name). Under `RCT_NEW_ARCH_ENABLED` it conforms to the codegen'd `NativeCashfreePgApiSpec` protocol; otherwise to plain `RCTBridgeModule`. It is an `RCTEventEmitter` subclass — the single module that now emits every event (`cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps`) via `supportedEvents`. Each exported method (`doPayment`, `doUPIPayment`, `doWebPayment`, `doSubscriptionPayment`, `doCardPayment`, `doElementUPIPayment`, `doElementNBPayment`, `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment`, `getInstalledUpiApps` (Promise-based), `setCallback`, `setEventSubscriber`, `removeEventSubscriber`) is a thin `RCT_EXPORT_METHOD` forwarding to `_impl`, an instance of `CashfreePgApiImpl`.
+- [CashfreePgApi.swift](ios/CashfreePgApi.swift) — The Swift implementation, exposed to ObjC as **`CashfreePgApiImpl`** (not `CashfreePgApi` — that ObjC name belongs to the adapter above; keeping the Swift class under a different bridged name avoids both compiling to `CashfreePgApi.o` and colliding at link time). Implements the actual payment logic via `CFPaymentGatewayService`, plus `getInstalledUpiApps` (resolves a JSON string; `"[]"` when no UPI app is installed). Callback is registered via `setCallback()` which calls `CFPaymentGatewayService.getInstance().setCallback(self)`. Implements `CFResponseDelegate` with `verifyPayment(order_id:)`, `onError(_:order_id:)`, and `receivedEvent(event_name:meta_data:)`, which hand off to `CashfreeEmitter` to emit back to JS.
+- `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the registered `RCTEventEmitter` (now the adapter's `CashfreePgApi` instance itself, registered via `registerEventEmitterWithEventEmitter:` in the adapter's `init`) and calls `sendEvent`. The `allEvents` array here must match JS listener names.
 - CocoaPod: `CashfreePG 2.5.2` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
+- Deleted in the TurboModule migration (do not resurrect): `CashfreePgApi.m` (ObjC bridge, superseded by the adapter), `CashfreeEventEmitter.swift`/`.m` (separate `RCTEventEmitter` subclass — the adapter is now the sole emitter).
 
 **Android** ([android/](android/)):
-- [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`. Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`).
-- `CashfreePgApiPackage.java` — Registers the module with React Native.
+- [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — `extends NativeCashfreePgApiSpec`, the abstract base class codegen generates from `src/NativeCashfreePgApi.ts`. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTDeviceEventEmitter` (moved from `NativeAppEventEmitter` — see migration notes if you were listening directly instead of via `setCallback`). Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`). `getInstalledUpiApps` resolves its Promise with a JSON string (`"[]"` on an empty list).
+  - **Callback re-registration is load-bearing.** Every payment method calls `registerCheckoutCallback()` (or `registerSubscriptionCallback()`) before starting, so the current module instance always receives the result — including after Android recreates the host Activity when a UPI app returns. It sets a single callback rather than appending, so it never duplicates. Do not "simplify" it down to the one call in `setCallback()`. iOS needs no equivalent.
+- `CashfreePgApiPackage.java` — `extends TurboReactPackage`, registers the module with React Native for both architectures.
 - Gradle dependency: `com.cashfree.pg:api:2.6.0`.
 
 ### Build output (`lib/`)
@@ -89,7 +110,7 @@ The `react-native` field in package.json points to `src/index` so Metro uses the
 
 **PPI wallet types** (added in v2.2.0): `CFPPIWallet` (camelCase `phone`, `walletId`, `userId`, `cfSubWalletId`, optional `provider`/`channel`) and `CFPPIWalletPayment(session, wallet)`, consumed by `doPPIWalletPayment`. Bumping the contract pin means merchants who list the contract themselves must bump in step, or `makePayment`'s `instanceof` routing sees two copies.
 
-**Subscription types** (added in v2.1.0):
+**Subscription types** (added in contract v2.1.0):
 - `CFSubscriptionSession` — session object with `subscription_session_id`, `subscription_id`, and `CFEnvironment`
 - `CFSubscriptionCheckoutPayment` — web checkout flow for subscriptions
 - `CFSubsCardPayment` — card-based subscription payment (element flow)
@@ -104,11 +125,11 @@ CFPaymentGatewayService.makeSubsPayment(payment)
   ↓ emits cfSuccess / cfFailure events
 ```
 
-**Example app screens:**
-- `example/src/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card, net banking) and the PPI wallet flow. Every section is a `CollapsibleSection` (Session, Checkout, Response open by default; payment-method cards collapsed).
-  - **PPI Wallet section:** "Create PPI Order" creates the order with `PPI_SANDBOX_CLIENT_ID` / `PPI_SANDBOX_CLIENT_SECRET` (a sandbox merchant with PPI enabled; the default example merchant is not), sending `customer_phone` from the PPI phone field plus `wallet_details`; "PPI Wallet Payment" calls `doPPIWalletPayment` with the screen's session. Both log `[PPI]` request/response lines. The credentials and phone are committed **empty** (public repo) — fill them locally in both `PGScreen.tsx` and `PGScreen.js`, never commit them. Sandbox success returns `action: "link"` with `data.url`.
-- `example/src/CollapsibleSection.tsx` — shared expand/collapse card used by `PGScreen` and `SubscriptionScreen`.
-- `example/src/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element (PCI), card element (NonPCI via `CFSubsCard`), net banking element, UPI intent. All sections are wrapped in the shared `CollapsibleSection` (expand/collapse UI). Key behaviours:
+**Shared sample screens** (used by all three sample apps):
+- `sampleApps/shared/PGScreen.tsx` — demonstrates standard payment flows (drop checkout, web, UPI, card, net banking) and the PPI wallet flow. Every section is a `CollapsibleSection` (Session, Checkout, Response open by default; payment-method cards collapsed).
+  - **PPI Wallet section:** "Create PPI Order" creates the order with `PPI_SANDBOX_CLIENT_ID` / `PPI_SANDBOX_CLIENT_SECRET` (a sandbox merchant with PPI enabled; the default sample merchant is not), sending `customer_phone` from the PPI phone field plus `wallet_details`; "PPI Wallet Payment" calls `doPPIWalletPayment` with the screen's session. Both log `[PPI]` request/response lines. The credentials and phone are committed **empty** (public repo) — fill them locally, never commit them. Sandbox success returns `action: "link"` with `data.url`.
+- `sampleApps/shared/CollapsibleSection.tsx` — expand/collapse card used by `PGScreen` and `SubscriptionScreen`.
+- `sampleApps/shared/SubscriptionScreen.tsx` — demonstrates subscription flows: web checkout, card element (PCI), card element (NonPCI via `CFSubsCard`), net banking element, UPI intent. All sections are wrapped in the shared `CollapsibleSection`. Key behaviours:
   - `showAlert(message)` — module-level helper that wraps `Alert.alert('Response', message)`. Used for all payment responses.
   - `onVerify` / `onError` callbacks call `showAlert()` with the result. `onVerify` also clears the `upiScheme` state so the UPI input is reset after a successful payment.
   - **Auto-create on mount:** `createSubscription()` is called in `componentDidMount`, so a subscription order is created as soon as the screen loads. The "Create Subscription" button still works to refresh/retry.
@@ -120,24 +141,51 @@ CFPaymentGatewayService.makeSubsPayment(payment)
   - **NonPCI card section:** `createCFSubsCard()` builds a `CustomSubsCardInput` (wraps `CFSubsCard`) in the constructor with a placeholder session and stores it as `this.cfSubsCardInstance`. `handleSubsCardInput` receives the JSON callback on each keystroke and updates `subsCardNetwork` state to show the detected card network logo. `_startSubsCardPaymentNonPCI` calls `this.subsCardRef.current.doSubscriptionPayment(elementCard)` using the session already held inside the component; `doSubscriptionPaymentWithNewSession` is available when a fresh session is needed.
   - Pre-filled test data: card `4400060119105004`, expiry `09/30`, CVV `123`; NB account `123456789`, bank `UTIB`, type `SAVINGS`.
 
+## Sample apps
+
+Three apps live under `sampleApps/`, all autolinking the SDK from the repo root
+via each app's `react-native.config.js` (so they exercise `src/`, not the
+published npm package). See [sampleApps/README.md](sampleApps/README.md) for the
+boundary-instrumentation methodology.
+
+| App | RN | Architecture |
+|---|---|---|
+| `OldArchSample` | 0.73.11 | old arch — control (was `example/`) |
+| `NewArchSample` | 0.81.5 | new arch, bridgeless — repro target |
+| `ExpoSample` | 0.85.3 / Expo 56 | new arch only (Expo 55+ has no legacy arch) |
+
+**Metro singleton pinning is load-bearing, not hygiene.** Each app pins `react`,
+`react-native` and `cashfree-pg-api-contract` to one copy and blocks the repo
+root's `node_modules`. Two copies of the contract package make
+`cfPayment instanceof CFUPIPayment` (in `makePayment`, `src/index.ts`) return `false`;
+`makePayment` then silently falls through to its else branch and never calls
+native — no UPI app, no callback, Pay button resets. That is indistinguishable
+from a real native failure, so duplicate copies can manufacture a false
+reproduction.
+
+**`setCallback` must be registered exactly once.** Each `setCallback` call in
+`src/index.ts` adds its own `cfSuccess`/`cfFailure` listeners, so registering
+twice (e.g. at app root *and* in a screen) delivers every result twice. The
+shared screens register once, in the screen that owns the UI feedback. Root
+registration is not needed for reliability — the Android module re-registers
+natively before every payment.
+
 ## Development conventions
 
 - **TypeScript strict mode** enabled; avoid `any`.
 - **Prettier + ESLint** (`@react-native-community` config) enforced via pre-commit hooks (Husky + lint-staged).
 - **Commit messages** must follow Conventional Commits (enforced by commitlint).
-- **Versioning:** `package.json` `version` is the RN SDK version (the podspec and JS `version` field read it). `versionNumber` in `CashfreePgApi.swift` tracks the **native iOS SDK** version (used in the `setPlatform` tag), not the RN version — bump it only with a native SDK bump, together with the `CashfreePG` pod and `com.cashfree.pg:api` Gradle versions.
-- **`src/**/*.js` are committed and are what merchants run**: the `react-native` field points at `src/index` and Metro resolves `.js` before `.ts`; Jest does the same, so tests exercise the `.js`. They are byte-identical `tsc` output — after editing any `.ts`, regenerate with `npx tsc -p tsconfig.json --noEmit false --outDir <tmp> --declaration false` and copy the matching `.js` files back. `lib/` is build output and is not tracked.
+- **Versioning:** `package.json` `version` is the RN SDK version (the podspec and JS `version` field read it; JS sends it on every payment). `versionNumber` in `ios/CashfreePgApi.swift` tracks the **native iOS SDK** version (used in the `setPlatform` tag), not the RN version — bump it only with a native SDK bump, together with the `CashfreePG` pod and `com.cashfree.pg:api` Gradle versions.
+- **No `.js` copies in `src/`.** Metro resolves `.js` before `.ts`, so a stale `src/**/*.js` next to its `.ts` silently shadows it (the pre-3.0 `index.js` would resolve the old `NativeModules` code instead of the TurboModule). `src/` is TypeScript only; Metro and Jest read the `.ts` directly.
+- Build artifacts in `lib/` are **generated, not committed** — `lib/` is gitignored. The `prepare` script (`bob build`) regenerates it before `npm publish` and before git-dependency installs, so it is always present in the published tarball. Verify with `npm pack`.
 
 ## Platform-specific notes
 
-- **iOS minimum deployment target:** 10.0
+- **iOS minimum deployment target:** 13.0
 - **Android minSdkVersion:** 21, compileSdkVersion: 35
-- When changing the podspec or `build.gradle`, verify the example app still builds (`yarn pods` + `cd example && npm run ios/android`).
-- The native event names (`cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps`) must stay in sync between the native emitters and the JS listeners in `src/index.ts`. On iOS, `CashfreeEmitter.swift`'s `allEvents` array is the authoritative list.
-- **Example `.js` files:** `example/src/*.js` are committed `tsc` output of the `.tsx` (Metro loads `.js` first). Regenerate with `../node_modules/.bin/tsc src/<File>.tsx --outDir <tmp> --target esnext --module esnext --jsx react --moduleResolution node --skipLibCheck --allowSyntheticDefaultImports` from `example/`, then copy back.
-- **Testing local SDK changes in the example:** `npm pack` the SDK root and point `example/package.json` at the tarball (`file:`) — never commit that; a `file:..` link pulls a second `react-native` into Metro.
-- **iOS example on RN 0.73:** the `boost` pod's jfrog URL is dead (checksum mismatch); for a local build, point `example/node_modules/react-native/third-party-podspecs/boost.podspec` at `https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2` (same sha256). `npx react-native run-ios` re-runs `pod install` with the system `pod`; if that is broken, build with `xcodebuild -workspace ios/CashfreePgApiExample.xcworkspace -scheme CashfreePgApiExample -sdk iphonesimulator` and install with `xcrun simctl install`.
-- **iOS build cache:** If you get `'CFCardSubsPayment' is unavailable: cannot find Swift declaration for this class` errors, the `XCFrameworkIntermediates` build cache is stale. Fix: `rm -rf example/ios/build/Debug-iphonesimulator/XCFrameworkIntermediates` then rebuild.
+- When changing the podspec or `build.gradle`, verify **all three** sample apps still build — they span RN 0.73 to 0.85, and the newest is the one that breaks first.
+- The native event names (`cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps`) must stay in sync between the native emitters and the JS listeners in `src/index.ts`. On iOS, the authoritative list is now the hardcoded array in `supportedEvents` in `ios/CashfreePgApiAdapter.mm` (`CashfreeEventEmitter.swift` was deleted).
+- **iOS build cache:** If you get `'CFCardSubsPayment' is unavailable: cannot find Swift declaration for this class` errors, the `XCFrameworkIntermediates` build cache is stale. Fix: `rm -rf sampleApps/*/ios/build/Debug-iphonesimulator/XCFrameworkIntermediates` then rebuild.
 - **iOS simulator UPI testing:** To test UPI app selection on simulator, install dummy apps with UPI URL schemes. See script below — uses `xcrun simctl install` with minimal `.app` bundles (binary compiled via `xcrun -sdk iphonesimulator clang`). Use `cat` instead of `cp` to copy binaries (hooks may intercept `cp`).
   ```sh
   # Schemes to cover: tez, phonepe, paytmmp, bhim

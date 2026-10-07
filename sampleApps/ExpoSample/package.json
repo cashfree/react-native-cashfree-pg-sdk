@@ -1,0 +1,24 @@
+{
+  "name": "exposample",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "cashfree-pg-api-contract": "2.2.0",
+    "expo": "~56.0.23",
+    "expo-status-bar": "~56.0.4",
+    "react": "19.2.3",
+    "react-native": "0.85.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "prebuild": "expo prebuild --clean"
+  },
+  "private": true
+}

@@ -1,6 +1,6 @@
 # react-native-cashfree-pg-sdk
 
-![GitHub](https://img.shields.io/github/license/cashfree/react-native-cashfree-pg-sdk) ![npm](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk) ![downloads](https://img.shields.io/npm/dm/react-native-cashfree-pg-sdk.svg?style=flat) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/react-native-cashfree-pg-sdk/master) [![install size](https://packagephobia.com/badge?p=react-native-cashfree-pg-sdk@2.3.0)](https://packagephobia.com/result?p=react-native-cashfree-pg-sdk@2.3.0)
+![GitHub](https://img.shields.io/github/license/cashfree/react-native-cashfree-pg-sdk) ![npm](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk) ![downloads](https://img.shields.io/npm/dm/react-native-cashfree-pg-sdk.svg?style=flat) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/react-native-cashfree-pg-sdk/master) [![install size](https://packagephobia.com/badge?p=react-native-cashfree-pg-sdk)](https://packagephobia.com/result?p=react-native-cashfree-pg-sdk)
 
 [![NPM](https://nodei.co/npm/react-native-cashfree-pg-sdk.svg?data=n,v,u,d)](https://nodei.co/npm/react-native-cashfree-pg-sdk/)
 
@@ -9,6 +9,10 @@ The Cashfree React Native SDK allows you to integrate Cashfree Payment Gateway i
 Click [here](https://docs.cashfree.com/docs/react-native-integration) for more Documentation.
 
 ## Installation
+
+**Requires React Native 0.73.0 or newer.** (Use 0.73.2+ if you're on the 0.73 line — see
+[MIGRATION-3.0.md](docs/MIGRATION-3.0.md) for why.) If you're on an older React Native
+version, stay on the `2.5.x` line of this SDK.
 
 ```sh
 npm install react-native-cashfree-pg-sdk
@@ -30,28 +34,44 @@ Add the following code to application's info.plist file.
 
 ## Usage
 
+Register the result callback **once**, then start a payment:
+
 ```js
 import {
-  CFCallback,
   CFErrorResponse,
   CFPaymentGatewayService,
 } from 'react-native-cashfree-pg-sdk';
-import {
-  CFEnvironment,
-  CFSession,
-  CFThemeBuilder,
-} from 'cashfree-pg-api-contract';
+import { CFEnvironment, CFSession } from 'cashfree-pg-api-contract';
 
-// ...
+useEffect(() => {
+  CFPaymentGatewayService.setCallback({
+    onVerify(orderID: string) {
+      // Payment flow finished — now confirm the order on your server.
+    },
+    onError(error: CFErrorResponse, orderID: string) {
+      console.log(error.getMessage(), orderID);
+    },
+  });
+  return () => CFPaymentGatewayService.removeCallback();
+}, []);
 
-try {
-  const session = new CFSession(paymentSessionId, orderId, CFEnvironment.PRODUCTION/CFEnvironment.SANDBOX);
-  console.log('Session', JSON.stringify(session));
-  CFPaymentGatewayService.doWebPayment(session);
-} catch (e: any) {
-  console.log(e.message);
+function pay(paymentSessionId: string, orderId: string) {
+  try {
+    const session = new CFSession(paymentSessionId, orderId, CFEnvironment.SANDBOX);
+    CFPaymentGatewayService.doWebPayment(session);
+  } catch (e: any) {
+    console.log(e.message);
+  }
 }
 ```
+
+- **Register `setCallback` in exactly one place.** Each registration receives every result, so
+  registering twice delivers each callback twice. Pair it with `removeCallback()` if the
+  registering component can mount more than once.
+- **Confirm payments server-side.** On `onVerify`, check the order with
+  `GET /pg/orders/{order_id}` from your server and fulfil only on `order_status: PAID`.
+
+Use `CFEnvironment.PRODUCTION` for live payments.
 
 ## Contributing
 
