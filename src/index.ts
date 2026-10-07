@@ -16,9 +16,12 @@ import {
   CFSubsUPIPayment,
   CFSubsCardPayment,
   CFSubsNBPayment,
+  type CFPPIWalletPayment,
 } from 'cashfree-pg-api-contract';
 import CFCardComponent from './Card/CFCardComponent';
 import CFSubsCardComponent from './Card/CFSubsCardComponent';
+import { CFErrorResponse } from './CFErrorResponse';
+import { doPPIWalletPayment } from './PPIWallet/PPIWalletPayment';
 
 const LINKING_ERROR =
   `The package 'react-native-cashfree-pg-api' doesn't seem to be linked. Make sure: \n\n` +
@@ -132,6 +135,14 @@ class CFPaymentGateway {
     }
   }
 
+  /**
+   * Creates a PPI wallet order session via Cashfree's API.
+   * Resolves with the API response as-is; rejects with CFErrorResponse.
+   */
+  doPPIWalletPayment(payment: CFPPIWalletPayment): Promise<unknown> {
+    return doPPIWalletPayment(payment);
+  }
+
   setEventSubscriber(cfEventCallback: CFEventCallback) {
     let eventFunction = (event: string) => {
       console.log(JSON.stringify(event));
@@ -214,39 +225,7 @@ export interface CFEventCallback {
   onReceivedEvent(eventName: string, map: Map<string, string>): void;
 }
 
-export class CFErrorResponse {
-  private status: string = 'FAILED';
-  private message: string = 'payment has failed';
-  private code: string = 'payment_failed';
-  private type: string = 'request_failed';
-
-  fromJSON(errorString: string) {
-    console.log('errorString :' + errorString);
-    const object = JSON.parse(errorString);
-    console.log('errorStringObject :' + object);
-    this.status = object.status;
-    this.message = object.message;
-    this.code = object.code;
-    this.type = object.type;
-  }
-
-  getStatus(): string {
-    return this.status;
-  }
-
-  getMessage(): string {
-    return this.message;
-  }
-
-  getCode(): string {
-    return this.code;
-  }
-
-  getType(): string {
-    return this.type;
-  }
-}
-
+export { CFErrorResponse };
 export const CFCard = CFCardComponent;
 export const CFSubsCard = CFSubsCardComponent;
 export const CFPaymentGatewayService = new CFPaymentGateway();

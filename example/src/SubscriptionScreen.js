@@ -5,48 +5,8 @@ import { Alert, Button, FlatList, Image, Modal, Platform, Pressable, ScrollView,
 import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
 import { Card, CFEnvironment, CFSubsCardPayment, CFSubsNB, CFSubsNBPayment, CFSubsUPIPayment, CFSubscriptionSession, CFUPI, ElementCard, UPIMode, } from 'cashfree-pg-api-contract';
 import CustomSubsCardInput from './CustomSubsCardInput';
+import CollapsibleSection from './CollapsibleSection';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
-const CollapsibleSection = ({ title, children, defaultExpanded = true, }) => {
-    const [expanded, setExpanded] = React.useState(defaultExpanded);
-    return (React.createElement(View, { style: sectionStyles.section },
-        React.createElement(Pressable, { onPress: () => setExpanded(e => !e), style: sectionStyles.header },
-            React.createElement(Text, { style: sectionStyles.title }, title),
-            React.createElement(Text, { style: sectionStyles.arrow }, expanded ? '▲' : '▼')),
-        expanded && React.createElement(View, { style: sectionStyles.body }, children)));
-};
-const sectionStyles = StyleSheet.create({
-    section: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 2,
-        overflow: 'hidden',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-    },
-    title: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1a1a2e',
-    },
-    arrow: {
-        fontSize: 11,
-        color: '#888',
-    },
-    body: {
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-    },
-});
 const showAlert = (message) => Alert.alert('Response', message, [{ text: 'OK' }]);
 const CF_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
 const CF_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';

@@ -3,12 +3,17 @@ import * as React from 'react';
 import { Component } from 'react';
 import CheckBox from '@react-native-community/checkbox';
 import { Button, Image, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, ToastAndroid, View, } from 'react-native';
-import { CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
-import { Card, CFNB, CFNBPayment, CFCardPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, ElementCard, SavedCard, UPIMode, } from 'cashfree-pg-api-contract';
+import { CFErrorResponse, CFPaymentGatewayService, } from 'react-native-cashfree-pg-sdk';
+import { Card, CFNB, CFNBPayment, CFCardPayment, CFPPIWallet, CFPPIWalletPayment, CFDropCheckoutPayment, CFEnvironment, CFPaymentComponentBuilder, CFPaymentModes, CFSession, CFThemeBuilder, CFUPI, CFUPIIntentCheckoutPayment, CFUPIPayment, ElementCard, SavedCard, UPIMode, } from 'cashfree-pg-api-contract';
 import CustomCardInput from './CustomCardInput';
+import CollapsibleSection from './CollapsibleSection';
 const BASE_RESPONSE_TEXT = 'Payment Status will be shown here.';
 const SANDBOX_CLIENT_ID = 'TEST430329ae80e0f32e41a393d78b923034';
 const SANDBOX_CLIENT_SECRET = 'TESTaf195616268bd6202eeb3bf8dc458956e7192a85';
+// Sandbox merchant with the PPI wallet enabled; used only by Create PPI Order.
+// Fill in locally. Never commit real values (public repo).
+const PPI_SANDBOX_CLIENT_ID = '';
+const PPI_SANDBOX_CLIENT_SECRET = '';
 const PROD_CLIENT_ID = '';
 const PROD_CLIENT_SECRET = '';
 function generateOrderId() {
@@ -34,6 +39,11 @@ export default class PGScreen extends Component {
             isSandbox: true,
             upiId: 'testfailure@gocash',
             nbBankCode: '3003',
+            ppiPhone: '',
+            ppiWalletId: 'WALLET_PG_07',
+            ppiUserId: 'PG_TEST_USER_Ajeet',
+            ppiSubWalletId: '1445673253583338496',
+            isPPILoading: false,
             cardNetwork: require('./assets/visa.png'),
         };
         this.cfCardInstance = this.createCFCard();
@@ -96,17 +106,56 @@ export default class PGScreen extends Component {
     getFixSession() {
         return new CFSession('session_4zxKsUyNPorU6aZbHcxf8LJmyET2xA_svlDF69vSa8k9mkjAV3Zeosc2l3__mxno38hTK3pXR6_jL8X5R5WVC9BEXoN6SPef5V5lAYJyIE234IODJE1TXtIpayment', 'devstudio_20339474', this.getEnv());
     }
-    async createOrder() {
+    createPPIOrder() {
+        return this.createOrder({
+            customer_details: {
+                customer_id: 'devstudio_user',
+                customer_phone: this.state.ppiPhone,
+            },
+            wallet_details: {
+                issuer: 'CASHFREE',
+                operation: 'REDEEM',
+                issuer_operation_details: {
+                    wallet_id: this.state.ppiWalletId,
+                    user_id: this.state.ppiUserId,
+                },
+            },
+        }, '[PPI]', {
+            clientId: PPI_SANDBOX_CLIENT_ID,
+            clientSecret: PPI_SANDBOX_CLIENT_SECRET,
+        });
+    }
+    async createOrder(extraBody = {}, logTag, sandboxCredentials) {
         this.setState({ isCreatingOrder: true, responseText: 'Creating order...' });
         const orderId = generateOrderId();
         const { isSandbox } = this.state;
         const apiUrl = isSandbox
             ? 'https://sandbox.cashfree.com/pg/orders'
             : 'https://api.cashfree.com/pg/orders';
-        const clientId = isSandbox ? SANDBOX_CLIENT_ID : PROD_CLIENT_ID;
-        const clientSecret = isSandbox ? SANDBOX_CLIENT_SECRET : PROD_CLIENT_SECRET;
+        const sandbox = sandboxCredentials ?? {
+            clientId: SANDBOX_CLIENT_ID,
+            clientSecret: SANDBOX_CLIENT_SECRET,
+        };
+        const clientId = isSandbox ? sandbox.clientId : PROD_CLIENT_ID;
+        const clientSecret = isSandbox ? sandbox.clientSecret : PROD_CLIENT_SECRET;
         console.log('[PGScreen] createOrder → API:', apiUrl, '| env:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
         try {
+            const orderBody = {
+                order_amount: 1.0,
+                order_currency: 'INR',
+                order_id: orderId,
+                customer_details: {
+                    customer_id: 'devstudio_user',
+                    customer_phone: '9876543210',
+                },
+                order_meta: {
+                    return_url: `https://www.cashfree.com/devstudio/preview/pg/seamless?order_id={order_id}`,
+                },
+                ...extraBody,
+            };
+            if (logTag) {
+                console.log(`${logTag} create order request`, JSON.stringify(orderBody, null, 2));
+            }
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -116,20 +165,12 @@ export default class PGScreen extends Component {
                     'Content-Type': 'application/json',
                     'x-api-version': '2025-01-01',
                 },
-                body: JSON.stringify({
-                    order_amount: 1.0,
-                    order_currency: 'INR',
-                    order_id: orderId,
-                    customer_details: {
-                        customer_id: 'devstudio_user',
-                        customer_phone: '9876543210',
-                    },
-                    order_meta: {
-                        return_url: `https://www.cashfree.com/devstudio/preview/pg/seamless?order_id={order_id}`,
-                    },
-                }),
+                body: JSON.stringify(orderBody),
             });
             const data = await response.json();
+            if (logTag) {
+                console.log(`${logTag} create order response HTTP ${response.status}`, JSON.stringify(data, null, 2));
+            }
             if (data.payment_session_id) {
                 this.setState({
                     orderId: data.order_id,
@@ -212,6 +253,34 @@ export default class PGScreen extends Component {
             console.log(e.message);
         }
     }
+    async _startPPIWalletPayment() {
+        this.setState({ isPPILoading: true });
+        try {
+            const wallet = new CFPPIWallet({
+                phone: this.state.ppiPhone,
+                walletId: this.state.ppiWalletId,
+                userId: this.state.ppiUserId,
+                cfSubWalletId: this.state.ppiSubWalletId,
+            });
+            const payment = new CFPPIWalletPayment(this.getSession(), wallet);
+            console.log('[PPI] pay request', JSON.stringify({ session: payment.getSession(), wallet: payment.getWallet() }, null, 2));
+            const response = await CFPaymentGatewayService.doPPIWalletPayment(payment);
+            console.log('[PPI] pay response', JSON.stringify(response, null, 2));
+            this.updateStatus('PPI success: ' + JSON.stringify(response, null, 2));
+        }
+        catch (e) {
+            console.log('[PPI] pay error', JSON.stringify(e));
+            if (e instanceof CFErrorResponse) {
+                this.updateStatus(`PPI error: type=${e.getType()} code=${e.getCode()} message=${e.getMessage()}`);
+            }
+            else {
+                this.updateStatus('PPI error: ' + e.message);
+            }
+        }
+        finally {
+            this.setState({ isPPILoading: false });
+        }
+    }
     /** @deprecated Use UPI Intent instead */
     async _makeUpiCollectPayment() {
         try {
@@ -262,8 +331,7 @@ export default class PGScreen extends Component {
                     React.createElement(Text, { style: styles.backBtnText }, "\u2190 Back")),
                 React.createElement(Text, { style: styles.headerTitle }, "Payment Gateway")),
             React.createElement(View, { style: styles.container },
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Session"),
+                React.createElement(CollapsibleSection, { title: "Session" },
                     React.createElement(Button, { title: this.state.isCreatingOrder
                             ? 'Creating Order...'
                             : 'Create Order', disabled: this.state.isCreatingOrder, onPress: () => this.createOrder() }),
@@ -288,8 +356,7 @@ export default class PGScreen extends Component {
                         ] },
                         React.createElement(Text, { style: styles.envBadgeText }, this.state.isSandbox ? '🟢 SANDBOX' : '🔴 PRODUCTION')),
                     React.createElement(TextInput, { style: styles.input, placeholder: "VPA / PSP app package (UPI)", value: this.state.upiId, onChangeText: v => this.setState({ upiId: v }) })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Checkout"),
+                React.createElement(CollapsibleSection, { title: "Checkout" },
                     React.createElement(View, { style: styles.buttonGrid }, [
                         { title: 'Drop Payment', action: () => this._startCheckout() },
                         { title: 'Web Checkout', action: () => this._startWebCheckout() },
@@ -307,11 +374,19 @@ export default class PGScreen extends Component {
                         },
                     ].map(btn => (React.createElement(View, { key: btn.title, style: styles.gridButton },
                         React.createElement(Button, { title: btn.title, onPress: btn.action })))))),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Response"),
+                React.createElement(CollapsibleSection, { title: "PPI Wallet", defaultExpanded: false },
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Phone", keyboardType: "phone-pad", value: this.state.ppiPhone, onChangeText: v => this.setState({ ppiPhone: v }) }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "Wallet Id", value: this.state.ppiWalletId, onChangeText: v => this.setState({ ppiWalletId: v }) }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "User Id", value: this.state.ppiUserId, onChangeText: v => this.setState({ ppiUserId: v }) }),
+                    React.createElement(TextInput, { style: styles.input, placeholder: "CF Sub Wallet Id", value: this.state.ppiSubWalletId, onChangeText: v => this.setState({ ppiSubWalletId: v }) }),
+                    React.createElement(Button, { title: this.state.isCreatingOrder
+                            ? 'Creating Order...'
+                            : 'Create PPI Order', disabled: this.state.isCreatingOrder, onPress: () => this.createPPIOrder() }),
+                    React.createElement(View, { style: styles.divider }),
+                    React.createElement(Button, { title: this.state.isPPILoading ? 'Calling...' : 'PPI Wallet Payment', disabled: this.state.isPPILoading, onPress: () => this._startPPIWalletPayment() })),
+                React.createElement(CollapsibleSection, { title: "Response" },
                     React.createElement(Text, { style: styles.responseText }, this.state.responseText)),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Card Payment (NonPCI)"),
+                React.createElement(CollapsibleSection, { title: "Card Payment (NonPCI)", defaultExpanded: false },
                     React.createElement(View, { style: styles.cardContainer },
                         this.cfCardInstance,
                         React.createElement(Image, { style: styles.cardNetworkImg, source: this.state.cardNetwork })),
@@ -321,8 +396,7 @@ export default class PGScreen extends Component {
                         React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "YY", keyboardType: "numeric", maxLength: 2, placeholderTextColor: "#999", onChangeText: v => this.setState({ cardExpiryYY: v }) }),
                         React.createElement(TextInput, { style: [styles.input, styles.flex1], placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, onChangeText: v => this.setState({ cardCVV: v }) })),
                     React.createElement(Button, { title: "Pay with Card (NonPCI)", onPress: this.handleSubmit })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Card Payment (PCI)"),
+                React.createElement(CollapsibleSection, { title: "Card Payment (PCI)", defaultExpanded: false },
                     React.createElement(TextInput, { style: styles.input, placeholder: "Card Number", keyboardType: "numeric", maxLength: 16, placeholderTextColor: "#999", onChangeText: v => this.setState({ cardNumber: v }) }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "Holder Name", placeholderTextColor: "#999", onChangeText: v => this.setState({ cardHolderName: v }) }),
                     React.createElement(View, { style: styles.row },
@@ -333,13 +407,11 @@ export default class PGScreen extends Component {
                         React.createElement(CheckBox, { value: this.state.toggleCheckBox, onValueChange: v => this.setState({ toggleCheckBox: v }) }),
                         React.createElement(Text, { style: styles.checkboxLabel }, "Save card for future payments")),
                     React.createElement(Button, { title: "Pay with Card (PCI)", onPress: () => this._startCardPayment() })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Saved Card"),
+                React.createElement(CollapsibleSection, { title: "Saved Card", defaultExpanded: false },
                     React.createElement(TextInput, { style: styles.input, placeholder: "Instrument Id", onChangeText: v => this.setState({ instrumentId: v }) }),
                     React.createElement(TextInput, { style: styles.input, placeholder: "CVV", keyboardType: "numeric", maxLength: 3, secureTextEntry: true, onChangeText: v => this.setState({ cardCVV: v }) }),
                     React.createElement(Button, { title: "Pay with Saved Card", onPress: () => this._startSavedCardPayment() })),
-                React.createElement(View, { style: styles.section },
-                    React.createElement(Text, { style: styles.sectionTitle }, "Net Banking (Element)"),
+                React.createElement(CollapsibleSection, { title: "Net Banking (Element)", defaultExpanded: false },
                     React.createElement(TextInput, { style: styles.input, placeholder: "Bank Code", value: this.state.nbBankCode, onChangeText: v => this.setState({ nbBankCode: v }), keyboardType: "numeric" }),
                     React.createElement(Button, { title: "Pay via Net Banking", onPress: () => this._makeNBPayment() })))));
     }
