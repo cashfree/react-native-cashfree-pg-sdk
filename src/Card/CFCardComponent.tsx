@@ -244,7 +244,8 @@ const CardInput: any = forwardRef<CardPaymentHandle, CardInputProps>(
         const cardPayment = new CFCardPayment(sessionRef.current, cardInfo);
         CFPaymentGatewayService.makePayment(cardPayment);
       } catch (e: any) {
-        console.log(e.message);
+        console.error('[CFCard] payment call failed:', e?.message ?? e);
+        throw e;
       }
     };
 
@@ -256,7 +257,8 @@ const CardInput: any = forwardRef<CardPaymentHandle, CardInputProps>(
         sessionRef.current = session;
         doPayment(cardInfo);
       } catch (e: any) {
-        console.log(e.message);
+        console.error('[CFCard] payment call failed:', e?.message ?? e);
+        throw e;
       }
     };
 

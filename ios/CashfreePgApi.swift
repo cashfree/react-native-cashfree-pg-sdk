@@ -2,13 +2,13 @@ import CashfreePGCoreSDK
 import CashfreePGUISDK
 import CashfreePG
 
-@objc(CashfreePgApi)
-class CashfreePgApi: NSObject {
+@objc(CashfreePgApiImpl)
+public class CashfreePgApi: NSObject {
 
     var analyticsCallbackEnabled: Bool = false
     private let versionNumber = "2.5.2"
 
-    override init() {
+    public override init() {
         super.init()
     }
 
@@ -16,7 +16,7 @@ class CashfreePgApi: NSObject {
         return false
     }
 
-    @objc func doPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doPayment(_ paymentObject: NSString) -> Void {
         do {
             let dropObject = try! parseDropPayment(paymentObject: "\(paymentObject)")
             if (dropObject != nil) {
@@ -29,7 +29,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doUPIPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doUPIPayment(_ paymentObject: NSString) -> Void {
             do {
                 let upiObject = try! parseUPIPayment(paymentObject: "\(paymentObject)")
                 if (upiObject != nil) {
@@ -42,7 +42,7 @@ class CashfreePgApi: NSObject {
             }
         }
 
-    @objc func doSubscriptionPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doSubscriptionPayment(_ paymentObject: NSString) -> Void {
         do {
             if let subscriptionSessionObj = try parseSubscriptionSession(paymentObject: "\(paymentObject)") {
                 let subscriptionWebCheckoutPayment = try! CFSubscriptionPayment.CFSubscriptionPaymentBuilder()
@@ -60,7 +60,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doWebPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doWebPayment(_ paymentObject: NSString) -> Void {
         do {
             if let sessionObj = try parseWebPayment(paymentObject: "\(paymentObject)") {
                 let cfPaymentObject = try! CFWebCheckoutPayment.CFWebCheckoutPaymentBuilder()
@@ -77,7 +77,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doCardPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doCardPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfCardPayment = try parseCardObject(paymentObject: "\(paymentObject)") {
                 if let vc = RCTPresentedViewController() {
@@ -105,7 +105,22 @@ class CashfreePgApi: NSObject {
         CashfreeEmitter.sharedInstance.dispatch(name: "cfUpiApps", body: stringify(json: appsToSend))
     }
 
-    @objc func doElementNBPayment(_ paymentObject: NSString) -> Void {
+    @objc public func getInstalledUpiApps(_ completion: @escaping (NSString?) -> Void) {
+        let upiApplications = CFUPIUtils().getInstalledUPIApplications()
+        var appsToSend: [NSDictionary] = []
+        for upi in upiApplications {
+            if (upi["id"] ?? "").contains("cred") {
+                continue
+            }
+            appsToSend.append([
+                "appPackage": upi["id"] ?? "",
+                "appName": upi["displayName"] ?? ""
+            ])
+        }
+        completion(self.stringify(json: appsToSend) as NSString)
+    }
+
+    @objc public func doElementNBPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfNBPayment = try parseNBObject(paymentObject: "\(paymentObject)") {
                 if let vc = RCTPresentedViewController() {
@@ -118,7 +133,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doElementUPIPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doElementUPIPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfUPIPayment = try parseUpiObject(paymentObject: "\(paymentObject)") {
                 if let vc = RCTPresentedViewController() {
@@ -131,7 +146,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doSubsCardPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doSubsCardPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfCardSubsPayment = try parseSubsCardObject(paymentObject: "\(paymentObject)") {
                 if let vc = RCTPresentedViewController() {
@@ -143,7 +158,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doSubsUPIPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doSubsUPIPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfUPISubsPayment = try parseSubsUPIObject(paymentObject: "\(paymentObject)") {
                 if let vc = RCTPresentedViewController() {
@@ -155,7 +170,7 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func doSubsNBPayment(_ paymentObject: NSString) -> Void {
+    @objc public func doSubsNBPayment(_ paymentObject: NSString) -> Void {
         do {
             if let cfNBSubsPayment = try parseSubsNBObject(paymentObject: "\(paymentObject)") {
                 if let vc = RCTPresentedViewController() {
@@ -167,15 +182,15 @@ class CashfreePgApi: NSObject {
         }
     }
 
-    @objc func setCallback() -> Void {
+    @objc public func setCallback() -> Void {
         CFPaymentGatewayService.getInstance().setCallback(self)
     }
 
-    @objc func setEventSubscriber() -> Void {
+    @objc public func setEventSubscriber() -> Void {
         analyticsCallbackEnabled = true
     }
 
-    @objc func removeEventSubscriber() -> Void {
+    @objc public func removeEventSubscriber() -> Void {
         analyticsCallbackEnabled = false
     }
 
@@ -574,6 +589,7 @@ class CashfreePgApi: NSObject {
                     .setAccountNumber(nbDict["accountNumber"] as? String ?? "")
                     .setBankAccountCode(nbDict["accountBankCode"] as? String ?? "")
                     .setAccountType(nbDict["accountType"] as? String ?? "")
+                    .setAuthMode("net_banking") 
                     .build()
                 let nbSubsPayment = try CFNetbankingSubsPayment.CFNetbankingSubsPaymentBuilder()
                     .setSession(subsSession)
@@ -606,7 +622,7 @@ class CashfreePgApi: NSObject {
 }
 
 extension CashfreePgApi: CFResponseDelegate {
-    func onError(_ error: CFErrorResponse, order_id: String) {
+    public func onError(_ error: CFErrorResponse, order_id: String) {
         print(error.message)
         let data : [String: String] = ["status": error.status ?? ""
                                        , "message": error.message ?? ""
@@ -616,12 +632,12 @@ extension CashfreePgApi: CFResponseDelegate {
         CashfreeEmitter.sharedInstance.dispatch(name: "cfFailure", body: stringify(json: body))
     }
 
-    func verifyPayment(order_id: String) {
+    public func verifyPayment(order_id: String) {
         print(order_id)
         CashfreeEmitter.sharedInstance.dispatch(name: "cfSuccess", body: order_id)
     }
 
-    func receivedEvent(event_name: String, meta_data: Dictionary<String, Any>) {
+    public func receivedEvent(event_name: String, meta_data: Dictionary<String, Any>) {
         if (analyticsCallbackEnabled) {
             print(event_name)
             let data: [String: Any] = ["eventName": event_name

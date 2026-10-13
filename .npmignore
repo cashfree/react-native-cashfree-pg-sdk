@@ -1,11 +1,12 @@
 .git/
 node_modules/
-example/
+sampleApps/
 .DS_Store
 .idea/
-src/
 *.log
 .gitignore
 .gitattributes
 .circleci/
 .husky/
+.yarn/
+.claude/

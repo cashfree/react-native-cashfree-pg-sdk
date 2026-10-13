@@ -5,32 +5,32 @@
 //  Created by Aabhas Jindal on 14/06/22.
 //
 
-class CashfreeEmitter {
+@objc(CashfreeEmitter)
+public class CashfreeEmitter: NSObject {
 
     /// Shared Instance.
-    public static var sharedInstance = CashfreeEmitter()
+    @objc public static var sharedInstance = CashfreeEmitter()
 
-    // ReactNativeEventEmitter is instantiated by React Native with the bridge.
-    private var eventEmitter: CashfreeEventEmitter!
+    // The active RCTEventEmitter, registered by the module when React Native creates it.
+    private var eventEmitter: RCTEventEmitter?
 
-    private init() {}
+    private override init() {}
 
     // When React Native instantiates the emitter it is registered here.
-    func registerEventEmitter(eventEmitter: CashfreeEventEmitter) {
+    @objc public func registerEventEmitter(eventEmitter: RCTEventEmitter) {
         self.eventEmitter = eventEmitter
     }
 
-    func dispatch(name: String, body: Any?) {
-        eventEmitter.sendEvent(withName: name, body: body)
+    @objc public func dispatch(name: String, body: Any?) {
+        eventEmitter?.sendEvent(withName: name, body: body)
     }
 
-    /// All Events which must be support by React Native.
-    lazy var allEvents: [String] = {
+    /// All Events which must be supported by React Native.
+    @objc public lazy var allEvents: [String] = {
         var allEventNames: [String] = ["cfSuccess", "cfFailure", "cfEvent", "cfUpiApps"]
 
         // Append all events here
 
         return allEventNames
     }()
-
 }

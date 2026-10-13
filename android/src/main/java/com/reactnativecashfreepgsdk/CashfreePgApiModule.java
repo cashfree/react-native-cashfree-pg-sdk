@@ -39,12 +39,11 @@ import com.cashfree.pg.core.api.utils.CFSubscriptionResponse;
 import com.cashfree.pg.core.api.webcheckout.CFWebCheckoutPayment;
 import com.cashfree.pg.ui.api.CFDropCheckoutPayment;
 import com.cashfree.pg.ui.api.upi.intent.CFUPIIntentCheckoutPayment;
-import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
-import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.cashfree.pg.api.util.DropPaymentParser;
 
 import org.json.JSONArray;
@@ -55,7 +54,9 @@ import java.util.List;
 import java.util.Map;
 
 @ReactModule(name = CashfreePgApiModule.NAME)
-public class CashfreePgApiModule extends ReactContextBaseJavaModule implements CFCheckoutResponseCallback, CFEventsSubscriber, CFSubscriptionResponseCallback {
+public class CashfreePgApiModule extends NativeCashfreePgApiSpec
+    implements CFCheckoutResponseCallback, CFEventsSubscriber, CFSubscriptionResponseCallback {
+
   public static final String NAME = "CashfreePgApi";
 
   public CashfreePgApiModule(ReactApplicationContext reactContext) {
@@ -68,15 +69,17 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     return NAME;
   }
 
+  @Override
   @ReactMethod
   public void doPayment(String cfPaymentString) {
     Log.d("CashfreePgApiModule", cfPaymentString);
     try {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       CFDropCheckoutPayment cfDropCheckoutPayment = DropPaymentParser.getDropCheckoutPayment(cfPaymentString);
       cfDropCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfDropCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.DROP);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cfDropCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -86,15 +89,17 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doUPIPayment(String cfPaymentString) {
     Log.d("CashfreePgApiModule", cfPaymentString);
     try {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       CFUPIIntentCheckoutPayment cfupiIntentCheckoutPayment = DropPaymentParser.getUPICheckoutPayment(cfPaymentString);
       cfupiIntentCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfupiIntentCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.INTENT);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cfupiIntentCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -104,6 +109,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doWebPayment(String sessionString) {
     Log.d("CashfreePgApiModule Web", sessionString);
@@ -119,13 +125,14 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       throw new IllegalStateException("Session is invalid");
     }
     try {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       CFWebCheckoutPayment cfWebCheckoutPayment = new CFWebCheckoutPayment.CFWebCheckoutPaymentBuilder()
         .setSession(cfSession)
         .build();
       cfWebCheckoutPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfWebCheckoutPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.WEB_CHECKOUT);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cfWebCheckoutPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -135,6 +142,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doSubscriptionPayment(String sessionString) {
     CFSubscriptionSession cfSubsSession = null;
@@ -149,14 +157,14 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       throw new IllegalStateException("Subscription Session is invalid");
     }
     try {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       CFSubscriptionPayment cfSubscriptionPayment = new CFSubscriptionPayment.CFSubscriptionCheckoutBuilder()
         .setSubscriptionSession(cfSubsSession)
         .build();
       cfSubscriptionPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfSubscriptionPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.SUBSCRIPTION);
       if (activity != null) {
-        CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+        registerSubscriptionCallback();
         CFPaymentGatewayService.getInstance().doSubscriptionPayment(activity, cfSubscriptionPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -166,6 +174,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doCardPayment(String data) {
     CFSession cfSession = null;
@@ -200,7 +209,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       throw new IllegalStateException(exception.getMessage());
     }
     try {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       CFCardPayment cardPayment = new CFCardPayment.CFCardPaymentBuilder()
         .setSession(cfSession)
         .setCard(card)
@@ -210,6 +219,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       cardPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cardPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
       if (activity != null) {
+        registerCheckoutCallback();
         CFPaymentGatewayService.getInstance().doPayment(activity, cardPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -219,9 +229,10 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
-  public void getInstalledUpiApps(Callback cb) {
-    Activity activity = getCurrentActivity();
+  public void getInstalledUpiApps(Promise promise) {
+    Activity activity = getReactApplicationContext().getCurrentActivity();
     final Intent intent = new Intent();
     intent.setAction(Intent.ACTION_VIEW);
     intent.setData(Uri.parse("upi://pay"));
@@ -240,9 +251,10 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       ex.printStackTrace();
     }
     Log.d("CashfreePgApiModule", "getInstalledUpiApps::--" + packageNames);
-    cb.invoke(packageNames.toString());
+    promise.resolve(packageNames.toString());
   }
 
+  @Override
   @ReactMethod
   public void doElementUPIPayment(String upiPaymentData) {
     Log.d("CashfreePgApiModule", upiPaymentData);
@@ -274,8 +286,9 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       cfupiPayment.setCfSDKFlow(CFPayment.CFSDKFlow.WITH_CASHFREE_FULLSCREEN_LOADER);
       cfupiPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfupiPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       if (activity != null) {
+        registerCheckoutCallback();
         CFCorePaymentGatewayService.getInstance().doPayment(activity, cfupiPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -285,6 +298,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doElementNBPayment(String nbPaymentData) {
     Log.d("CashfreePgApiModule", nbPaymentData);
@@ -314,8 +328,9 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
       cfNetBankingPayment.setCfSDKFlow(CFPayment.CFSDKFlow.WITH_CASHFREE_FULLSCREEN_LOADER);
       cfNetBankingPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       cfNetBankingPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.ELEMENT);
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       if (activity != null) {
+        registerCheckoutCallback();
         CFCorePaymentGatewayService.getInstance().doPayment(activity, cfNetBankingPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -325,6 +340,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doSubsCardPayment(String data) {
     CFSubscriptionSession cfSubsSession = null;
@@ -360,6 +376,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doSubsUPIPayment(String data) {
     CFSubscriptionSession cfSubsSession = null;
@@ -391,6 +408,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void doSubsNBPayment(String data) {
     CFSubscriptionSession cfSubsSession = null;
@@ -426,11 +444,11 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
 
   private void doSubscriptionElementPayment(CFSubsPayment subsPayment){
     try {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       subsPayment.setCfsdkFramework(CFPayment.CFSDKFramework.REACT_NATIVE);
       subsPayment.setCfSDKFlavour(CFPayment.CFSDKFlavour.SUBSCRIPTION);
       if (activity != null) {
-        CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+        registerSubscriptionCallback();
         CFPaymentGatewayService.getInstance().doSubscriptionPayment(activity, subsPayment);
       } else {
         throw new IllegalStateException("activity is null");
@@ -440,14 +458,30 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+
+  // Registered before every payment, not just once, so the current module
+  // instance is always the one that receives the result — including after
+  // Android recreates the host Activity when a UPI app returns. This sets a
+  // single callback rather than appending, so repeat calls never duplicate.
+  // Keep it per payment; do not reduce it to the one call in setCallback().
+  private void registerCheckoutCallback() throws CFException {
+    CFPaymentGatewayService.getInstance().setCheckoutCallback(this);
+  }
+
+  private void registerSubscriptionCallback() throws CFException {
+    CFPaymentGatewayService.getInstance().setSubscriptionCheckoutCallback(this);
+  }
+
+  @Override
   @ReactMethod
   public void setCallback() {
     try {
-      CFPaymentGatewayService.getInstance().setCheckoutCallback(this);
+      registerCheckoutCallback();
     } catch (CFException cfException) {
     }
   }
 
+  @Override
   @ReactMethod
   public void setEventSubscriber() {
     try {
@@ -456,6 +490,7 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     }
   }
 
+  @Override
   @ReactMethod
   public void removeEventSubscriber() {
     try {
@@ -465,10 +500,23 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
   }
 
   @Override
+  @ReactMethod
+  public void addListener(String eventName) {
+    // Required by the generated spec / NativeEventEmitter contract. Events are
+    // delivered via RCTDeviceEventEmitter, so there is nothing to register here.
+  }
+
+  @Override
+  @ReactMethod
+  public void removeListeners(double count) {
+    // Required by the generated spec. `double` is what codegen emits for a JS number.
+  }
+
+  @Override
   public void onPaymentVerify(String orderID) {
-    this.getReactApplicationContext()
-      .getJSModule(RCTNativeAppEventEmitter.class)
-      .emit("cfSuccess", orderID);
+    getReactApplicationContext()
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        .emit("cfSuccess", orderID);
   }
 
   @Override
@@ -482,9 +530,9 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    this.getReactApplicationContext()
-      .getJSModule(RCTNativeAppEventEmitter.class)
-      .emit("cfFailure", jsonObject.toString());
+    getReactApplicationContext()
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        .emit("cfFailure", jsonObject.toString());
   }
 
   @Override
@@ -502,9 +550,9 @@ public class CashfreePgApiModule extends ReactContextBaseJavaModule implements C
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    this.getReactApplicationContext()
-      .getJSModule(RCTNativeAppEventEmitter.class)
-      .emit("cfEvent", jsonObject.toString());
+    getReactApplicationContext()
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        .emit("cfEvent", jsonObject.toString());
   }
 
   @Override

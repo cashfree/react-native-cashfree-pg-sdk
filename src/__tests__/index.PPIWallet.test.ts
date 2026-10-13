@@ -4,14 +4,13 @@ import {
   CFPPIWalletPayment,
   CFSession,
 } from 'cashfree-pg-api-contract';
-import { NativeModules } from 'react-native';
 import type * as SDK from '../index';
 
-// Native boundary: the iOS event emitter module is absent under Jest.
-NativeModules.CashfreeEventEmitter = {
-  addListener: jest.fn(),
-  removeListeners: jest.fn(),
-};
+// Native boundary: the CashfreePgApi TurboModule is absent under Jest.
+jest.mock('../NativeCashfreePgApi', () => ({
+  __esModule: true,
+  default: { addListener: jest.fn(), removeListeners: jest.fn() },
+}));
 const { CFPaymentGatewayService, CFErrorResponse } =
   require('../index') as typeof SDK;
 
