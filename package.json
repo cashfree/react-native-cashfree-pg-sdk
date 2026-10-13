@@ -62,7 +62,8 @@
   },
   "homepage": "https://docs.cashfree.com/docs/react-native-integration",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "tag": "turbo"
   },
   "codegenConfig": {
     "name": "RNCashfreePgApiSpec",
@@ -124,7 +125,8 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": true,
+      "tag": "turbo"
     },
     "github": {
       "release": true

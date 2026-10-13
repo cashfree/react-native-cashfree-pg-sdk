@@ -188,7 +188,9 @@ Two release lines ship side by side:
 | 2.x | `master` | `latest` (default) | `npm install react-native-cashfree-pg-sdk` |
 | 3.x (TurboModule) | `master_3.x.x` | `turbo` | `npm install react-native-cashfree-pg-sdk@turbo` |
 
-**Every 3.x publish must carry `--tag turbo`.** A bare `npm publish` makes the 3.x build `latest`, and every default install (including apps below RN 0.73, which the `>=0.73.0` peer dependency rejects) gets it. Do not use `yarn release` on this line — its release-it config publishes without a tag.
+**Every 3.x publish must go to `turbo`, never `latest`.** If a 3.x build became `latest`, every default install would get it — including apps below RN 0.73, which the `>=0.73.0` peer dependency rejects. `package.json` enforces this in two places: `"publishConfig": { "tag": "turbo" }` covers a bare `npm publish`, and `"release-it": { "npm": { "tag": "turbo" } }` covers `yarn release` (release-it always passes `--tag` itself, which would otherwise override `publishConfig`). Still pass `--tag turbo` explicitly as a further guard. npm's dry-run line "Publishing … with tag latest" prints the tag from before `publishConfig` is applied; the tag actually sent is `turbo`.
+
+**When 3.x merges into `master`, remove both `"tag": "turbo"` entries** — in `publishConfig` (keep `registry`) and in `release-it.npm`. Left in, every later release keeps going to `turbo` and `latest` stays on the last 2.x. Then move `latest` with `npm dist-tag add react-native-cashfree-pg-sdk@<3.x version> latest` — `dist-tag` is not affected by `publishConfig`.
 
 1. **Bump.** A native SDK release touches four places, on both lines:
    - `react-native-cashfree-pg-sdk.podspec` — `CashfreePG`
@@ -201,7 +203,7 @@ Two release lines ship side by side:
 3. **Verify.** `yarn test`, `yarn typescript`, `yarn lint`, then build all three sample apps on both platforms. On iOS, a changed `CashfreePG` pin needs `pod update CashfreePG` — `pod install` alone keeps the old version from `Podfile.lock`.
 4. **Publish and check the tags.**
    ```sh
-   npm publish --dry-run --tag turbo   # confirm files and version
+   npm publish --dry-run --tag turbo   # confirm files, version and "with tag turbo"
    npm publish --tag turbo
    npm view react-native-cashfree-pg-sdk dist-tags   # latest must still be 2.x
    ```
