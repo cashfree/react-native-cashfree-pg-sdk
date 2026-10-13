@@ -179,6 +179,39 @@ natively before every payment.
 - **No `.js` copies in `src/`.** Metro resolves `.js` before `.ts`, so a stale `src/**/*.js` next to its `.ts` silently shadows it (the pre-3.0 `index.js` would resolve the old `NativeModules` code instead of the TurboModule). `src/` is TypeScript only; Metro and Jest read the `.ts` directly.
 - Build artifacts in `lib/` are **generated, not committed** — `lib/` is gitignored. The `prepare` script (`bob build`) regenerates it before `npm publish` and before git-dependency installs, so it is always present in the published tarball. Verify with `npm pack`.
 
+## Releasing 3.x
+
+Two release lines ship side by side:
+
+| Line | Branch | npm dist-tag | Install |
+|---|---|---|---|
+| 2.x | `master` | `latest` (default) | `npm install react-native-cashfree-pg-sdk` |
+| 3.x (TurboModule) | `master_3.x.x` | `turbo` | `npm install react-native-cashfree-pg-sdk@turbo` |
+
+**Every 3.x publish must carry `--tag turbo`.** A bare `npm publish` makes the 3.x build `latest`, and every default install (including apps below RN 0.73, which the `>=0.73.0` peer dependency rejects) gets it. Do not use `yarn release` on this line — its release-it config publishes without a tag.
+
+1. **Bump.** A native SDK release touches four places, on both lines:
+   - `react-native-cashfree-pg-sdk.podspec` — `CashfreePG`
+   - `android/build.gradle` — `com.cashfree.pg:api`
+   - `ios/CashfreePgApi.swift` — `versionNumber` (the native iOS SDK version, not the RN version)
+   - `package.json` — `version`
+
+   A new native method exposed to JS is more than a bump on 3.x: add it to the codegen spec (`src/NativeCashfreePgApi.ts`), the adapter (`ios/CashfreePgApiAdapter.mm`) and `CashfreePgApiModule.java`.
+2. **Bring in 2.x first.** After each 2.x release, merge `master` → `master_3.x.x` (merge, not cherry-pick). Then check that no `src/**/*.js` came along — `master` commits them, and one here silently shadows its `.ts` (see above).
+3. **Verify.** `yarn test`, `yarn typescript`, `yarn lint`, then build all three sample apps on both platforms. On iOS, a changed `CashfreePG` pin needs `pod update CashfreePG` — `pod install` alone keeps the old version from `Podfile.lock`.
+4. **Publish and check the tags.**
+   ```sh
+   npm publish --dry-run --tag turbo   # confirm files and version
+   npm publish --tag turbo
+   npm view react-native-cashfree-pg-sdk dist-tags   # latest must still be 2.x
+   ```
+   If `latest` moved by mistake: `npm dist-tag add react-native-cashfree-pg-sdk@<2.x version> latest`.
+5. **Tag and release on GitHub.** Lightweight tag `v<version>` on `master_3.x.x`, then
+   `gh release create v<version> --target master_3.x.x --generate-notes --latest=false`
+   so GitHub's "Latest" badge stays on the 2.x release.
+
+3.x merges into `master` (and becomes `latest`) only after it has been observed in production for a while.
+
 ## Platform-specific notes
 
 - **iOS minimum deployment target:** 13.0
