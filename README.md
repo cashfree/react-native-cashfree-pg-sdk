@@ -1,6 +1,6 @@
 # react-native-cashfree-pg-sdk
 
-![GitHub](https://img.shields.io/github/license/cashfree/react-native-cashfree-pg-sdk) ![npm](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk) ![downloads](https://img.shields.io/npm/dm/react-native-cashfree-pg-sdk.svg?style=flat) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/react-native-cashfree-pg-sdk/master) [![install size](https://packagephobia.com/badge?p=react-native-cashfree-pg-sdk)](https://packagephobia.com/result?p=react-native-cashfree-pg-sdk)
+![GitHub](https://img.shields.io/github/license/cashfree/react-native-cashfree-pg-sdk) ![npm](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk) ![npm turbo](https://img.shields.io/npm/v/react-native-cashfree-pg-sdk/turbo?label=npm%40turbo) ![downloads](https://img.shields.io/npm/dm/react-native-cashfree-pg-sdk.svg?style=flat) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/react-native-cashfree-pg-sdk/master) [![install size](https://packagephobia.com/badge?p=react-native-cashfree-pg-sdk)](https://packagephobia.com/result?p=react-native-cashfree-pg-sdk)
 
 [![NPM](https://nodei.co/npm/react-native-cashfree-pg-sdk.svg?data=n,v,u,d)](https://nodei.co/npm/react-native-cashfree-pg-sdk/)
 
@@ -10,13 +10,30 @@ Click [here](https://docs.cashfree.com/docs/react-native-integration) for more D
 
 ## Installation
 
-**Requires React Native 0.73.0 or newer.** (Use 0.73.2+ if you're on the 0.73 line — see
-[MIGRATION-3.0.md](docs/MIGRATION-3.0.md) for why.) If you're on an older React Native
-version, stay on the `2.5.x` line of this SDK.
+This branch is the **3.x line**: the SDK as a TurboModule, for the New and the legacy
+architecture. It is published under the npm tag `turbo`; the default (`latest`) install is
+still the 2.5.x line.
+
+| Your app | Install | Line |
+|---|---|---|
+| React Native 0.73 or newer | `react-native-cashfree-pg-sdk@turbo` | 3.x |
+| React Native below 0.73 | `react-native-cashfree-pg-sdk` | 2.5.x |
+
+**3.x requires React Native 0.73.0 or newer.** Use 0.73.2+ if you're on the 0.73 line — see
+[MIGRATION-3.0.md](docs/MIGRATION-3.0.md) for why, and for upgrading from 2.x.
 
 ```sh
-npm install react-native-cashfree-pg-sdk
+npm install react-native-cashfree-pg-sdk@turbo cashfree-pg-api-contract@2.2.0
+cd ios && pod install
 ```
+
+- **Pin `cashfree-pg-api-contract` to exactly 2.2.0**, the version the SDK depends on. Two
+  versions installed side by side stop `makePayment` and `makeSubsPayment` from recognising
+  payment objects.
+- **iOS:** deployment target 13.0 or later. If `pod install` reports that the `CashfreePG`
+  constraint changed (upgrading from 2.4.x or earlier), run `pod update CashfreePG`.
+- **Android:** autolinked; no extra setup. Rebuild the app after installing.
+- **New Architecture:** nothing to enable or configure. The SDK works with it on or off.
 
 ### iOS
 Add the following code to application's info.plist file.
