@@ -13,6 +13,13 @@ both platforms and no longer depends on React Native's legacy-module interop lay
 works unmodified on the legacy architecture. See [docs/MIGRATION-3.0.md](docs/MIGRATION-3.0.md)
 for the merchant-facing migration notes (the only breaking change is the RN floor).
 
+3.x is published under the npm dist-tag **`turbo`** (3.0.0 released 2026-10-13); `latest` is
+the 2.x line from `master`. Merchants install it with
+`npm install react-native-cashfree-pg-sdk@turbo cashfree-pg-api-contract@2.2.0` then
+`cd ios && pod install` (`pod update CashfreePG` when upgrading from a release with an older
+`CashfreePG` pin). Keep README.md, docs/MIGRATION-3.0.md and this paragraph in step when the
+install command, contract pin or native SDK versions change.
+
 ## Commands
 
 ### SDK (root)
@@ -208,6 +215,8 @@ Two release lines ship side by side:
    npm view react-native-cashfree-pg-sdk dist-tags   # latest must still be 2.x
    ```
    If `latest` moved by mistake: `npm dist-tag add react-native-cashfree-pg-sdk@<2.x version> latest`.
+   The registry can take a few minutes to show a new version (`npm view` may 404 meanwhile).
+   Wait until it appears, then check its `gitHead` is the commit you released, before tagging.
 5. **Tag and release on GitHub.** Lightweight tag `v<version>` on `master_3.x.x`, then
    `gh release create v<version> --target master_3.x.x --generate-notes --latest=false`
    so GitHub's "Latest" badge stays on the 2.x release.

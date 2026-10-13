@@ -19,7 +19,37 @@ target of 13.0, and those releases default to 12.4.)
 
 There are no JavaScript API changes. `CFPaymentGatewayService.makePayment()`,
 `setCallback()`, `makeSubsPayment()`, `getInstalledUpiApps()` and the event
-names are all unchanged.
+names are all unchanged. 3.0.0 includes everything in 2.5.0, including
+`doPPIWalletPayment()`.
+
+## Upgrade steps
+
+3.x is published under the npm tag `turbo`; a plain `npm install react-native-cashfree-pg-sdk`
+still installs 2.5.x.
+
+1. Install 3.x and the contract version it depends on:
+
+   ```sh
+   npm install react-native-cashfree-pg-sdk@turbo cashfree-pg-api-contract@2.2.0
+   ```
+
+   If your `package.json` lists `cashfree-pg-api-contract`, keep it on exactly 2.2.0. Two
+   versions installed side by side stop `makePayment` and `makeSubsPayment` from recognising
+   payment objects.
+
+2. Update the iOS pods:
+
+   ```sh
+   cd ios && pod install
+   ```
+
+   Coming from 2.4.x or earlier, `pod install` stops and reports that the `CashfreePG`
+   constraint changed. Run `pod update CashfreePG` instead; 3.0.0 uses `CashfreePG` 2.5.2.
+
+3. Rebuild the app on both platforms. A JavaScript reload is not enough: the native module
+   changed.
+
+Nothing needs to be enabled for the New Architecture. The same install works with it on or off.
 
 ## Register `setCallback` exactly once
 
@@ -96,7 +126,12 @@ the customer what went wrong.
 
 ## Staying on 2.5.x
 
-2.5.x remains available for apps below React Native 0.73.
+2.5.x remains the default install (npm tag `latest`) and stays available for apps below
+React Native 0.73:
+
+```sh
+npm install react-native-cashfree-pg-sdk
+```
 
 ## Confirm payments server-side
 
