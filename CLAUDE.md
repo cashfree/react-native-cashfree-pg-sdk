@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **2.5.0** (iOS native: 2.5.2, Android native: 2.6.0)
+Current version: **2.5.1** (iOS native: 2.5.2, Android native: 2.6.1)
 
 ## Commands
 
@@ -72,7 +72,7 @@ Platform SDKs (CashfreePG CocoaPod / Cashfree PG Gradle dependency)
 **Android** ([android/](android/)):
 - [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — Primary Java native module. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTNativeAppEventEmitter`. Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`).
 - `CashfreePgApiPackage.java` — Registers the module with React Native.
-- Gradle dependency: `com.cashfree.pg:api:2.6.0`.
+- Gradle dependency: `com.cashfree.pg:api:2.6.1`.
 
 ### Build output (`lib/`)
 
