@@ -6,7 +6,7 @@ import CashfreePG
 public class CashfreePgApi: NSObject {
 
     var analyticsCallbackEnabled: Bool = false
-    private let versionNumber = "2.5.2"
+    private let versionNumber = "2.5.3"
 
     public override init() {
         super.init()
