@@ -14,7 +14,7 @@ Use 0.73.2 or newer if you are on the 0.73 line: React Native 0.73.0 and 0.73.1 
 `boost.podspec` pointing at a host that no longer serves the tarball, so `pod install` fails
 there for reasons unrelated to this SDK.
 
-(0.71 and 0.72 are excluded because `CashfreePG` 2.5.2 requires an iOS deployment
+(0.71 and 0.72 are excluded because `CashfreePG` 2.5.2 and later require an iOS deployment
 target of 13.0, and those releases default to 12.4.)
 
 There are no JavaScript API changes. `CFPaymentGatewayService.makePayment()`,
@@ -44,7 +44,7 @@ still installs 2.5.x.
    ```
 
    Coming from 2.4.x or earlier, `pod install` stops and reports that the `CashfreePG`
-   constraint changed. Run `pod update CashfreePG` instead; 3.0.0 uses `CashfreePG` 2.5.2.
+   constraint changed. Run `pod update CashfreePG` instead; 3.0.1 uses `CashfreePG` 2.5.3.
 
 3. Rebuild the app on both platforms. A JavaScript reload is not enough: the native module
    changed.

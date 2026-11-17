@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **react-native-cashfree-pg-sdk** — a React Native SDK that bridges JavaScript and native payment processing (iOS/Android) for Cashfree Payment Gateway. It is distributed as an NPM package with native modules on both platforms.
 
-Current version: **3.0.0** (iOS native: 2.5.2, Android native: 2.6.0)
+Current version: **3.0.1** (iOS native: 2.5.3, Android native: 2.7.1)
 
 **Requires React Native 0.73.0 or newer.** As of 3.0.0 the SDK is a codegen TurboModule on
 both platforms and no longer depends on React Native's legacy-module interop layer; it still
@@ -93,14 +93,14 @@ The module still works with the interop layer off and, unmodified, on the legacy
 - [CashfreePgApiAdapter.h](ios/CashfreePgApiAdapter.h) / [CashfreePgApiAdapter.mm](ios/CashfreePgApiAdapter.mm) — The ObjC TurboModule adapter. It declares and implements the ObjC class **`CashfreePgApi`** (deliberately not renamed to match the file — React Native's TurboModule lookup resolves `NSClassFromString("CashfreePgApi")` directly, before consulting `RCTGetModuleClasses()`, so the class name is load-bearing and must stay `CashfreePgApi` regardless of the file's name). Under `RCT_NEW_ARCH_ENABLED` it conforms to the codegen'd `NativeCashfreePgApiSpec` protocol; otherwise to plain `RCTBridgeModule`. It is an `RCTEventEmitter` subclass — the single module that now emits every event (`cfSuccess`, `cfFailure`, `cfEvent`, `cfUpiApps`) via `supportedEvents`. Each exported method (`doPayment`, `doUPIPayment`, `doWebPayment`, `doSubscriptionPayment`, `doCardPayment`, `doElementUPIPayment`, `doElementNBPayment`, `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment`, `getInstalledUpiApps` (Promise-based), `setCallback`, `setEventSubscriber`, `removeEventSubscriber`) is a thin `RCT_EXPORT_METHOD` forwarding to `_impl`, an instance of `CashfreePgApiImpl`.
 - [CashfreePgApi.swift](ios/CashfreePgApi.swift) — The Swift implementation, exposed to ObjC as **`CashfreePgApiImpl`** (not `CashfreePgApi` — that ObjC name belongs to the adapter above; keeping the Swift class under a different bridged name avoids both compiling to `CashfreePgApi.o` and colliding at link time). Implements the actual payment logic via `CFPaymentGatewayService`, plus `getInstalledUpiApps` (resolves a JSON string; `"[]"` when no UPI app is installed). Callback is registered via `setCallback()` which calls `CFPaymentGatewayService.getInstance().setCallback(self)`. Implements `CFResponseDelegate` with `verifyPayment(order_id:)`, `onError(_:order_id:)`, and `receivedEvent(event_name:meta_data:)`, which hand off to `CashfreeEmitter` to emit back to JS.
 - `CashfreeEmitter.swift` — Singleton event dispatcher. Holds a reference to the registered `RCTEventEmitter` (now the adapter's `CashfreePgApi` instance itself, registered via `registerEventEmitterWithEventEmitter:` in the adapter's `init`) and calls `sendEvent`. The `allEvents` array here must match JS listener names.
-- CocoaPod: `CashfreePG 2.5.2` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
+- CocoaPod: `CashfreePG 2.5.3` (declared in `react-native-cashfree-pg-sdk.podspec`; exact version pin, not pessimistic).
 - Deleted in the TurboModule migration (do not resurrect): `CashfreePgApi.m` (ObjC bridge, superseded by the adapter), `CashfreeEventEmitter.swift`/`.m` (separate `RCTEventEmitter` subclass — the adapter is now the sole emitter).
 
 **Android** ([android/](android/)):
 - [CashfreePgApiModule.java](android/src/main/java/com/reactnativecashfreepgsdk/CashfreePgApiModule.java) — `extends NativeCashfreePgApiSpec`, the abstract base class codegen generates from `src/NativeCashfreePgApi.ts`. Implements `CFCheckoutResponseCallback`, `CFEventsSubscriber`, `CFSubscriptionResponseCallback`. Parses JSON payment data from JS, calls Cashfree Android SDK, emits events via `RCTDeviceEventEmitter` (moved from `NativeAppEventEmitter` — see migration notes if you were listening directly instead of via `setCallback`). Subscription element methods: `doSubsCardPayment`, `doSubsUPIPayment`, `doSubsNBPayment` (routed by `doSubscriptionElementPayment`). `getInstalledUpiApps` resolves its Promise with a JSON string (`"[]"` on an empty list).
   - **Callback re-registration is load-bearing.** Every payment method calls `registerCheckoutCallback()` (or `registerSubscriptionCallback()`) before starting, so the current module instance always receives the result — including after Android recreates the host Activity when a UPI app returns. It sets a single callback rather than appending, so it never duplicates. Do not "simplify" it down to the one call in `setCallback()`. iOS needs no equivalent.
 - `CashfreePgApiPackage.java` — `extends TurboReactPackage`, registers the module with React Native for both architectures.
-- Gradle dependency: `com.cashfree.pg:api:2.6.0`.
+- Gradle dependency: `com.cashfree.pg:api:2.7.1`.
 
 ### Build output (`lib/`)
 
